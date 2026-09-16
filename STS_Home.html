@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>要拚要猛</title>
+  <style>
+    :root {
+      --primary: #00D4FF;
+      --primary-hover: #00a3cc;
+      --bg-color: #060E1C;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    #particles-js {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .glass-panel {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px 35px;
+      width: 360px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 212, 255, 0.1);
+    }
+
+    .form-section {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+    .form-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .input-group input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .form-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+
+    .form-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+
+    .form-links a:hover {
+      color: var(--primary);
+    }
+
+    .text-center {
+      text-align: center;
+      justify-content: center !important;
+    }
+
+    .form-msg {
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .form-msg.error { color: #ff6b6b; }
+    .form-msg.success { color: #4ade80; }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="particles-js"></div>
+
+  <div class="glass-panel">
+    
+    <div id="login-form" class="form-section active">
+      <h2>會員登入</h2>
+      <div class="input-group">
+        <input id="login-email" type="email" placeholder="電子郵件" required>
+      </div>
+      <div class="input-group">
+        <input id="login-password" type="password" placeholder="密碼" required>
+      </div>
+      <div id="login-msg" class="form-msg"></div>
+      <button class="btn" id="login-btn" onclick="handleLogin()">登入</button>
+      <div class="form-links">
+        <a onclick="switchForm('forgot-form')">忘記密碼？</a>
+        <a onclick="switchForm('register-form')">註冊新帳號</a>
+      </div>
+    </div>
+
+    <div id="register-form" class="form-section">
+      <h2>建立帳號</h2>
+      <div class="input-group">
+        <input id="register-username" type="text" placeholder="使用者名稱" required>
+      </div>
+      <div class="input-group">
+        <input id="register-email" type="email" placeholder="電子郵件" required>
+      </div>
+      <div class="input-group">
+        <input id="register-password" type="password" placeholder="設定密碼（至少6碼）" required>
+      </div>
+      <div id="register-msg" class="form-msg"></div>
+      <button class="btn" id="register-btn" onclick="handleRegister()">註冊</button>
+      <div class="form-links text-center">
+        <a onclick="switchForm('login-form')">已經有帳號了？返回登入</a>
+      </div>
+    </div>
+
+    <div id="forgot-form" class="form-section">
+      <h2>重設密碼</h2>
+      <p style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 20px; text-align: center;">
+        請輸入您的註冊電子郵件，我們將發送重設密碼的連結給您。
+      </p>
+      <div class="input-group">
+        <input id="forgot-email" type="email" placeholder="電子郵件" required>
+      </div>
+      <div id="forgot-msg" class="form-msg"></div>
+      <button class="btn" id="forgot-btn" onclick="handleForgotPassword()">發送重設連結</button>
+      <div class="form-links text-center">
+        <a onclick="switchForm('login-form')">返回登入</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // ====== Supabase 設定：換成你自己專案的值 ======
+    // Project Settings → API 裡可以找到這兩個值
+    const SUPABASE_URL = "https://heutehjgcoecgafpvxwo.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_pknjuK0FYqGAlJScP8shjQ_9ffXPaTk";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 如果已經登入過（有有效 session），直接跳去遊戲主頁
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        window.location.href = "index.html";
+      }
+    })();
+
+    // --- 表單切換邏輯 ---
+    function switchForm(formId) {
+      document.querySelectorAll('.form-section').forEach(form => {
+        form.classList.remove('active');
+      });
+      document.getElementById(formId).classList.add('active');
+      document.querySelectorAll('.form-msg').forEach(m => { m.textContent = ''; m.className = 'form-msg'; });
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'form-msg ' + (type || '');
+    }
+
+    function setLoading(btnId, loading, defaultText) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.textContent = loading ? '處理中...' : defaultText;
+    }
+
+    // --- 註冊 ---
+    async function handleRegister() {
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+
+      if (!username || !email || !password) {
+        showMsg('register-msg', '請填寫完整資料', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showMsg('register-msg', '密碼至少需要 6 個字元', 'error');
+        return;
+      }
+
+      setLoading('register-btn', true, '註冊');
+
+      // 1. 建立驗證帳號
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { username } }
+      });
+
+      if (error) {
+        setLoading('register-btn', false, '註冊');
+        showMsg('register-msg', '註冊失敗：' + error.message, 'error');
+        return;
+      }
+
+      // profiles 資料列會由資料庫觸發器（on_auth_user_created）自動建立，
+      // 前端不需要再手動 insert，避免 RLS 政策擋下未登入狀態的寫入。
+
+      setLoading('register-btn', false, '註冊');
+
+      if (data.session) {
+        // 沒有開啟 email 驗證，註冊完直接是登入狀態
+        showMsg('register-msg', '註冊成功，正在進入遊戲...', 'success');
+        setTimeout(() => { window.location.href = "index.html"; }, 800);
+      } else {
+        // 有開啟 email 驗證，需要先去信箱點連結
+        showMsg('register-msg', '註冊成功！請至信箱收取驗證信後再登入。', 'success');
+        setTimeout(() => switchForm('login-form'), 1500);
+      }
+    }
+
+    // --- 登入 ---
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showMsg('login-msg', '請輸入電子郵件與密碼', 'error');
+        return;
+      }
+
+      setLoading('login-btn', true, '登入');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      setLoading('login-btn', false, '登入');
+
+      if (error) {
+        showMsg('login-msg', '登入失敗：' + error.message, 'error');
+        return;
+      }
+
+      showMsg('login-msg', '登入成功，正在進入遊戲...', 'success');
+      setTimeout(() => { window.location.href = "index.html"; }, 500);
+    }
+
+    // --- 忘記密碼 ---
+    async function handleForgotPassword() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) {
+        showMsg('forgot-msg', '請輸入電子郵件', 'error');
+        return;
+      }
+
+      setLoading('forgot-btn', true, '發送重設連結');
+
+      // redirectTo 可視需要改成你重設密碼頁面的網址
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+
+      setLoading('forgot-btn', false, '發送重設連結');
+
+      if (error) {
+        showMsg('forgot-msg', '發送失敗：' + error.message, 'error');
+        return;
+      }
+      showMsg('forgot-msg', '重設密碼連結已寄出，請至信箱查收。', 'success');
+    }
+
+    // --- 粒子宇宙設定 ---
+    particlesJS('particles-js', {
+      "particles": {
+        "number": {
+          "value": 80,
+          "density": { "enable": true, "value_area": 800 }
+        },
+        "color": { "value": ["#ffffff", "#00D4FF", "#A855F7"] },
+        "shape": {
+          "type": "circle",
+        },
+        "opacity": {
+          "value": 0.6,
+          "random": true,
+          "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false }
+        },
+        "size": {
+          "value": 3,
+          "random": true,
+          "anim": { "enable": true, "speed": 2, "size_min": 0.1, "sync": false }
+        },
+        "line_linked": {
+          "enable": true,
+          "distance": 150,
+          "color": "#00D4FF",
+          "opacity": 0.2,
+          "width": 1
+        },
+        "move": {
+          "enable": true,
+          "speed": 1.5,
+          "direction": "none",
+          "random": true,
+          "straight": false,
+          "out_mode": "out",
+          "bounce": false,
+        }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": {
+            "enable": true,
+            "mode": "grab"
+          },
+          "onclick": {
+            "enable": true,
+            "mode": "push"
+          },
+          "resize": true
+        },
+        "modes": {
+          "grab": { "distance": 140, "line_linked": { "opacity": 0.5 } },
+          "push": { "particles_nb": 4 }
+        }
+      },
+      "retina_detect": true
+    });
+  </script>
+</body>
+</html>

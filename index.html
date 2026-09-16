@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<link rel="icon" href="data:,">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>要拚要猛</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/social.css">
+<link rel="stylesheet" href="css/legal.css">
+</head>
+<body>
+
+<div id="particles-js"></div>
+<div id="rf"></div>
+
+<div id="coin-display">🪙 <span id="coin-count">0</span></div>
+<div id="sys-top-right">
+  <button class="icon-btn menu-only-icon" onclick="showSignIn()" data-i18n-attr="title:title-signin">📅<div id="sign-in-dot" class="red-dot"></div></button>
+  <button class="icon-btn menu-only-icon" onclick="openQuestsScreen()" data-i18n-attr="title:title-quests">🎯<div id="quest-dot" class="red-dot"></div></button>
+  <button class="icon-btn menu-only-icon" onclick="openAchievementsScreen()" data-i18n-attr="title:title-achievements">🏅</button>
+  <button class="icon-btn menu-only-icon" onclick="openChallengeScreen()" data-i18n-attr="title:title-challenge">🤝</button>
+  <button class="icon-btn menu-only-icon" onclick="openLegalOverlay('view')" data-i18n-attr="title:title-legal">🔒</button>
+  <button class="icon-btn menu-only-icon" onclick="goTo('scr-shop');playSfx('click');renderShop()" data-i18n-attr="title:title-shop">🛒</button>
+  <button class="icon-btn menu-only-icon" onclick="goTo('scr-board');playSfx('click');renderBoard()" data-i18n-attr="title:title-board">🏆</button>
+  <button class="icon-btn menu-only-icon" onclick="goTutorial();playSfx('click')" data-i18n-attr="title:title-tutorial">📜</button>
+  <button class="icon-btn menu-only-icon" onclick="openContact();playSfx('click')" title="聯絡我們">✉️</button>
+  <button class="icon-btn menu-only-icon" id="phonecam-btn" onclick="openPhoneCamPairing();playSfx('click')" title="使用手機鏡頭（測試版）">🤳<div id="phonecam-dot" class="red-dot" style="display:none"></div></button>
+  <button class="icon-btn menu-only-icon" onclick="openSettings();playSfx('click')" data-i18n-attr="title:title-settings">⚙️</button>
+</div>
+
+
+<button class="icon-btn" id="ai-chat-btn" onclick="toggleAIChat()" style="position:fixed;bottom:20px;right:20px;z-index:9999;width:56px;height:56px;font-size:2em;" data-i18n-attr="title:title-ai-coach">🤖</button>
+
+<div id="ai-chat-window" class="card off">
+  <div class="scr-title" style="font-size:1.2em;margin-bottom:0;display:flex;justify-content:space-between;align-items:center;">
+    <div data-i18n="ai-title">AI <span>教練</span></div>
+    <button onclick="toggleAIChat()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:1.2em;">✖</button>
+  </div>
+  <div id="ai-chat-history" style="flex:1;overflow-y:auto;background:var(--bg2);border-radius:8px;padding:10px;font-size:0.85em;display:flex;flex-direction:column;gap:10px;">
+    <div class="chat-msg-ai" data-i18n="ai-welcome">你好！我是專屬 AI 訓練員。有什麼我可以幫忙的嗎？</div>
+  </div>
+  
+  <div id="ai-preset-questions">
+    <button class="preset-btn" onclick="sendPreset('遊戲規則是什麼？')" data-i18n="ai-preset-rules">遊戲規則</button>
+    <button class="preset-btn" onclick="sendPreset('坐站訓練有什麼好處？')" data-i18n="ai-preset-benefits">坐站訓練好處</button>
+    <button class="preset-btn" onclick="sendPreset('如何獲得高分？')" data-i18n="ai-preset-skills">高分技巧</button>
+  </div>
+  
+  <div style="display:flex;gap:6px;">
+    <input id="ai-chat-input" type="text" placeholder="問我問題..." data-i18n-attr="placeholder:ai-input-holder" autocomplete="off" style="flex:1;background:var(--bg);border:1.5px solid var(--border);color:var(--white);border-radius:8px;padding:8px 12px;outline:none;transition:border-color 0.2s;">
+    <button class="btn btn-blue" style="padding:8px 16px;" onclick="sendAIMessage()" data-i18n="ai-btn-send">送出</button>
+  </div>
+</div>
+
+
+<div class="scr" id="scr-menu">
+  <div class="menu-content">
+    <div class="logo-wrap">
+      <div>
+        <div class="logo-title" data-i18n="menu-logo-title">123<span>木頭人</span></div>
+        <div class="logo-sub" data-i18n="menu-logo-sub">PRO — 姿勢矯正版</div>
+      </div>
+    </div>
+    <div class="menu-btns">
+      <button class="btn btn-blue" onclick="goTo('scr-chars');playSfx('click')" data-i18n="menu-btn-start">開始遊戲</button>
+      <button class="btn btn-green" onclick="watchAdMock(null, '廣告播放中...')" data-i18n="menu-btn-ad">看廣告領 500 🪙</button>
+    </div>
+    <div class="legal-footer-link" onclick="openLegalOverlay('view')" data-i18n="menu-legal-footer">🔒 隱私權政策・攝影機使用說明・運動安全提醒</div>
+  </div>
+</div>
+
+<div class="scr off" id="scr-chars">
+  <div class="scr-title" data-i18n="chars-title">選擇<span>角色</span></div>
+  <div class="char-grid" id="char-grid"></div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="btn-back">← 返回</button>
+    <button class="btn btn-blue" onclick="goTo('scr-mode');playSfx('click');buildModeGrid()" data-i18n="chars-next">下一步：選模式 →</button>
+  </div>
+</div>
+
+<div class="scr off" id="scr-mode">
+  <div class="scr-title" data-i18n="mode-title">選擇<span>模式</span></div>
+  <div class="mode-grid" id="mode-grid"></div>
+  <div id="control-time-panel" class="control-time-panel" style="display:none;">
+    <div>
+      <div class="control-time-title" data-i18n="control-target-label">目標下降時間</div>
+      <div class="control-time-hint" data-i18n="control-target-hint">兩個控制模式都會先固定保持 5 秒；此處只設定後續下降節奏，不代表醫療正常值。</div>
+    </div>
+    <div class="control-time-input-wrap">
+      <input id="control-target-sec" type="number" value="5.0" min="0.5" max="30" step="0.5" onchange="setControlTargetSec(this.value)" oninput="setControlTargetSec(this.value)">
+      <span>秒</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-ghost" onclick="goTo('scr-chars');playSfx('click')" data-i18n="btn-back">← 返回</button>
+    <button class="btn btn-blue" id="mode-next-btn" onclick="continueFromModeSelection()" data-i18n="mode-next">下一步：選難度 →</button>
+  </div>
+</div>
+
+<div class="scr off" id="scr-diff">
+  <div class="scr-title" data-i18n="diff-title">選擇<span>難度</span></div>
+  <div class="diff-grid" id="diff-grid"></div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-ghost" onclick="goTo('scr-mode');playSfx('click')" data-i18n="btn-back">← 返回</button>
+    <button class="btn btn-blue" onclick="launchGame()" data-i18n="diff-next">開始遊戲 ▶</button>
+  </div>
+</div>
+
+<div class="scr off" id="scr-tutorial">
+  <div class="scr-title" data-i18n="tut-title">遊戲<span>說明</span></div>
+  <div class="ss-anim" style="gap:8px;">
+    <div class="ss-fig"><canvas id="tut-stand" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-stand">站立</div></div>
+    <div class="tut-arrow">→</div>
+    <div class="ss-fig"><canvas id="tut-sit" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-sit">坐下</div></div>
+    <div class="tut-arrow">→</div>
+    <div class="ss-fig"><canvas id="tut-stand2" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-stand">站立</div></div>
+    <div class="tut-arrow">→</div>
+    <div class="ss-fig"><canvas id="tut-tiptoe" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-tiptoe">墊腳尖</div></div>
+    <div class="tut-arrow" style="color:var(--green);font-size:1em;" data-i18n="tut-cap-step">= +1步！</div>
+  </div>
+  <div class="tut-grid">
+    <div class="tut-card"><div class="tut-icon">🟢</div><div class="tut-head" data-i18n="tut-head-green">綠燈時</div><div class="tut-body" data-i18n="tut-body-green">完成<strong>站➔坐➔站➔墊腳</strong>即前進<br>姿勢越好，步伐越大</div></div>
+    <div class="tut-card"><div class="tut-icon">🟡</div><div class="tut-head" data-i18n="tut-head-yellow">黃燈時</div><div class="tut-body" data-i18n="tut-body-yellow"><strong>起立後切黃燈</strong><br>請準備<strong>坐下</strong></div></div>
+    <div class="tut-card"><div class="tut-icon">🔴</div><div class="tut-head" data-i18n="tut-head-red">紅燈時</div><div class="tut-body" data-i18n="tut-body-red">必須<strong>坐下且靜止</strong><br>亂動或站立<br><strong style="color:var(--red)">Game Over！</strong></div></div>
+  </div>
+  <div class="card" style="max-width:800px;padding:18px 27px;" id="tut-mode-hint"></div>
+  <div class="card safety-mini-note" data-i18n="tut-safety-note">
+    ⚠️ <strong>運動安全提醒：</strong>本遊戲僅供一般運動參考，並非醫療器材，不能取代物理治療師或醫師之專業評估。若有心血管疾病、平衡感不佳或跌倒病史，請先諮詢醫師；運動中如有不適請立即停止。
+    <span class="legal-link-inline" onclick="openLegalOverlay('view')" data-i18n="tut-safety-more">查看完整聲明 →</span>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="tut-btn-menu">← 返回主選單</button>
+    <button class="btn btn-blue" onclick="goTo('scr-chars');playSfx('click')" data-i18n="tut-btn-chars">去選角色 ▶</button>
+  </div>
+</div>
+
+<div class="scr off" id="scr-quests">
+  <div class="scr-title" data-i18n="quests-title">每日<span>任務</span></div>
+  <div class="quest-section">
+    <div class="quest-section-title"><span data-i18n="quests-daily-sec">📅 每日任務</span><span class="quest-reset-info" id="quest-daily-reset-info"></span></div>
+    <div id="quest-daily-list" class="quest-list"></div>
+  </div>
+  <div class="quest-section">
+    <div class="quest-section-title"><span data-i18n="quests-weekly-sec">🗓️ 每週任務</span><span class="quest-reset-info" id="quest-weekly-reset-info"></span></div>
+    <div id="quest-weekly-list" class="quest-list"></div>
+  </div>
+  <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="quests-btn-menu">← 返回主選單</button>
+</div>
+
+<div class="scr off" id="scr-achievements">
+  <div class="scr-title" data-i18n="ach-title">成就<span>徽章</span></div>
+  <div class="ach-summary" id="ach-summary"></div>
+  <div class="ach-grid" id="ach-grid"></div>
+  <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="ach-btn-menu">← 返回主選單</button>
+</div>
+
+<div class="scr off" id="scr-game">
+  <button class="icon-btn" id="game-settings-btn" style="position:fixed;top:14px;right:14px;z-index:500;" onclick="openInGameSettings();playSfx('click')" data-i18n-attr="title:title-settings">⚙️</button>
+  <div id="left-panel">
+    <div class="lbl"></div>
+    <div id="light-badge" class="lb-green" data-i18n="game-light-green">🟢 綠燈 — 自由移動</div>
+    <div id="time-card">
+      <div class="lbl"></div>
+      <div class="time-row">
+        <span id="h-timer-lbl" data-i18n="game-timer-lbl">剩餘時間</span>
+        <strong id="h-timer">0:00</strong>
+      </div>
+    </div>
+    <div id="rep-time-card" style="display:none;">
+      <div class="lbl" id="rep-time-label" data-i18n="game-rep-remaining">本次剩餘</div>
+      <strong id="rep-time-value">--</strong>
+    </div>
+    <div id="ss-panel">
+      <span style="font-size:1.3em">🧍</span>
+      <div>
+        <div id="ss-body-state" style="color:var(--blue2)" data-i18n="game-state-body">遊戲開始</div>
+        <div style="font-size:.68em;color:var(--dim)" data-i18n="game-state-lbl">當前狀態</div>
+      </div>
+      <div class="ss-reps">
+        <div class="ss-rep-num" id="ss-rep-num">0</div>
+        <div class="ss-rep-lbl" data-i18n="game-rep-lbl">次</div>
+      </div>
+    </div>
+    <div id="posture-card">
+      <div class="lbl" id="posture-card-label" style="margin-bottom:5px;" data-i18n="game-posture-lbl">單次姿勢分</div>
+      <div id="p-big" style="color:var(--blue2)">--</div>
+      <div id="p-grade" style="background:rgba(30,111,255,.15);color:var(--blue2)">--</div>
+    </div>
+
+    <div id="detail-list"></div>
+    <div id="score-block">
+      <div class="lbl" style="margin-bottom:4px;" data-i18n="game-score-lbl">總分</div>
+      <div id="score-big">0</div>
+      <div class="score-sub" id="prog-line"><span data-i18n="game-prog-lbl">進度：</span><span id="prog-txt">0%</span></div>
+    </div>
+  </div>
+
+  <div id="right-panel">
+    <div id="pose-stage">
+      <div id="cam-wrap">
+        <div id="recording-live-badge">🔴 錄影中</div>
+        <canvas id="pose-canvas" width="640" height="480"></canvas>
+        <div id="cam-msg"><div class="spinner"></div><span id="cam-status-text">啟動攝影機...</span></div>
+        <div id="calib-overlay" class="calib-off">
+          <div id="calib-box">
+            <div class="calib-corner c-tl"></div>
+            <div class="calib-corner c-tr"></div>
+            <div class="calib-corner c-bl"></div>
+            <div class="calib-corner c-br"></div>
+            <div id="calib-text">請站立於方框內進行定位與校正</div>
+          </div>
+          <div id="calib-timer">5</div>
+        </div>
+      </div>
+    </div>
+    <div id="game-stage">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hblock"><div class="hval" id="h-light">🟢</div><div class="hlbl">燈號</div></div>
+        <div class="hblock"><div class="hval" id="h-streak">0</div><div class="hlbl">連續好姿勢</div></div>
+      </div>
+    </div>
+    <div id="move-warn">⚠️ 偵測到移動！</div>
+    <div id="tip-box"></div>
+    <div id="countdown"></div>
+    <div id="timer-bar-wrap"><div id="timer-bar" style="width:100%"></div></div>
+
+    <div id="ov-result" class="overlay-modal">
+      <div id="ov-icon"></div>
+      <div id="ov-title"></div>
+      <div id="ov-sub"></div>
+      <div class="stat-row" id="ov-stats"></div>
+      <!-- 診斷卡片：只需要這一個 ID 即可！ -->
+      <div id="ai-diag-box" style="margin: 12px 0; padding: 12px; background: rgba(30, 111, 255, 0.1); border: 1px solid #1e6fff; border-radius: 8px; color: #fff; text-align: left;">
+        🤖 AI 教練準備中...
+      </div>
+      <div id="recording-result">
+        <div class="recording-result-head">
+          <span>🎥 本次原始錄影</span>
+          <span id="recording-status">尚未產生錄影</span>
+        </div>
+        <video id="recording-preview" controls playsinline preload="metadata"></video>
+        <div id="analysis-status">尚未開始 Heavy 分析</div>
+        <div class="recording-action-row">
+          <button class="btn btn-blue" id="recording-download-btn" onclick="downloadRecordedVideo()" disabled>⬇️ 下載錄影</button>
+          <a class="btn btn-gold" id="analysis-pdf-btn" style="display:none" target="_blank" download>📄 下載分析 PDF</a>
+          <a class="btn btn-ghost" id="analysis-csv-btn" style="display:none" target="_blank" download>📊 下載 Heavy CSV</a>
+        </div>
+      </div>
+      <div id="control-report-wrap" style="display:none;"></div>
+      <div id="chart-wrap"><div id="chart-title">📈 姿勢歷史曲線</div><canvas id="chart-cvs" width="380" height="110"></canvas></div>
+      <div id="name-wrap"><label for="name-input" data-i18n="res-name-lbl">輸入名稱（3字）：</label><input id="name-input" maxlength="3" placeholder="AAA" spellcheck="false"></div>
+      <div class="ov-btns">
+        <button class="btn btn-gold" onclick="collectCoinsAndContinue()" data-i18n="res-btn-collect">🪙 領取金幣</button>
+        <button class="btn btn-ghost" onclick="openShareCardFromResult()" data-i18n="res-btn-share">📸 分享成就卡</button>
+        <button class="btn btn-ghost" onclick="createChallengeFromResult()" data-i18n="res-btn-challenge">🤝 挑戰好友</button>
+        <button class="btn btn-ghost" onclick="saveAndBoard()" data-i18n="res-btn-board">🏆 排行榜</button>
+        <button class="btn btn-ghost" onclick="saveAndMenu()" data-i18n="res-btn-menu">🏠 主選單</button>
+      </div>
+    </div>
+
+    <div id="coin-reward" class="overlay-modal">
+      <div class="cr-particles" id="cr-particles"></div>
+      <div class="cr-anim">🪙</div>
+      <div class="cr-title" data-i18n="reward-title">金幣獎勵！</div>
+      <div class="cr-amount" id="cr-amount">+0</div>
+      <div class="cr-breakdown" id="cr-breakdown"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button class="btn btn-blue" onclick="afterCoinCollect('restart')" data-i18n="reward-btn-restart">🔄 再玩一次</button>
+        <button class="btn btn-ghost" onclick="afterCoinCollect('board')" data-i18n="reward-btn-board">🏆 排行榜</button>
+        <button class="btn btn-ghost" onclick="afterCoinCollect('menu')" data-i18n="reward-btn-menu">🏠 主選單</button>
+      </div>
+    </div>
+
+    <div id="rep-feedback"><div id="rep-fb-score"></div><div id="rep-fb-label" data-i18n="game-rep-fb">起立完成！</div></div>
+
+    <div id="ov-pause" class="overlay-modal">
+      <div style="font-size:3em">⏸</div>
+      <div class="pause-title" data-i18n="pause-title">遊戲暫停</div>
+      <div style="font-size:.9em;color:var(--dim)" data-i18n="pause-sub">按 P 鍵或點擊「繼續」恢復遊戲</div>
+      <div class="pause-stats" id="pause-stats"></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn btn-blue" onclick="resumeGame()" data-i18n="pause-btn-resume">▶ 繼續遊戲</button>
+        <button class="btn btn-ghost" onclick="pauseAndQuit()" data-i18n="pause-btn-quit">🏠 返回主選單</button>
+      </div>
+    </div>
+
+    <div id="pbar-wrap"><div id="pbar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="scr off" id="scr-board">
+  <div class="board-header">
+    <div class="scr-title" data-i18n="board-title">🏆 <span>排行榜</span></div>
+    <div class="diff-tabs">
+      <div class="diff-tab active" onclick="filterBoard('all',this)" data-i18n="board-tab-all">全部</div>
+      <div class="diff-tab" onclick="filterBoard('season',this)" data-i18n="board-tab-season">🌟 本賽季</div>
+      <div class="diff-tab" onclick="filterBoard('classic',this)" data-i18n="board-tab-classic">通關</div>
+      <div class="diff-tab" onclick="filterBoard('infinite',this)" data-i18n="board-tab-infinite">無限</div>
+      <div class="diff-tab" onclick="filterBoard('timed',this)" data-i18n="board-tab-timed">限時</div>
+    </div>
+    <button class="btn btn-ghost" style="padding:5px 12px;font-size:.78em;border-color:var(--red);color:var(--red);" onclick="clearBoard()" data-i18n="board-btn-clear">🗑 清空</button>
+  </div>
+
+  <div id="season-info" class="season-info"></div>
+
+  <div class="board-table-wrap" style="width: 1050px; max-height: 400px; overflow-y: auto; display: block; border: 1.5px solid var(--border); border-radius: 8px;">
+    <table id="board-table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-rank">排名</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-name">名稱</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-score">分數</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-mode">模式</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-diff">難度</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-time">時間</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-char">角色</th>
+          <th style="position: sticky; top: 0; background: #0C1828; z-index: 10;" data-i18n="board-th-date">日期</th>
+        </tr>
+      </thead>
+      <tbody id="board-body"></tbody>
+    </table>
+  </div>
+
+  <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="board-btn-menu">← 返回主選單</button>
+</div>
+
+<div class="scr off" id="scr-shop">
+  <div class="shop-header">
+    <div class="scr-title" data-i18n="shop-title">🛒 <span>角色商城</span></div>
+    <div class="shop-coins">🪙 <span id="shop-coin-count">0</span></div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" onclick="filterShop('chars',this)" data-i18n="shop-tab-chars">角色</div>
+      <div class="shop-tab" onclick="filterShop('trails',this)" data-i18n="shop-tab-trails">軌跡</div>
+      <div class="shop-tab" onclick="filterShop('hats',this)" data-i18n="shop-tab-hats">頭飾</div>
+    </div>
+  </div>
+  <div class="shop-grid" id="shop-grid"></div>
+  <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="shop-btn-menu">← 返回主選單</button>
+</div>
+
+<div id="scr-signin" class="scr off" style="margin:30px;">
+  <div class="scr-title" style="margin-bottom:16px;" data-i18n="signin-title">📅 每日<span>簽到</span></div>
+  <div id="cal-wrap">
+    <div class="cal-header">
+      <div class="cal-title" id="cal-month-title">年份/月份</div>
+      <div class="cal-retro-info" id="cal-retro-text"><span data-i18n="signin-retro">補簽次數: </span><span>3</span>/3</div>
+    </div>
+    <div class="cal-week">
+      <div data-i18n="week-sun">日</div><div data-i18n="week-mon">一</div><div data-i18n="week-tue">二</div><div data-i18n="week-wed">三</div><div data-i18n="week-thu">四</div><div data-i18n="week-fri">五</div><div data-i18n="week-sat">六</div>
+    </div>
+    <div class="cal-grid" id="cal-grid">
+      </div>
+  </div>
+  <button class="btn btn-ghost" onclick="goTo('scr-menu'); playSfx('click')" data-i18n="signin-btn-close">✖ 關閉</button>
+</div>
+
+
+<div class="scr off" id="ov-settings" style="position:fixed; inset:0; background:rgba(6,14,28,.93); backdrop-filter:blur(10px); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px;">
+  <!-- 標題 放大 2 倍 -->
+  <div class="scr-title" id="set-title" data-i18n="set-title" style="font-size: 2.8em;">⚙️ 遊戲<span>設定</span></div>
+  
+  <!-- 語言選擇區域 放大 2 倍 -->
+  <div style="width:640px; display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-lang" data-i18n="lbl-set-lang">選擇語言</span>
+    <select id="set-lang-select" onchange="changeLanguageFromSettings(this.value)" style="background:var(--bg); border:3px solid var(--border); color:var(--white); padding:8px 16px; border-radius:12px; outline:none; font-size:1.7em; cursor:pointer;">
+      <option value="zh-TW">繁體中文</option>
+      <option value="en">English</option>
+    </select>
+  </div>
+  
+  <!-- 設定卡片與內部按鈕 放大 2 倍 (寬度改為 640px) -->
+  <div class="card" style="width:640px; display:flex; flex-direction:column; gap:32px; padding:32px; border-radius:24px; background:var(--card2);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-mute" data-i18n="lbl-set-mute">遊戲音效</span>
+      <button id="set-mute-btn" class="btn btn-ghost" style="padding:12px 28px; font-size:1.6em; border-radius:12px;" onclick="toggleMuteFromSettings()" data-i18n="set-mute-on">播放中</button>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-part" data-i18n="lbl-set-part">背景粒子特效</span>
+      <button id="set-part-btn" class="btn btn-ghost" style="padding:12px 28px; font-size:1.6em; border-radius:12px;" onclick="toggleParticles()" data-i18n="set-part-on">開啟</button>
+    </div>
+  </div>
+  
+  <!-- 返回按鈕 放大 2 倍 -->
+  <button class="btn btn-blue" id="set-back-btn" style="padding:16px 36px; font-size:1.8em; border-radius:16px;" onclick="closeSettings();playSfx('click')" data-i18n="set-back-btn">確認並返回</button>
+</div>
+
+<div id="scr-challenge" class="scr off">
+  <div class="scr-title" style="margin-bottom:12px;" data-i18n="chal-title">🤝 好友<span>挑戰</span></div>
+  <div class="diff-tabs" id="challenge-tabs">
+    <div class="diff-tab active" onclick="switchChallengeTab('create',this)" data-i18n="chal-tab-create">建立挑戰</div>
+    <div class="diff-tab" onclick="switchChallengeTab('redeem',this)" data-i18n="chal-tab-redeem">接受挑戰</div>
+    <div class="diff-tab" onclick="switchChallengeTab('history',this)" data-i18n="chal-tab-history">紀錄</div>
+  </div>
+
+  <div id="challenge-create-panel">
+    <p style="font-size:1.2em;color:var(--dim);text-align:center;margin:10px 0px;" data-i18n="chal-create-tip">遊戲結束後，在結算畫面點「挑戰好友」即可產生挑戰內容；下方顯示你最近一次產生的內容，複製後貼給朋友。</p>
+    <textarea id="challenge-code-output" readonly rows="4" style="background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:10px;font-size:1.1em;"></textarea>
+    <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;">
+      <button class="btn btn-blue" onclick="copyChallengeCode()" data-i18n="chal-btn-copy">📋 複製內容</button>
+      <button class="btn btn-ghost" onclick="shareChallengeCode()" data-i18n="chal-btn-share">📤 分享</button>
+    </div>
+  </div>
+
+  <div id="challenge-redeem-panel" style="display:none;">
+    <p style="font-size:1.2em;color:var(--dim);text-align:center;margin:10px 0;" data-i18n="chal-redeem-tip">貼上朋友給你的挑戰碼（STS1- 開頭），按下方按鈕即可直接開始挑戰。</p>
+    <textarea id="challenge-code-input" rows="4" placeholder="貼上好友的挑戰碼..." data-i18n-attr="placeholder:chal-input-holder" style="background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:10px;font-size:1.1em;"></textarea>
+    <div class="challenge-preview" id="challenge-preview"></div>
+    <button class="btn btn-blue" style="margin-top:6px;" onclick="acceptChallengeCode()" data-i18n="chal-btn-accept">⚔️ 接受挑戰並開始</button>
+  </div>
+
+  <div id="challenge-history-panel" style="display:none;">
+    <div id="challenge-history-list" class="quest-list"></div>
+  </div>
+
+  <button class="btn btn-ghost" style="margin-top:14px;" onclick="goTo('scr-menu'); playSfx('click')" data-i18n="chal-btn-close">✖ 關閉</button>
+</div>
+
+<div id="ov-share-card" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:10px;" data-i18n="share-title">📸 分享<span>卡片</span></div>
+  <img id="share-card-preview-img" style="max-width:280px;border-radius:14px;border:1.5px solid var(--border);"/>
+  <div style="display:flex;gap:10px;margin-top:14px;">
+    <button class="btn btn-blue" onclick="doShareCard()" data-i18n="share-btn-do">📤 分享</button>
+    <button class="btn btn-ghost" onclick="doDownloadCard()" data-i18n="share-btn-dl">💾 下載圖片</button>
+    <button class="btn btn-ghost" onclick="closeShareCard()" data-i18n="share-btn-close">✖ 關閉</button>
+  </div>
+</div>
+
+<div id="ov-phonecam" class="overlay-modal"style="margin-top:5em;">
+  <div class="scr-title" style="margin-bottom:0.6em;">🤳 使用<span>手機鏡頭</span>（測試版）</div>
+  <p style="font-size:1.6em;color:var(--dim);text-align:center;max-width:420px;margin:0 0 14px;">
+    用手機掃描下方 QR Code，或在手機瀏覽器輸入配對碼開啟連線頁面。電腦和手機只要都能上網就能連線；在同一個 WiFi 下連線品質最好，不同網路（例如手機用行動網路）也能連，但延遲會稍微高一點。
+  </p>
+  <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:520px;">
+    <div id="phonecam-qr-box" style="background:#fff;border-radius:12px;padding:10px;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
+      <canvas id="phonecam-qr-canvas"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:220px;">
+      <div>
+        <div style="font-size:1.55em;color:var(--dim);margin-bottom:2px;">配對碼</div>
+        <div id="phonecam-code" style="font-size:1.6em;font-weight:800;color:var(--blue2);letter-spacing:2px;">------</div>
+      </div>
+      <div>
+        <div style="font-size:1.6em;color:var(--dim);margin-bottom:2px;">連線網址</div>
+        <textarea id="phonecam-link" readonly rows="2" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:8px;font-size:1.5em;width:13em;resize:none;"></textarea>
+      </div>
+      <button class="btn btn-ghost" style="padding:6px 12px;font-size:1.45em;" onclick="copyPhoneCamLink()">📋 複製連結</button>
+    </div>
+  </div>
+  <div id="phonecam-status" style="margin-top:16px;font-size:1.5em;color:var(--yellow);text-align:center;">🕐 等待手機連接中...</div>
+  <div style="display:flex;gap:10px;margin-top:14px;">
+    <button class="btn btn-ghost" id="phonecam-disconnect-btn" style="display:none;border-color:var(--red);color:var(--red);" onclick="disconnectPhoneCam()">🔌 中斷連線，改用電腦鏡頭</button>
+    <button class="btn btn-ghost" onclick="closePhoneCamPairing()">✖ 關閉</button>
+  </div>
+</div>
+
+<div class="scr off" id="ov-legal" style="position:fixed; inset:0; background:rgba(5,10,20,.97); backdrop-filter:blur(10px); z-index:10000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px;">
+  <div class="scr-title" style="margin-bottom:0;" data-i18n="legal-title">🔒 隱私權與<span>安全聲明</span></div>
+  <div id="legal-content" class="legal-content"></div>
+  <div id="legal-agree-row" class="legal-agree-row">
+    <label class="legal-checkbox-label" id="legal-checkbox">
+  <input type="checkbox" id="legal-agree-checkbox">
+  <span data-i18n="legal-agree-text">我已詳細閱讀並同意上述隱私權政策、攝影機使用說明與運動安全提醒</span>
+  </label>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <button class="btn btn-blue" id="legal-agree-btn" onclick="agreeToLegal()" data-i18n="legal-btn-agree">同意並開始使用</button>
+    <button class="btn btn-ghost" id="legal-close-btn" style="display:none;" onclick="closeLegalOverlay()" data-i18n="legal-btn-close">關閉</button>
+  </div>
+</div>
+
+<video id="video" autoplay playsinline muted style="position: absolute; opacity: 0; pointer-events: none; z-index: -1;"></video>
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@latest/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@latest/build/qrcode.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/social.js"></script>
+<script src="js/legal.js"></script>
+<div id="ov-contact" class="scr off">
+  <div class="scr-title" style="margin-bottom:16px;">✉️ 聯絡<span>我們</span></div>
+  
+  <form id="contact-form" action="https://formspree.io/f/mkolewdb" method="POST" style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;">
+    
+    <input type="text" name="name" placeholder="您的稱呼" required style="background:var(--bg);border:1.5px solid var(--border);color:var(--white);border-radius:8px;padding:10px;outline:none;">
+    
+    <input type="email" name="email" placeholder="您的聯絡 Email" required style="background:var(--bg);border:1.5px solid var(--border);color:var(--white);border-radius:8px;padding:10px;outline:none;">
+    
+    <textarea name="message" placeholder="請輸入您的建議或問題..." required rows="4" style="background:var(--bg);border:1.5px solid var(--border);color:var(--white);border-radius:8px;padding:10px;outline:none;resize:none;font-family:inherit;"></textarea>
+    
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button type="submit" class="btn btn-blue" style="flex:1;">📤 送出訊息</button>
+      <button type="button" class="btn btn-ghost" onclick="closeContact()">✖ 關閉</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

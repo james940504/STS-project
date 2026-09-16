@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>手機鏡頭 — 要拚要猛</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    --bg:#060E1C; --card:#0F1E36; --border:rgba(255,255,255,.12);
+    --blue:#1E6FFF; --blue2:#4FA0FF; --green:#00CC6A; --red:#FF3050; --yellow:#FFAA00;
+    --white:#fff; --dim:#8AA0C0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--white); font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    min-height:100vh; padding:18px 16px 30px; gap:14px;
+  }
+  h1{font-size:1.15em; text-align:center;}
+  h1 span{color:var(--blue2);}
+  #sub{font-size:.82em; color:var(--dim); text-align:center; max-width:340px; line-height:1.5;}
+  #stage{
+    position:relative; width:100%; max-width:380px; aspect-ratio:3/4;
+    background:#000; border-radius:16px; overflow:hidden; border:1.5px solid var(--border);
+  }
+  #preview{width:100%; height:100%; object-fit:cover; transform:scaleX(-1);}
+  #stage.rear #preview{transform:none;}
+  #status-badge{
+    position:absolute; top:10px; left:10px; right:10px;
+    background:rgba(6,14,28,.75); backdrop-filter:blur(6px);
+    border-radius:10px; padding:8px 12px; font-size:.82em; text-align:center;
+    border:1px solid var(--border);
+  }
+  #status-badge.ok{color:var(--green); border-color:var(--green);}
+  #status-badge.err{color:var(--red); border-color:var(--red);}
+  #status-badge.wait{color:var(--yellow); border-color:var(--yellow);}
+  .btn{
+    padding:13px 22px; border-radius:10px; border:1.5px solid var(--border);
+    background:var(--card); color:var(--white); font-size:.95em; font-weight:700;
+    cursor:pointer; transition:transform .15s, border-color .15s; width:100%; max-width:380px;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-blue{background:var(--blue); border-color:var(--blue);}
+  .btn-ghost{background:transparent;}
+  #row{display:flex; gap:10px; width:100%; max-width:380px;}
+  #row .btn{flex:1;}
+  #code-echo{font-size:.78em; color:var(--dim); text-align:center;}
+  #code-echo b{color:var(--blue2); letter-spacing:1px;}
+  #err-box{
+    display:none; max-width:380px; text-align:center; background:rgba(255,48,80,.1);
+    border:1px solid var(--red); border-radius:10px; padding:14px; font-size:.85em; color:#ffb3bd;
+  }
+</style>
+</head>
+<body>
+
+<h1>📷 <span>手機鏡頭</span>連線</h1>
+<div id="sub">請將手機直放，退後 1.5～2 公尺，讓鏡頭能拍到全身。連線成功後就可以回到電腦繼續遊戲。</div>
+
+<div id="stage">
+  <video id="preview" autoplay playsinline muted></video>
+  <div id="status-badge" class="wait">尚未啟動鏡頭</div>
+</div>
+
+<div id="row">
+  <button class="btn btn-blue" id="btn-start" onclick="startPhoneCam()">📷 開始連線</button>
+  <button class="btn btn-ghost" id="btn-flip" onclick="flipCamera()" style="display:none;">🔄 切換鏡頭</button>
+</div>
+
+<div id="code-echo">配對碼：<b id="code-echo-val">--</b></div>
+
+<div id="err-box"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@latest/dist/peerjs.min.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const roomId = params.get('room');
+const statusEl = document.getElementById('status-badge');
+const errBox = document.getElementById('err-box');
+const stageEl = document.getElementById('stage');
+const previewEl = document.getElementById('preview');
+const btnStart = document.getElementById('btn-start');
+const btnFlip = document.getElementById('btn-flip');
+
+document.getElementById('code-echo-val').textContent = roomId || '(未提供)';
+
+let localStream = null;
+let peer = null;
+let currentFacing = 'environment';
+
+// 跟電腦端用同一組 ICE 設定：STUN 處理同網路/簡單 NAT 直連，
+// TURN（Open Relay Project，免註冊）處理手機用行動網路等跨網路的情況。
+const PHONECAM_ICE_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:openrelay.metered.ca:80' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ]
+};
+
+function setStatus(text, cls){
+  statusEl.textContent = text;
+  statusEl.className = cls || '';
+}
+
+function showFatalError(msg){
+  errBox.style.display = 'block';
+  errBox.textContent = msg;
+  btnStart.disabled = true;
+}
+
+if (!roomId) {
+  showFatalError('找不到配對碼，請回到電腦畫面重新掃描 QR Code 或複製連結。');
+  setStatus('缺少配對碼', 'err');
+}
+
+if (!window.isSecureContext) {
+  showFatalError('目前網址不是安全連線（需要 https 或 localhost），瀏覽器會擋住鏡頭權限。請改用電腦畫面提供的 https 連結。');
+}
+
+async function openCamera(facing){
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop());
+  }
+  localStream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: facing }, width: { ideal: 720 }, height: { ideal: 1280 } },
+    audio: false
+  });
+  previewEl.srcObject = localStream;
+  stageEl.classList.toggle('rear', facing === 'environment');
+  return localStream;
+}
+
+async function startPhoneCam(){
+  if (!roomId) return;
+  btnStart.disabled = true;
+  setStatus('正在啟動鏡頭...', 'wait');
+  try {
+    await openCamera(currentFacing);
+  } catch (err) {
+    console.error(err);
+    setStatus('無法取得鏡頭權限', 'err');
+    showFatalError('無法啟動鏡頭：' + err.message + '（請確認已允許瀏覽器使用相機）');
+    btnStart.disabled = false;
+    return;
+  }
+
+  btnFlip.style.display = 'block';
+  setStatus('正在連接電腦...', 'wait');
+
+  peer = new Peer(undefined, { config: PHONECAM_ICE_CONFIG });
+  peer.on('open', () => {
+    const call = peer.call(roomId, localStream);
+    if (!call) {
+      setStatus('連線失敗，找不到電腦端', 'err');
+      return;
+    }
+    call.on('stream', () => {
+      setStatus('✅ 已連接！可以回到電腦畫面了', 'ok');
+    });
+    call.on('close', () => {
+      setStatus('連線已中斷', 'err');
+    });
+    call.on('error', (e) => {
+      console.error(e);
+      setStatus('連線發生錯誤', 'err');
+    });
+    // 保守判斷：短時間內若沒收到任何回應，先顯示已送出等待中
+    setTimeout(() => {
+      if (statusEl.className.indexOf('ok') === -1) {
+        setStatus('已送出鏡頭畫面，等待電腦確認中...', 'wait');
+      }
+    }, 1500);
+  });
+  peer.on('error', (err) => {
+    console.error(err);
+    setStatus('無法建立連線', 'err');
+    showFatalError('連線發生錯誤（' + (err.type || err.message) + '）。請確認手機和電腦在同一個 WiFi，並重新整理此頁面再試一次。');
+  });
+}
+
+function flipCamera(){
+  currentFacing = currentFacing === 'environment' ? 'user' : 'environment';
+  setStatus('正在切換鏡頭...', 'wait');
+  openCamera(currentFacing).then(() => setStatus('鏡頭已切換', 'wait')).catch(err=>{
+    console.error(err);
+    setStatus('切換鏡頭失敗', 'err');
+  });
+}
+
+window.addEventListener('beforeunload', () => {
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  if (peer) peer.destroy();
+});
+</script>
+</body>
+</html>

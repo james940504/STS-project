@@ -1,0 +1,209 @@
+/* ══════════════════════════════════════════════════════════════
+   社群與黏著度系統樣式 (已放大 1.5 倍)
+   成就徽章 / 每日任務 / 賽季排行榜 / 好友挑戰 / 分享卡片
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 任務畫面 ── */
+/* ── 任務畫面 (已縮小至 0.9 倍) ── */
+#scr-quests {
+  gap: 21.6px;
+  overflow-y: auto;
+  padding: 32.4px 0;
+  justify-content: flex-start;
+}
+
+.quest-section {
+  width: 100%;
+  max-width: 810px;
+}
+
+.quest-section-title {
+  font-size: 1.2825em;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 10.8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quest-reset-info {
+  font-size: 0.918em;
+  color: var(--dim);
+  font-weight: 600;
+}
+
+.quest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10.8px;
+}
+
+.quest-item {
+  background: var(--card);
+  border: 1.35px solid var(--border);
+  border-radius: 16.2px;
+  padding: 13.5px 18.9px;
+  display: flex;
+  align-items: center;
+  gap: 16.2px;
+  transition: border-color .2s;
+}
+
+.quest-item.done {
+  border-color: var(--green);
+}
+
+.quest-item.done-claimed {
+  opacity: .55;
+}
+
+.quest-item-icon {
+  font-size: 2.16em;
+  min-width: 45.9px;
+  text-align: center;
+}
+
+.quest-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.quest-item-label {
+  font-size: 1.107em;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6.75px;
+}
+
+.quest-progress-bg {
+  width: 100%;
+  height: 8.1px;
+  background: rgba(255,255,255,.08);
+  border-radius: 5.4px;
+  overflow: hidden;
+}
+
+.quest-progress-bar {
+  height: 100%;
+  background: var(--blue2);
+  border-radius: 5.4px;
+  transition: width .25s;
+}
+
+.quest-claim-btn {
+  border: none;
+  border-radius: 10.8px;
+  padding: 10.8px 18.9px;
+  font-size: 1.0125em;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+}
+
+.quest-claim-btn.ready {
+  background: var(--gold);
+  color: #201400;
+}
+
+.quest-claim-btn.ready:hover {
+  background: #FFE066;
+  transform: translateY(-1.8px);
+}
+
+.quest-claim-btn.locked {
+  background: rgba(255,255,255,.06);
+  color: var(--dim);
+  cursor: default;
+}
+
+.quest-claim-btn.claimed {
+  background: rgba(0,204,106,.15);
+  color: var(--green);
+  cursor: default;
+}
+
+/* ── 成就畫面 ── */
+#scr-achievements{gap:21px;overflow-y:auto;padding:36px 0;}
+.ach-summary{font-size:1.275em;color:var(--dim);font-weight:700;}
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1320px;max-height:60vh;overflow-y:auto;padding:6px;}
+.ach-card{background:var(--card);border:2px solid var(--border);border-radius:21px;padding:24px 18px;text-align:center;position:relative;transition:transform .2s,border-color .2s;}
+.ach-card:hover{transform:translateY(-3px);}
+.ach-card.locked{opacity:.6;}
+.ach-card.unlocked.tier-bronze{border-color:#CD7F32;}
+.ach-card.unlocked.tier-silver{border-color:#C0C0C0;}
+.ach-card.unlocked.tier-gold{border-color:var(--gold);box-shadow:0 0 16px rgba(255,215,0,.25);}
+.ach-icon{font-size:3.6em;margin-bottom:9px;}
+.ach-name{font-size:1.275em;font-weight:800;color:var(--white);margin-bottom:6px;}
+.ach-desc{font-size:1.02em;color:var(--dim);line-height:1.5;margin-bottom:12px;min-height:2.6em;}
+.ach-reward.unlocked-tag{font-size:1.02em;font-weight:800;color:var(--gold);margin-bottom:9px;}
+.ach-progress-bg{width:100%;height:7.5px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;margin-bottom:6px;}
+.ach-progress-bar{height:100%;background:var(--blue2);border-radius:6px;}
+.ach-progress-text{font-size:1.02em;color:var(--dim);}
+.ach-share-btn{padding:7.5px 15px !important;font-size:1.02em !important;width:100%;}
+
+/* ── 賽季排行榜資訊 ── */
+.season-info{width:1050px;max-width:100%;background:var(--card2);border:1.5px solid rgba(255,215,0,.25);border-radius:15px;padding:18px 24px;font-size:1.23em;}
+.season-current{font-weight:800;color:var(--gold);margin-bottom:9px;}
+.season-history-list{display:flex;flex-direction:column;gap:4.5px;}
+.season-history-item{font-size:1.275em;color:var(--dim);}
+
+/* ── 好友挑戰 (文字放大 2 倍) ── */
+#ov-challenge {
+  padding: 0 45px;
+}
+
+#challenge-tabs {
+  width: 100%;
+  max-width: 945px;
+  justify-content: center;
+}
+
+#challenge-create-panel,
+#challenge-redeem-panel,
+#challenge-history-panel {
+  width: 100%;
+  max-width: 945px;
+}
+
+#challenge-code-output,
+#challenge-code-input {
+  width: 100%;
+  background: var(--bg);
+  border: 2.25px solid var(--border);
+  border-radius: 18px;
+  color: var(--white);
+  padding: 22.5px;
+  font-family: inherit;
+  resize: none;
+  font-size: 2em;
+}
+
+.challenge-preview {
+  margin-top: 22.5px;
+  min-height: 45px;
+  text-align: center;
+}
+
+.challenge-preview-ok {
+  color: var(--green);
+  font-size: 2.55em;
+  font-weight: 700;
+}
+
+.challenge-preview-err {
+  color: var(--red);
+  font-size: 2.55em;
+  font-weight: 700;
+}
+
+/* ── 成就解鎖提示 ── */
+.ach-toast{position:fixed;top:120px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#2A2000,#151000);border:1.5px solid var(--gold);border-radius:24px;padding:18px 30px;z-index:9999;box-shadow:0 8px 30px rgba(255,215,0,.25);animation:toastFade 3.2s forwards;pointer-events:none;}
+.ach-toast-icon{font-size:3.3em;}
+.ach-toast-title{font-size:1.02em;color:var(--gold);font-weight:800;letter-spacing:1px;}
+.ach-toast-name{font-size:1.65em;font-weight:900;color:#fff;}
+.ach-toast-reward{font-size:1.17em;color:var(--gold);font-weight:700;}
+
+/* ── 結算畫面按鈕加多後允許換行 ── */
+.ov-btns{flex-wrap:wrap;justify-content:center;max-width:840px;}

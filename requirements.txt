@@ -1,0 +1,9 @@
+# STS Web backend dependencies
+# 建議在目前確認可正常執行的 Windows/Conda 環境中安裝後，
+# 再用 `python -m pip freeze > requirements-lock.txt` 保存精確版本。
+Flask==3.1.3
+mediapipe==0.10.32
+opencv-python==4.13.0.92
+numpy==2.0.2
+reportlab==4.5.0
+python-dotenv
