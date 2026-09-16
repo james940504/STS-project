@@ -194,9 +194,44 @@ body{
   top: 24px;
   right: 24px;
   display: flex;
-  gap: 18px;
+  gap: 22px;              /* 加了文字標籤後，圖示之間多留一點呼吸空間 */
   z-index: 999;
+  /* 窄螢幕或大字體模式下要能換行，不然會被推出畫面外 */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100vw - 48px);
 }
+
+/* 左下角：歷史紀錄／改善建議 */
+#sys-bottom-left {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  gap: 22px;
+  z-index: 999;
+  flex-wrap: wrap;
+  max-width: calc(100vw - 48px);
+}
+
+/* 圖示 + 下方文字說明，讓使用者不用把滑鼠停上去就知道功能 */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.nav-label {
+  font-size: .78em;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  text-shadow: 0 2px 6px rgba(0,0,0,.75);
+  letter-spacing: .5px;
+  pointer-events: none;
+}
+.nav-item:hover .nav-label { color: var(--blue2); }
+body.high-contrast .nav-label { color: #FFF; text-shadow: 0 2px 6px #000; }
 .icon-btn {
   background: rgba(15, 30, 54, 0.85);
   backdrop-filter: blur(4px);
@@ -480,8 +515,8 @@ body{
   margin-top: 6px !important;
   letter-spacing: 1px;
 }
-#rep-feedback{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .15s;text-align:center;z-index:60;}
-#rep-feedback.show{opacity:1;}
+#rep-feedback{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);pointer-events:none;opacity:0;transition:opacity .15s, transform .15s;text-align:center;z-index:60;}
+#rep-feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 #rep-fb-score{font-size:4.5em;font-weight:900;text-shadow:0 0 20px currentColor;}
 #rep-fb-label{font-size:1.35em;color:rgba(255,255,255,.8);margin-top:6px;}
 
@@ -755,3 +790,450 @@ body{
   width: 25em;
   align-self: center;
 }
+
+/* ── Controlled Sit / Heel Control v1 ── */
+.control-time-panel{
+  width:min(820px,92vw);display:flex;align-items:center;justify-content:space-between;gap:24px;
+  background:rgba(30,111,255,.08);border:2px solid var(--border);border-radius:18px;padding:18px 22px;margin:6px 0 16px;
+}
+.control-time-title{font-size:1.25em;font-weight:850;color:var(--white);}
+.control-time-hint{font-size:.9em;color:var(--dim);margin-top:5px;line-height:1.5;}
+.control-time-input-wrap{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--blue2);font-size:1.15em;}
+#control-target-sec{width:110px;background:var(--bg2);border:2px solid var(--border);color:var(--white);border-radius:12px;padding:10px 12px;font-size:1.2em;font-weight:800;text-align:center;outline:none;}
+#control-target-sec:focus{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(64,144,255,.12);}
+.lb-control{background:rgba(30,111,255,.12);border:2px solid rgba(64,144,255,.38);color:var(--blue2);}
+#rep-time-card{width:100%;background:var(--card2);border:2px solid var(--border);border-radius:15px;padding:15px 18px;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+#rep-time-card #rep-time-value{font-size:2.7em;color:var(--yellow);line-height:1.1;margin-top:5px;}
+#control-report-wrap{width:min(1400px,96%);max-height:none; overflow:visible;padding:10px 18px 30px;text-align:left;}
+.control-report-head h3{font-size:1.35em;margin:4px 0 12px;color:var(--white);}
+.control-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px;margin-bottom:14px;}
+.control-summary-grid>div{background:rgba(30,111,255,.08);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center;}
+.control-summary-grid b{display:block;color:var(--blue2);font-size:1.45em;}
+.control-summary-grid span{display:block;color:var(--dim);font-size:.78em;margin-top:3px;}
+.control-rep-card{background:rgba(8,20,38,.72);border:1px solid var(--border);border-radius:12px;margin:10px 0;overflow:hidden;}
+.control-rep-card summary{cursor:pointer;padding:12px 14px;font-weight:800;color:var(--white);}
+.control-rep-content{padding:0 14px 14px;}
+.control-rep-chart{width:100%;height:auto;background:#07111f;border:1px solid rgba(64,144,255,.18);border-radius:10px;display:block;}
+.control-chart-note{font-size:.78em;color:var(--dim);margin:6px 0 10px;}
+.control-table-wrap{overflow-x:auto;}
+.control-angle-table{width:100%;border-collapse:collapse;font-size:.82em;}
+.control-angle-table th,.control-angle-table td{padding:7px 9px;border-bottom:1px solid rgba(64,144,255,.12);text-align:center;white-space:nowrap;}
+.control-angle-table th{color:var(--blue2);background:rgba(30,111,255,.08);position:sticky;top:0;}
+@media(max-width:800px){.control-summary-grid{grid-template-columns:repeat(2,1fr)}.control-time-panel{flex-direction:column;align-items:flex-start}}
+
+
+/* ══════════════════════════════════════════════════════════════
+   以下為 0809 版整合進來的功能樣式：
+   無障礙（大字體／高對比）、設定滑塊、好友系統
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 無障礙：大字體模式 ──
+   這一版的版面用 clamp() 隨螢幕縮放，而且 html/body 綁死 100vw/100vh。
+   單純放大 font-size 不會讓 72px 的圖示按鈕變大，所以改用 zoom 等比放大，
+   再把寬高除回去，避免放大後撐破畫面跑出捲軸。 */
+body.large-text{
+  zoom: 1.35;
+  width: calc(100vw / 1.35);
+  height: calc(100vh / 1.35);
+}
+
+/* ── 無障礙：高對比模式 ──
+   覆寫調色盤變數：純黑背景、純白文字、更亮的強調色與更粗的邊框。 */
+body.high-contrast{
+  --bg:#000000; --bg2:#000000; --card:#000000; --card2:#0A0A0A;
+  --border:#FFFFFF; --blue:#3B9DFF; --blue2:#7CCBFF; --bluef:#9ED6FF;
+  --white:#FFFFFF; --text:#FFFFFF; --dim:#E6E6E6;
+  --green:#3CFF8F; --red:#FF6B84; --yellow:#FFD54A; --gold:#FFE066; --purple:#D6B3FF;
+}
+body.high-contrast .card,
+body.high-contrast .icon-btn,
+body.high-contrast .btn-ghost,
+body.high-contrast .char-card,
+body.high-contrast .mode-card,
+body.high-contrast .diff-card{border-width:3px;}
+
+/* ── 設定開關：滑塊樣式 ──
+   用 <button role="switch"> 而不是 checkbox，鍵盤 Enter/Space 就能切換，
+   螢幕報讀軟體也讀得出開關狀態（aria-checked 由 JS 同步）。 */
+.switch{
+  position:relative; flex:0 0 auto;
+  width:64px; height:34px; padding:0;
+  border-radius:999px; cursor:pointer;
+  background:var(--card); border:2px solid var(--border);
+  transition:background .22s ease, border-color .22s ease;
+}
+.switch::after{
+  content:''; position:absolute; top:50%; left:4px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--dim); transform:translateY(-50%);
+  transition:left .22s ease, background .22s ease;
+}
+.switch:hover{ border-color:var(--blue); }
+.switch.on{ background:var(--blue); border-color:var(--blue2); }
+.switch.on::after{ left:calc(100% - 26px); background:var(--white); }
+.switch:focus-visible{ outline:3px solid var(--bluef); outline-offset:3px; }
+
+body.high-contrast .switch{ border-width:3px; background:#000; }
+body.high-contrast .switch::after{ background:#8A8A8A; }
+body.high-contrast .switch.on{ background:var(--blue); }
+body.high-contrast .switch.on::after{ background:#FFF; }
+
+.set-row{display:flex; justify-content:space-between; align-items:center; gap:20px;}
+.set-row-label{font-size:1.35em; font-weight:700; color:var(--text);}
+
+/* ── 好友系統 ── */
+.friend-item{
+  display:flex; align-items:center; gap:12px;
+  background:var(--card); border:2px solid var(--border);
+  border-radius:14px; padding:12px 14px;
+}
+.friend-avatar{
+  flex:0 0 auto; width:44px; height:44px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--card2); border:2px solid var(--border);
+  font-weight:900; font-size:1.05em; color:var(--blue2);
+}
+.friend-main{flex:1 1 auto; min-width:0;}
+.friend-name{font-weight:800; font-size:1.05em; color:var(--white);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.friend-sub{font-size:.85em; color:var(--dim); margin-top:3px;}
+.friend-actions{flex:0 0 auto; display:flex; gap:8px;}
+.friend-mini-btn{
+  border:2px solid var(--border); background:var(--card2); color:var(--text);
+  border-radius:10px; padding:7px 13px; font-size:.85em; font-weight:700; cursor:pointer;
+  transition:border-color .18s, color .18s;
+}
+.friend-mini-btn:hover{border-color:var(--blue); color:var(--blue2);}
+.friend-mini-btn.danger:hover{border-color:var(--red); color:var(--red);}
+.friend-rank{
+  flex:0 0 auto; width:32px; text-align:center;
+  font-weight:900; font-size:1.05em; color:var(--dim);
+}
+.friend-item.is-me{border-color:var(--blue2); background:rgba(30,111,255,.10);}
+.friend-empty{
+  text-align:center; color:var(--dim); font-size:.95em;
+  padding:30px 12px; line-height:1.8;
+}
+body.high-contrast .friend-item,
+body.high-contrast .friend-avatar,
+body.high-contrast .friend-mini-btn{border-width:3px;}
+
+/* 好友視窗內容較高，預留頂部空間避免壓到右上角圖示列，超出時可捲動 */
+#ov-friends{padding:124px 16px 28px; overflow-y:auto;}
+
+/* ── 設定視窗內的功能選單（從右上角移進來的四項） ── */
+#ov-settings{padding:28px 16px; overflow-y:auto;}
+
+.set-menu{
+  width:440px; max-width:88vw;
+  display:flex; flex-direction:column; gap:10px;
+}
+.set-menu-item{
+  display:flex; align-items:center; gap:14px; text-align:left;
+  width:100%; padding:12px 16px; cursor:pointer;
+  background:var(--card2); border:2px solid var(--border);
+  border-radius:14px; color:var(--text);
+  transition:border-color .18s, transform .18s, background .18s;
+}
+.set-menu-item:hover{
+  border-color:var(--blue2); background:var(--card);
+  transform:translateY(-2px);
+}
+.set-menu-item:focus-visible{outline:3px solid var(--bluef); outline-offset:3px;}
+.set-menu-icon{flex:0 0 auto; font-size:1.7em; line-height:1;}
+.set-menu-text{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.set-menu-title{font-size:1.05em; font-weight:800; color:var(--white);}
+.set-menu-desc{font-size:.82em; color:var(--dim); line-height:1.5;}
+body.high-contrast .set-menu-item{border-width:3px;}
+
+/* ══════════════ 歷史紀錄 ══════════════ */
+#ov-history{padding:110px 16px 28px; overflow-y:auto;}
+
+.hist-stats{
+  display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+  margin-bottom:12px; max-width:560px;
+}
+.hist-stat{
+  background:var(--card2); border:2px solid var(--border); border-radius:12px;
+  padding:8px 16px; text-align:center; min-width:78px;
+}
+.hist-stat-v{font-size:1.25em; font-weight:900; color:var(--blue2); line-height:1.2;}
+.hist-stat-l{font-size:.72em; color:var(--dim); margin-top:2px;}
+
+.hist-item{
+  background:var(--card2); border:2px solid var(--border);
+  border-radius:12px; padding:12px 14px;
+}
+.hist-head{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;
+}
+.hist-mode{font-weight:800; font-size:.98em; color:var(--white);}
+.hist-diff{
+  font-size:.72em; font-weight:700; color:var(--blue2);
+  border:1.5px solid var(--border); border-radius:6px; padding:2px 8px;
+}
+.hist-date{margin-left:auto; font-size:.75em; color:var(--dim);}
+.hist-body{display:flex; gap:8px; flex-wrap:wrap;}
+.hist-metric{
+  flex:1 1 0; min-width:64px; text-align:center;
+  background:var(--bg); border-radius:8px; padding:6px 4px;
+}
+.hist-metric b{display:block; font-size:1.05em; color:var(--text); line-height:1.3;}
+.hist-metric span{font-size:.68em; color:var(--dim);}
+.hist-posture{margin-top:8px; font-size:.75em; color:var(--dim);}
+body.high-contrast .hist-item,
+body.high-contrast .hist-stat{border-width:3px;}
+
+/* ══════════════ 改善建議 ══════════════ */
+#ov-advice{padding:100px 16px 28px; overflow-y:auto;}
+
+.advice-status{
+  background:var(--bg); border:2px solid var(--border); border-radius:10px;
+  padding:10px 14px; font-size:.85em; color:var(--text); text-align:center;
+}
+.advice-section-title{
+  font-size:.8em; font-weight:800; color:var(--dim);
+  letter-spacing:1px; margin-bottom:8px;
+}
+.advice-scores{display:flex; gap:8px; flex-wrap:wrap;}
+.advice-score{
+  flex:1 1 0; min-width:66px; text-align:center;
+  background:var(--card); border:2px solid var(--border);
+  border-radius:10px; padding:10px 4px;
+}
+.advice-score b{display:block; font-size:1.35em; color:var(--blue2); line-height:1.2;}
+.advice-score span{font-size:.7em; color:var(--dim);}
+
+.advice-placeholder{
+  font-size:.82em; color:var(--dim); line-height:1.7;
+  background:var(--bg); border:2px dashed var(--border);
+  border-radius:10px; padding:14px;
+}
+
+.advice-issue{
+  background:var(--bg); border:2px solid var(--border);
+  border-left-width:5px; border-radius:10px;
+  padding:10px 14px; margin-bottom:8px;
+}
+.advice-issue.sev-high{border-left-color:var(--red);}
+.advice-issue.sev-mid{border-left-color:var(--yellow);}
+.advice-issue.sev-low{border-left-color:var(--blue2);}
+.advice-issue-title{font-weight:800; font-size:.92em; color:var(--white); margin-bottom:4px;}
+.advice-issue-detail{font-size:.8em; color:var(--dim); line-height:1.6;}
+
+.advice-drill{
+  background:var(--bg); border:2px solid var(--border);
+  border-radius:10px; padding:10px 14px; margin-bottom:8px;
+}
+.advice-drill-title{font-weight:800; font-size:.92em; color:var(--green); margin-bottom:4px;}
+.advice-drill-detail{font-size:.8em; color:var(--text); line-height:1.6;}
+.advice-drill-freq{font-size:.75em; color:var(--dim); margin-top:4px;}
+
+.advice-chart{
+  display:flex; align-items:flex-end; gap:5px; height:90px;
+  background:var(--bg); border:2px solid var(--border);
+  border-radius:10px; padding:10px;
+}
+.advice-bar{
+  flex:1 1 0; background:var(--blue); border-radius:4px 4px 0 0; min-height:4px;
+}
+.advice-trend-summary{font-size:.8em; color:var(--dim); margin-top:8px; line-height:1.6;}
+body.high-contrast .advice-score,
+body.high-contrast .advice-issue,
+body.high-contrast .advice-drill,
+body.high-contrast .advice-status,
+body.high-contrast .advice-chart{border-width:3px;}
+
+/* ══════════════ 冒險地圖（章節 x 5 關的闖關戰鬥系統） ══════════════ */
+#ov-story{padding:110px 16px 28px; overflow-y:auto;}
+#ov-story-intro{padding:110px 16px 28px; overflow-y:auto; text-align:center;}
+#ov-story-victory{padding:60px 16px 28px; overflow-y:auto; text-align:center;}
+.story-map-card{display:flex; flex-direction:column; gap:16px;}
+.story-victory-icon{font-size:4em; line-height:1; margin-bottom:4px;}
+.story-victory-card{text-align:left;}
+#story-victory-text{font-size:.92em; color:var(--text); line-height:1.9; white-space:pre-line;}
+
+.story-chapter{
+  background:var(--card2); border:2px solid var(--border);
+  border-radius:14px; padding:14px 16px;
+}
+.story-chapter.dim{opacity:.5;}
+.story-chapter-head{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+.story-chapter-icon{flex:0 0 auto; font-size:1.9em; line-height:1;}
+.story-chapter-title{font-weight:800; font-size:.98em; color:var(--white);}
+.story-chapter-progress{font-size:.75em; color:var(--dim); margin-top:2px;}
+
+.story-level-row{display:flex; gap:10px; flex-wrap:wrap;}
+.story-node{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  width:58px; height:58px; border-radius:50%; cursor:pointer;
+  background:var(--bg); border:2px solid var(--border); color:var(--text);
+  transition:transform .15s, border-color .15s;
+}
+.story-node:hover{transform:translateY(-2px);}
+.story-node-icon{font-size:1.25em; line-height:1;}
+.story-node-num{font-size:.65em; color:var(--dim);}
+.story-node.available{border-color:var(--blue2); box-shadow:0 0 12px var(--glow);}
+.story-node.cleared{border-color:var(--gold); background:rgba(255,215,0,.08);}
+.story-node.locked{opacity:.5; cursor:not-allowed;}
+body.high-contrast .story-chapter,
+body.high-contrast .story-node{border-width:3px;}
+
+.story-detail{
+  background:var(--bg); border:2px dashed var(--border);
+  border-radius:12px; padding:16px;
+}
+.story-detail-empty,
+.story-detail-locked{font-size:.85em; color:var(--dim); line-height:1.7; text-align:center;}
+.story-detail-head{display:flex; align-items:center; gap:12px; margin-bottom:10px;}
+.story-detail-enemy-icon{flex:0 0 auto; font-size:2.4em; line-height:1;}
+.story-detail-title{font-weight:800; font-size:1em; color:var(--white);}
+.story-detail-enemy-name{font-size:.8em; color:var(--blue2); margin-top:2px;}
+.story-detail-text{font-size:.85em; color:var(--text); line-height:1.8; margin-bottom:10px;}
+.story-detail-need{font-size:.75em; color:var(--dim); margin-bottom:12px;}
+.story-detail-btn{width:100%;}
+body.high-contrast .story-detail{border-width:3px;}
+
+/* 遊戲畫面裡的戰鬥進度 HUD（只在有選定關卡時顯示） */
+#story-battle-hud{
+  display:none; position:absolute; top:82px; left:50%; transform:translateX(-50%);
+  align-items:center; gap:10px; z-index:130; pointer-events:none;
+  background:rgba(6,14,28,.75); border:1.5px solid var(--blue2);
+  border-radius:20px; padding:6px 18px; font-weight:800; font-size:.95em;
+  color:var(--white); white-space:nowrap;
+}
+#story-battle-hud.on{display:flex;}
+#story-battle-progress{color:var(--gold);}
+
+.story-toast{
+  position:fixed; top:120px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:18px; cursor:pointer;
+  background:linear-gradient(135deg,#0C2440,#061428);
+  border:1.5px solid var(--blue2); border-radius:24px; padding:18px 30px;
+  z-index:9999; box-shadow:0 8px 30px var(--glow);
+  animation:toastFade 3.6s forwards;
+}
+.story-toast-icon{font-size:3.3em;}
+.story-toast-title{font-size:1.02em; color:var(--blue2); font-weight:800; letter-spacing:1px;}
+.story-toast-name{font-size:1.5em; font-weight:900; color:#fff;}
+.story-toast-reward{font-size:1.1em; color:var(--gold); font-weight:700;}
+
+/* ══════════════ 演出效果（打擊感） ══════════════
+   刻意不做畫面搖晃：受眾包含平衡/前庭較敏感的長者，
+   只用單次淡入淡出的光暈與粒子，不做連續閃爍。 */
+
+/* 連擊數字：每下更新都跳一次，連擊數越高顏色越熱 */
+#combo-display .hval{ transition: color .2s; }
+#combo-display.tier-hot .hval{ color: var(--yellow); }
+#combo-display.tier-fire .hval{ color: var(--gold); text-shadow: 0 0 14px rgba(255,215,0,.6); }
+#combo-display.pop .hval{ animation: comboPop .28s ease-out; }
+@keyframes comboPop{
+  0%{ transform: scale(1); }
+  40%{ transform: scale(1.35); }
+  100%{ transform: scale(1); }
+}
+
+/* 完美閃光：單次淡入淡出，不重複閃爍 */
+#juice-flash{
+  position:absolute; inset:0; z-index:140; pointer-events:none; opacity:0;
+}
+#juice-flash.flash-perfect{ background: radial-gradient(circle, rgba(255,215,0,.38), rgba(255,215,0,0) 70%); animation: juiceFlash .5s ease-out forwards; }
+#juice-flash.flash-combo{ background: radial-gradient(circle, rgba(64,144,255,.32), rgba(64,144,255,0) 70%); animation: juiceFlash .5s ease-out forwards; }
+@keyframes juiceFlash{
+  0%{ opacity: 0; }
+  25%{ opacity: 1; }
+  100%{ opacity: 0; }
+}
+
+/* 連擊里程碑橫幅 */
+.combo-banner{
+  position: fixed; top: 30%; left: 50%; transform: translate(-50%,-50%) scale(.7);
+  z-index: 9999; pointer-events: none;
+  font-size: 2.6em; font-weight: 900; color: var(--blue2);
+  text-shadow: 0 0 20px rgba(64,144,255,.7), 0 4px 12px rgba(0,0,0,.5);
+  animation: comboBanner 1.5s ease-out forwards;
+}
+.combo-banner.tier-hot{ color: var(--yellow); text-shadow: 0 0 20px rgba(255,170,0,.7), 0 4px 12px rgba(0,0,0,.5); }
+.combo-banner.tier-fire{ color: var(--gold); text-shadow: 0 0 26px rgba(255,215,0,.8), 0 4px 12px rgba(0,0,0,.5); }
+@keyframes comboBanner{
+  0%{ opacity: 0; transform: translate(-50%,-50%) scale(.6); }
+  15%{ opacity: 1; transform: translate(-50%,-50%) scale(1.08); }
+  25%{ transform: translate(-50%,-50%) scale(1); }
+  75%{ opacity: 1; }
+  100%{ opacity: 0; transform: translate(-50%,-60%) scale(1); }
+}
+
+/* 連擊里程碑粒子爆發 */
+#juice-particles{ position:absolute; inset:0; z-index:135; pointer-events:none; overflow:hidden; }
+.juice-particle{
+  position:absolute; left:50%; top:40%; width:10px; height:10px; border-radius:50%;
+  animation: juiceParticle .8s ease-out forwards;
+}
+@keyframes juiceParticle{
+  0%{ transform: translate(0,0) scale(1); opacity: 1; }
+  100%{ transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; }
+}
+
+/* ══════════════ 節奏音樂模式（跟拍起立，看準度不看次數） ══════════════ */
+#ov-rhythm{padding:110px 16px 28px; overflow-y:auto;}
+#ov-rhythm-result{padding:60px 16px 28px; overflow-y:auto; text-align:center;}
+.rhythm-result-icon{font-size:4em; line-height:1; margin-bottom:4px;}
+.rhythm-result-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 4px; border-bottom:1px solid var(--border); font-size:.9em;
+}
+.rhythm-result-row:last-child{border-bottom:none;}
+.rhythm-result-lbl{color:var(--dim);}
+.rhythm-result-val{font-weight:800; color:var(--white);}
+.rhythm-result-combo .rhythm-result-val{color:var(--gold);}
+
+.rhythm-tempo-card{
+  background:var(--bg); border:2px solid var(--border); border-radius:14px;
+  padding:14px 16px; margin-bottom:12px; cursor:pointer;
+  transition:transform .15s, border-color .15s;
+}
+.rhythm-tempo-card:last-child{margin-bottom:0;}
+.rhythm-tempo-card:hover{transform:translateY(-2px); border-color:var(--blue2);}
+.rhythm-tempo-icon{font-size:1.8em; line-height:1; margin-bottom:4px;}
+.rhythm-tempo-name{font-weight:800; font-size:.98em; color:var(--white);}
+.rhythm-tempo-bpm{font-size:.78em; color:var(--gold); margin:2px 0 6px;}
+.rhythm-tempo-desc{font-size:.8em; color:var(--dim); line-height:1.6;}
+body.high-contrast .rhythm-tempo-card{border-width:3px;}
+
+/* 遊戲畫面裡的節拍 HUD（只在節奏模式進行中顯示），位置跟冒險模式戰鬥 HUD 共用同一排 */
+#rhythm-hud{
+  display:none; position:absolute; top:82px; left:50%; transform:translateX(-50%);
+  align-items:center; gap:10px; z-index:130; pointer-events:none;
+  background:rgba(6,14,28,.75); border:1.5px solid var(--blue2);
+  border-radius:20px; padding:6px 18px; font-weight:800; font-size:.95em;
+  color:var(--white); white-space:nowrap;
+}
+#rhythm-hud.on{display:flex;}
+#rhythm-beat-dot{
+  width:14px; height:14px; border-radius:50%; background:var(--blue2);
+  box-shadow:0 0 8px var(--glow); flex:0 0 auto;
+}
+#rhythm-beat-dot.pulse{animation:rhythmBeatPulse .18s ease-out;}
+#rhythm-beat-dot.pulse-strong{animation:rhythmBeatPulseStrong .3s ease-out; background:var(--gold);}
+@keyframes rhythmBeatPulse{
+  0%{ transform:scale(1); }
+  40%{ transform:scale(1.35); }
+  100%{ transform:scale(1); }
+}
+@keyframes rhythmBeatPulseStrong{
+  0%{ transform:scale(1); background:var(--gold); }
+  40%{ transform:scale(1.7); background:var(--gold); }
+  100%{ transform:scale(1); background:var(--blue2); }
+}
+#rhythm-hud-progress{color:var(--white);}
+#rhythm-hud-combo{color:var(--gold); font-size:.9em;}
+.rhythm-judge-text{
+  min-width:2.4em; text-align:center; opacity:0; transform:scale(.7);
+  transition:opacity .12s, transform .12s; font-weight:900;
+}
+.rhythm-judge-text.show{opacity:1; transform:scale(1);}
+.rhythm-judge-text.judge-perfect{color:var(--gold); text-shadow:0 0 10px rgba(255,215,0,.6);}
+.rhythm-judge-text.judge-great{color:var(--blue2);}
+.rhythm-judge-text.judge-good{color:var(--green);}
+.rhythm-judge-text.judge-miss{color:var(--red);}
+body.high-contrast #rhythm-hud{border-width:3px;}

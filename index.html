@@ -15,18 +15,65 @@
 <div id="rf"></div>
 
 <div id="coin-display">🪙 <span id="coin-count">0</span></div>
+<!-- 右上角只留常用功能，每個圖示配一行文字說明；
+     新手導覽／隱私權／遊戲規則／聯絡我們已移進「設定」視窗 -->
 <div id="sys-top-right">
-  <button class="icon-btn menu-only-icon" onclick="showSignIn()" data-i18n-attr="title:title-signin">📅<div id="sign-in-dot" class="red-dot"></div></button>
-  <button class="icon-btn menu-only-icon" onclick="openQuestsScreen()" data-i18n-attr="title:title-quests">🎯<div id="quest-dot" class="red-dot"></div></button>
-  <button class="icon-btn menu-only-icon" onclick="openAchievementsScreen()" data-i18n-attr="title:title-achievements">🏅</button>
-  <button class="icon-btn menu-only-icon" onclick="openChallengeScreen()" data-i18n-attr="title:title-challenge">🤝</button>
-  <button class="icon-btn menu-only-icon" onclick="openLegalOverlay('view')" data-i18n-attr="title:title-legal">🔒</button>
-  <button class="icon-btn menu-only-icon" onclick="goTo('scr-shop');playSfx('click');renderShop()" data-i18n-attr="title:title-shop">🛒</button>
-  <button class="icon-btn menu-only-icon" onclick="goTo('scr-board');playSfx('click');renderBoard()" data-i18n-attr="title:title-board">🏆</button>
-  <button class="icon-btn menu-only-icon" onclick="goTutorial();playSfx('click')" data-i18n-attr="title:title-tutorial">📜</button>
-  <button class="icon-btn menu-only-icon" onclick="openContact();playSfx('click')" title="聯絡我們">✉️</button>
-  <button class="icon-btn menu-only-icon" id="phonecam-btn" onclick="openPhoneCamPairing();playSfx('click')" title="使用手機鏡頭（測試版）">🤳<div id="phonecam-dot" class="red-dot" style="display:none"></div></button>
-  <button class="icon-btn menu-only-icon" onclick="openSettings();playSfx('click')" data-i18n-attr="title:title-settings">⚙️</button>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-signin" onclick="showSignIn()" data-i18n-attr="title:title-signin">📅<div id="sign-in-dot" class="red-dot"></div></button>
+    <span class="nav-label">簽到</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-quests" onclick="openQuestsScreen()" data-i18n-attr="title:title-quests">🎯<div id="quest-dot" class="red-dot"></div></button>
+    <span class="nav-label">任務</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-achievements" onclick="openAchievementsScreen()" data-i18n-attr="title:title-achievements">🏅</button>
+    <span class="nav-label">成就</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-friends" onclick="openFriendsScreen()" title="好友">👥</button>
+    <span class="nav-label">好友</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-challenge" onclick="openChallengeScreen()" data-i18n-attr="title:title-challenge">🤝</button>
+    <span class="nav-label">挑戰</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-shop" onclick="goTo('scr-shop');playSfx('click');renderShop()" data-i18n-attr="title:title-shop">🛒</button>
+    <span class="nav-label">商城</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-board" onclick="goTo('scr-board');playSfx('click');renderBoard()" data-i18n-attr="title:title-board">🏆</button>
+    <span class="nav-label">排行榜</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="phonecam-btn" onclick="openPhoneCamPairing();playSfx('click')" title="使用手機鏡頭（測試版）">🤳<div id="phonecam-dot" class="red-dot" style="display:none"></div></button>
+    <span class="nav-label">手機鏡頭</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-settings" onclick="openSettings();playSfx('click')" data-i18n-attr="title:title-settings">⚙️</button>
+    <span class="nav-label">設定</span>
+  </div>
+</div>
+
+<!-- 左下角：訓練資料相關入口 -->
+<div id="sys-bottom-left">
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-history" onclick="openHistoryScreen()" title="歷史紀錄">📊</button>
+    <span class="nav-label">歷史紀錄</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-advice" onclick="openAdviceScreen()" title="改善建議">💡</button>
+    <span class="nav-label">改善建議</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-story" onclick="openStoryScreen()" title="冒險地圖">🗺️</button>
+    <span class="nav-label">冒險地圖</span>
+  </div>
+  <div class="nav-item menu-only-icon">
+    <button class="icon-btn" id="nav-rhythm" onclick="openRhythmScreen()" title="節奏音樂模式">🎵</button>
+    <span class="nav-label">節奏模式</span>
+  </div>
 </div>
 
 
@@ -63,8 +110,8 @@
       </div>
     </div>
     <div class="menu-btns">
-      <button class="btn btn-blue" onclick="goTo('scr-chars');playSfx('click')" data-i18n="menu-btn-start">開始遊戲</button>
-      <button class="btn btn-green" onclick="watchAdMock(null, '廣告播放中...')" data-i18n="menu-btn-ad">看廣告領 500 🪙</button>
+      <button class="btn btn-blue" id="btn-start-game" onclick="goTo('scr-chars');playSfx('click')" data-i18n="menu-btn-start">開始遊戲</button>
+      <button class="btn btn-green" id="btn-watch-ad" onclick="watchAdMock(null, '廣告播放中...')" data-i18n="menu-btn-ad">看廣告領 500 🪙</button>
     </div>
     <div class="legal-footer-link" onclick="openLegalOverlay('view')" data-i18n="menu-legal-footer">🔒 隱私權政策・攝影機使用說明・運動安全提醒</div>
   </div>
@@ -218,8 +265,21 @@
       <canvas id="game-canvas"></canvas>
       <div id="hud">
         <div class="hblock"><div class="hval" id="h-light">🟢</div><div class="hlbl">燈號</div></div>
+        <div class="hblock" id="combo-display"><div class="hval" id="combo-num">0</div><div class="hlbl">連擊</div></div>
         <div class="hblock"><div class="hval" id="h-streak">0</div><div class="hlbl">連續好姿勢</div></div>
       </div>
+      <div id="story-battle-hud">
+        <span id="story-battle-enemy"></span>
+        <span id="story-battle-progress"></span>
+      </div>
+      <div id="rhythm-hud">
+        <span id="rhythm-beat-dot"></span>
+        <span id="rhythm-hud-progress"></span>
+        <span id="rhythm-judge-text"></span>
+        <span id="rhythm-hud-combo"></span>
+      </div>
+      <div id="juice-flash"></div>
+      <div id="juice-particles"></div>
     </div>
     <div id="move-warn">⚠️ 偵測到移動！</div>
     <div id="tip-box"></div>
@@ -257,6 +317,39 @@
         <button class="btn btn-ghost" onclick="createChallengeFromResult()" data-i18n="res-btn-challenge">🤝 挑戰好友</button>
         <button class="btn btn-ghost" onclick="saveAndBoard()" data-i18n="res-btn-board">🏆 排行榜</button>
         <button class="btn btn-ghost" onclick="saveAndMenu()" data-i18n="res-btn-menu">🏠 主選單</button>
+      </div>
+    </div>
+
+    <!-- 冒險模式：關卡過關時顯示，取代一般成績結算畫面，只呈現劇情不看成績 -->
+    <div id="ov-story-victory" class="overlay-modal">
+      <div class="story-victory-icon">🏆</div>
+      <div class="scr-title" id="story-victory-title" style="margin-bottom:10px;"></div>
+      <div class="card story-victory-card" style="width:560px; max-width:90vw;">
+        <div id="story-victory-text"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-gold" id="story-victory-next-btn" onclick="challengeNextStoryLevel()">⚔️ 挑戰下一關</button>
+        <button class="btn btn-ghost" onclick="backToStoryMapFromVictory()">🗺️ 返回冒險地圖</button>
+        <button class="btn btn-ghost" onclick="saveAndMenu()">🏠 主選單</button>
+      </div>
+    </div>
+
+    <!-- 節奏音樂模式：結束時顯示，不看姿勢成績，改看準度結算（PERFECT/GREAT/GOOD/MISS） -->
+    <div id="ov-rhythm-result" class="overlay-modal">
+      <div class="rhythm-result-icon">🎵</div>
+      <div class="scr-title" id="rhythm-result-grade" style="margin-bottom:4px;"></div>
+      <div id="rhythm-result-sub" style="font-size:.85em; color:var(--dim); margin-bottom:14px;"></div>
+      <div class="card story-map-card" style="width:460px; max-width:90vw;">
+        <div class="rhythm-result-row"><span class="rhythm-result-lbl">完美 PERFECT</span><span class="rhythm-result-val" id="rr-perfect">0</span></div>
+        <div class="rhythm-result-row"><span class="rhythm-result-lbl">很棒 GREAT</span><span class="rhythm-result-val" id="rr-great">0</span></div>
+        <div class="rhythm-result-row"><span class="rhythm-result-lbl">不錯 GOOD</span><span class="rhythm-result-val" id="rr-good">0</span></div>
+        <div class="rhythm-result-row"><span class="rhythm-result-lbl">錯拍 MISS</span><span class="rhythm-result-val" id="rr-miss">0</span></div>
+        <div class="rhythm-result-row rhythm-result-combo"><span class="rhythm-result-lbl">最佳連續準度</span><span class="rhythm-result-val" id="rr-combo">0</span></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-gold" onclick="replayRhythmSession()">🔁 再玩一次</button>
+        <button class="btn btn-ghost" onclick="backToRhythmMenuFromResult()">🎵 換個節奏</button>
+        <button class="btn btn-ghost" onclick="saveAndMenu()">🏠 主選單</button>
       </div>
     </div>
 
@@ -357,34 +450,258 @@
 </div>
 
 
-<div class="scr off" id="ov-settings" style="position:fixed; inset:0; background:rgba(6,14,28,.93); backdrop-filter:blur(10px); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px;">
-  <!-- 標題 放大 2 倍 -->
-  <div class="scr-title" id="set-title" data-i18n="set-title" style="font-size: 2.8em;">⚙️ 遊戲<span>設定</span></div>
-  
-  <!-- 語言選擇區域 放大 2 倍 -->
-  <div style="width:640px; display:flex; justify-content:space-between; align-items:center;">
-    <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-lang" data-i18n="lbl-set-lang">選擇語言</span>
-    <select id="set-lang-select" onchange="changeLanguageFromSettings(this.value)" style="background:var(--bg); border:3px solid var(--border); color:var(--white); padding:8px 16px; border-radius:12px; outline:none; font-size:1.7em; cursor:pointer;">
+<div class="scr off" id="ov-settings" style="position:fixed; inset:0; background:rgba(6,14,28,.93); backdrop-filter:blur(10px); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;">
+  <div class="scr-title" id="set-title" data-i18n="set-title">⚙️ 遊戲<span>設定</span></div>
+
+  <!-- 版面回到正常尺寸，放大交給「大字體模式」控制，讓使用者自己決定 -->
+  <div style="width:440px; max-width:88vw; display:flex; justify-content:space-between; align-items:center;">
+    <span class="set-row-label" id="lbl-set-lang" data-i18n="lbl-set-lang">選擇語言</span>
+    <select id="set-lang-select" onchange="changeLanguageFromSettings(this.value)" style="background:var(--bg); border:2px solid var(--border); color:var(--white); padding:6px 12px; border-radius:10px; outline:none; font-size:1.15em; cursor:pointer;">
       <option value="zh-TW">繁體中文</option>
       <option value="en">English</option>
     </select>
   </div>
-  
-  <!-- 設定卡片與內部按鈕 放大 2 倍 (寬度改為 640px) -->
-  <div class="card" style="width:640px; display:flex; flex-direction:column; gap:32px; padding:32px; border-radius:24px; background:var(--card2);">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-mute" data-i18n="lbl-set-mute">遊戲音效</span>
-      <button id="set-mute-btn" class="btn btn-ghost" style="padding:12px 28px; font-size:1.6em; border-radius:12px;" onclick="toggleMuteFromSettings()" data-i18n="set-mute-on">播放中</button>
+
+  <div class="card" style="width:440px; max-width:88vw; display:flex; flex-direction:column; gap:22px; background:var(--card2);">
+    <div class="set-row">
+      <span class="set-row-label" id="lbl-set-mute" data-i18n="lbl-set-mute">遊戲音效</span>
+      <button id="set-mute-sw" class="switch" role="switch" aria-checked="true"
+              aria-labelledby="lbl-set-mute" onclick="toggleMuteFromSettings()"></button>
     </div>
-    
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-part" data-i18n="lbl-set-part">背景粒子特效</span>
-      <button id="set-part-btn" class="btn btn-ghost" style="padding:12px 28px; font-size:1.6em; border-radius:12px;" onclick="toggleParticles()" data-i18n="set-part-on">開啟</button>
+
+    <div class="set-row">
+      <span class="set-row-label" id="lbl-set-part" data-i18n="lbl-set-part">背景粒子特效</span>
+      <button id="set-part-sw" class="switch" role="switch" aria-checked="true"
+              aria-labelledby="lbl-set-part" onclick="toggleParticles()"></button>
+    </div>
+
+    <div class="set-row">
+      <span class="set-row-label" id="lbl-set-large">大字體模式</span>
+      <button id="set-large-sw" class="switch" role="switch" aria-checked="false"
+              aria-labelledby="lbl-set-large" onclick="toggleLargeText()"></button>
+    </div>
+
+    <div class="set-row">
+      <span class="set-row-label" id="lbl-set-contrast">高對比模式</span>
+      <button id="set-contrast-sw" class="switch" role="switch" aria-checked="false"
+              aria-labelledby="lbl-set-contrast" onclick="toggleHighContrast()"></button>
     </div>
   </div>
-  
-  <!-- 返回按鈕 放大 2 倍 -->
-  <button class="btn btn-blue" id="set-back-btn" style="padding:16px 36px; font-size:1.8em; border-radius:16px;" onclick="closeSettings();playSfx('click')" data-i18n="set-back-btn">確認並返回</button>
+
+  <!-- 從右上角移進來的四項功能，各自配一行說明 -->
+  <div class="set-menu">
+    <button class="set-menu-item" onclick="closeSettings();startTour(true)">
+      <span class="set-menu-icon">🧭</span>
+      <span class="set-menu-text">
+        <span class="set-menu-title">新手導覽</span>
+        <span class="set-menu-desc">重新播放功能導覽，一步步認識每個按鈕</span>
+      </span>
+    </button>
+    <button class="set-menu-item" onclick="closeSettings();goTutorial();playSfx('click')">
+      <span class="set-menu-icon">📜</span>
+      <span class="set-menu-text">
+        <span class="set-menu-title">遊戲規則說明</span>
+        <span class="set-menu-desc">紅綠燈規則圖解：站➔坐➔站➔墊腳</span>
+      </span>
+    </button>
+    <button class="set-menu-item" onclick="closeSettings();openLegalOverlay('view')">
+      <span class="set-menu-icon">🔒</span>
+      <span class="set-menu-text">
+        <span class="set-menu-title">隱私權與安全聲明</span>
+        <span class="set-menu-desc">攝影機影像如何使用，以及運動安全提醒</span>
+      </span>
+    </button>
+    <button class="set-menu-item" onclick="closeSettings();openContact();playSfx('click')">
+      <span class="set-menu-icon">✉️</span>
+      <span class="set-menu-text">
+        <span class="set-menu-title">聯絡我們</span>
+        <span class="set-menu-desc">意見回饋、問題詢問或錯誤回報</span>
+      </span>
+    </button>
+  </div>
+
+  <button class="btn btn-blue" id="set-back-btn" onclick="closeSettings();playSfx('click')" data-i18n="set-back-btn">確認並返回</button>
+</div>
+
+<div id="ov-history" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:12px;">📊 歷史<span>紀錄</span></div>
+
+  <div id="history-stats" class="hist-stats"></div>
+
+  <div class="diff-tabs" id="history-tabs">
+    <div class="diff-tab active" onclick="switchHistoryFilter('all',this)">全部</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('classic',this)">通關</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('infinite',this)">無限</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('timed',this)">限時</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('controlled_sit',this)">控制坐下</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('heel_control',this)">腳跟控制</div>
+  </div>
+
+  <div class="card" style="width:560px; max-width:90vw;">
+    <div id="history-list" style="display:flex; flex-direction:column; gap:10px; max-height:46vh; overflow-y:auto;"></div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-ghost" onclick="exportHistoryCSV()">📊 匯出 CSV</button>
+    <button class="btn btn-ghost" onclick="clearHistory()">🗑️ 清除紀錄</button>
+    <button class="btn btn-blue" onclick="closeHistoryScreen()">✕ 關閉</button>
+  </div>
+</div>
+
+<div id="ov-story" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:6px;">🗺️ 冒險<span>地圖</span></div>
+  <div style="font-size:.85em; color:var(--dim); margin-bottom:14px; max-width:560px; text-align:center;">
+    傳說中，只要有人願意一次次坐下又站起，就能化身「坐站王子（公主）」。
+    每一次起立就是一次攻擊，點一個關卡，看看等著你的對手是誰！
+  </div>
+
+  <div class="card story-map-card" style="width:600px; max-width:92vw; max-height:70vh; overflow-y:auto;">
+    <div id="story-chapters"></div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-blue" onclick="closeStoryScreen()">✕ 關閉</button>
+  </div>
+</div>
+
+<!-- 每一關開始前的獨立劇情畫面：點地圖上的關卡先看故事，確認後才真正進入遊戲 -->
+<div id="ov-story-intro" class="overlay-modal">
+  <div class="story-detail-enemy-icon" id="story-intro-enemy-icon" style="font-size:3.6em;"></div>
+  <div class="scr-title" id="story-intro-title" style="margin:8px 0 4px;"></div>
+  <div id="story-intro-enemy-name" style="font-size:.9em; color:var(--blue2); margin-bottom:14px;"></div>
+
+  <div class="card story-map-card" style="width:560px; max-width:90vw;">
+    <div id="story-intro-text" class="story-detail-text"></div>
+    <div id="story-intro-need" class="story-detail-need"></div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-gold" id="story-intro-start-btn" onclick="confirmStartStoryBattle()">⚔️ 開始迎戰</button>
+    <button class="btn btn-ghost" onclick="backToStoryMapFromIntro()">← 返回地圖</button>
+  </div>
+</div>
+
+<!-- 節奏音樂模式：選節奏畫面，選好直接開打，不經過角色/模式/難度選擇 -->
+<div id="ov-rhythm" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:6px;">🎵 節奏<span>音樂模式</span></div>
+  <div style="font-size:.85em; color:var(--dim); margin-bottom:14px; max-width:560px; text-align:center;">
+    跟著節拍器的鼓點起立，看看自己能不能把「站起來」的那一刻，剛好踩在拍子上。
+    選一個節奏開始吧，難度不是看次數，是看準度！
+  </div>
+
+  <div class="card story-map-card" style="width:600px; max-width:92vw;">
+    <div id="rhythm-tempo-list"></div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-blue" onclick="closeRhythmScreen()">✕ 關閉</button>
+  </div>
+</div>
+
+<div id="ov-advice" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:6px;">💡 改善<span>建議</span></div>
+  <div style="font-size:.85em; color:var(--dim); margin-bottom:14px;">
+    根據你的訓練資料，找出最需要調整的動作細節
+  </div>
+
+  <div class="card" style="width:560px; max-width:90vw; display:flex; flex-direction:column; gap:16px;">
+
+    <!-- 分析狀態列：之後由後端回填 -->
+    <div id="advice-status" class="advice-status">
+      尚未產生分析報告
+    </div>
+
+    <!-- 綜合評分：等後端回傳後填入 -->
+    <div class="advice-section">
+      <div class="advice-section-title">綜合評分</div>
+      <div class="advice-scores" id="advice-scores">
+        <div class="advice-score"><b data-advice="overall">—</b><span>整體</span></div>
+        <div class="advice-score"><b data-advice="trunk">—</b><span>軀幹</span></div>
+        <div class="advice-score"><b data-advice="heel">—</b><span>腳跟</span></div>
+        <div class="advice-score"><b data-advice="knee">—</b><span>膝部</span></div>
+        <div class="advice-score"><b data-advice="tempo">—</b><span>節奏</span></div>
+      </div>
+    </div>
+
+    <!-- 重點問題：後端分析後列出 -->
+    <div class="advice-section">
+      <div class="advice-section-title">需要改善的重點</div>
+      <div id="advice-issues" class="advice-placeholder">
+        完成幾場訓練後，這裡會列出最需要調整的動作問題。
+      </div>
+    </div>
+
+    <!-- 練習建議 -->
+    <div class="advice-section">
+      <div class="advice-section-title">建議練習</div>
+      <div id="advice-drills" class="advice-placeholder">
+        這裡會依照你的弱項，推薦對應的加強動作與練習頻率。
+      </div>
+    </div>
+
+    <!-- 趨勢 -->
+    <div class="advice-section">
+      <div class="advice-section-title">進步趨勢</div>
+      <div id="advice-trend" class="advice-placeholder">
+        累積足夠場次後，這裡會顯示姿勢分數隨時間的變化。
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-gold" id="advice-generate-btn" onclick="generateAdvice()">🔍 產生分析報告</button>
+    <button class="btn btn-ghost" id="advice-export-btn" onclick="exportAdviceReport()">📄 匯出報告</button>
+    <button class="btn btn-blue" onclick="closeAdviceScreen()">✕ 關閉</button>
+  </div>
+</div>
+
+<div id="ov-friends" class="overlay-modal">
+  <div class="scr-title" style="margin-bottom:12px;">👥 我的<span>好友</span></div>
+
+  <div class="diff-tabs" id="friend-tabs">
+    <div class="diff-tab active" onclick="switchFriendTab('list',this)">好友名單</div>
+    <div class="diff-tab" onclick="switchFriendTab('board',this)">排行榜</div>
+    <div class="diff-tab" onclick="switchFriendTab('code',this)">我的好友碼</div>
+  </div>
+
+  <div id="friend-list-panel">
+    <div class="card" style="width:440px; max-width:88vw; display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; gap:10px;">
+        <input id="friend-add-input" type="text" placeholder="貼上好友碼…"
+               style="flex:1; background:var(--bg); border:2px solid var(--border); color:var(--white); padding:10px 12px; border-radius:10px; outline:none; font-size:1em;">
+        <button class="btn btn-blue" style="padding:10px 20px; font-size:1em;" onclick="addFriendFromInput()">新增</button>
+      </div>
+      <div id="friend-list" style="display:flex; flex-direction:column; gap:10px; max-height:44vh; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div id="friend-board-panel" style="display:none;">
+    <div class="card" style="width:440px; max-width:88vw;">
+      <div id="friend-board" style="display:flex; flex-direction:column; gap:10px; max-height:50vh; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div id="friend-code-panel" style="display:none;">
+    <div class="card" style="width:440px; max-width:88vw; display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <div style="font-size:.95em; font-weight:700; color:var(--dim); margin-bottom:8px;">你的暱稱</div>
+        <input id="friend-my-name" type="text" maxlength="12" placeholder="輸入暱稱（最多 12 字）"
+               oninput="saveMyFriendName()"
+               style="width:100%; background:var(--bg); border:2px solid var(--border); color:var(--white); padding:10px 12px; border-radius:10px; outline:none; font-size:1em;">
+      </div>
+      <div>
+        <div style="font-size:.95em; font-weight:700; color:var(--dim); margin-bottom:8px;">我的好友碼</div>
+        <textarea id="friend-my-code" readonly rows="3"
+                  style="width:100%; background:var(--bg); border:2px solid var(--border); color:var(--text); padding:10px 12px; border-radius:10px; outline:none; font-size:.85em; resize:none; font-family:monospace;"></textarea>
+      </div>
+      <button class="btn btn-blue" onclick="copyMyFriendCode()">📋 複製好友碼</button>
+      <div style="font-size:.85em; color:var(--dim); line-height:1.7;">
+        好友碼會附上你目前的最佳成績，分數更新後記得重新分享一次。
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-ghost" style="margin-top:16px;" onclick="closeFriendsScreen()">✕ 關閉</button>
 </div>
 
 <div id="scr-challenge" class="scr off">
@@ -478,7 +795,14 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@latest/build/qrcode.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/social.js"></script>
+<script src="js/friends.js"></script>
+<script src="js/history.js"></script>
+<script src="js/advice.js"></script>
+<script src="js/story.js"></script>
+<script src="js/juice.js"></script>
+<script src="js/rhythm.js"></script>
 <script src="js/legal.js"></script>
+<script src="js/tour.js"></script>
 <div id="ov-contact" class="scr off">
   <div class="scr-title" style="margin-bottom:16px;">✉️ 聯絡<span>我們</span></div>
   

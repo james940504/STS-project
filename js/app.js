@@ -217,7 +217,6 @@ const i18n = {
     'res-timeup-sub': '30秒挑戰結束！',
     'lbl-final-score': '最終分數',
     'lbl-completed-reps': '完成起立',
-    'lbl-average-score': '平均分數',
     'lbl-game-time': '遊戲時間',
     'lbl-complete-time': '完成時間',
     'lbl-total-sts': '總坐站次數',
@@ -624,7 +623,6 @@ const i18n = {
     'res-timeup-sub': '30s challenge ended!',
     'lbl-final-score': 'Final Score',
     'lbl-completed-reps': 'Reps Completed',
-    'lbl-average-score': 'Average Score',
     'lbl-game-time': 'Game Time',
     'lbl-complete-time': 'Clear Time',
     'lbl-total-sts': 'Total STS Reps',
@@ -1330,7 +1328,7 @@ let kneeScoresArray = [];            // 記錄整場遊戲的膝部陣列
 let controlSessionReps = [];
 let controlLastScore = 0;
 let controlMoveUntil = 0;
-let lastSpokenSecond = null;
+
 // Controlled movement protocol parameters.
 // 3 秒是本系統目前固定的訓練流程參數，不是臨床正常值。
 const CONTROL_HOLD_SEC = 3.0;
@@ -1343,6 +1341,7 @@ const CONTROL_HEEL_START_DROP_DEG = 2;
 
 // 一個 Rep 內鎖定同一側，避免 trajectory 因 SideSelector 中途換邊而產生跳點。
 let controlLockedSide = null;
+let lastSpokenSecond = null;
 function lockControlSide(side){
   if(side === 'left' || side === 'right') controlLockedSide = side;
   return controlLockedSide;
@@ -1977,8 +1976,9 @@ function resetGameState(){
   controlSessionReps = [];
   controlLastScore = 0;
   controlMoveUntil = 0;
+  lastSpokenSecond = null;
   releaseControlSide();
-  controlledSitState = {state:'WAIT_STAND',standHipY:null,holdStartMs:null,startMs:null,lastHipY:null,descentCandidateMs:null,candidateSamples:[],seatCandidateMs:null,samples:[],basehip_y:null};
+  controlledSitState = {state:'WAIT_STAND',standHipY:null,holdStartMs:null,startMs:null,lastHipY:null,descentCandidateMs:null,candidateSamples:[],seatCandidateMs:null,samples:[]};
   heelControlState = {state:'WAIT_STAND',baselineAngle:null,baselineBuf:[],baselineStartMs:null,peakAngle:null,holdReferenceAngle:null,lowerStartAngle:null,holdStartMs:null,startMs:null,lastAngle:null,lowerCandidateMs:null,candidateSamples:[],baselineCandidateMs:null,samples:[]};
   hipPxYBuf = []; angleHipBuf = []; angleKneeBuf = []; trunkVertBuf = []; angleHeelBuf = [];
   resetDrawSmoothState();
@@ -2395,7 +2395,6 @@ function updateControlRemaining(remainingSec, labelKey='game-rep-remaining'){
   }
 }
 
-
 function getControlScore(actualSec, targetSec=controlTargetSec){
   if(!Number.isFinite(actualSec) || actualSec <= 0 || !Number.isFinite(targetSec) || targetSec <= 0) return 0;
   const error = Math.abs(actualSec - targetSec) / targetSec;
@@ -2463,11 +2462,11 @@ function updateControlledSitMode(metrics, nowMs){
     lockControlSide(metrics.selected_side);
   }
 
-  // 原 STS 四階段抵達 3 後，再確認已回到個人校正站姿範圍的 70% 以上，才進入固定 3 秒 Hold。
-  // standProgress = 1 - Pcalib，其中 Pcalib=0 為校正站姿、1 為校正坐姿。
-  const sitProgress = normalizedSitPosition(hipY, userStandHipBaseline);
-  const standProgress = sitProgress === null ? null : (1 - sitProgress);
-  if(stsPhase === 3 && st.state === 'WAIT_STAND' && Number.isFinite(standProgress) && standProgress >= CONTROL_HOLD_ENTRY_RATIO){
+  // 原 STS 四階段抵達 3 後，再確認已回到個人校正站姿範圍的 85% 以上，才進入固定 3 秒 Hold。
+  // StandCompletion = 1 - Pcalib，其中 Pcalib=0 為校正站姿、1 為校正坐姿。
+  const calibStandPos = normalizedSitPosition(hipY, userStandHipBaseline);
+  const standCompletion = calibStandPos === null ? null : (1 - calibStandPos);
+  if(stsPhase === 3 && st.state === 'WAIT_STAND' && Number.isFinite(standCompletion) && standCompletion >= CONTROL_HOLD_ENTRY_RATIO){
     lockControlSide(metrics.selected_side);
     st.state = 'HOLD';
     st.standHipY = hipY;
@@ -2484,10 +2483,10 @@ function updateControlledSitMode(metrics, nowMs){
   }
 
   if(st.state === 'HOLD'){
-    const holdSitProgress = normalizedSitPosition(hipY, userStandHipBaseline);
-    const holdStandProgress = holdSitProgress === null ? null : (1 - holdSitProgress);
+    const holdCalibPos = normalizedSitPosition(hipY, userStandHipBaseline);
+    const holdStandCompletion = holdCalibPos === null ? null : (1 - holdCalibPos);
     // Hold 期間只要求仍維持在個人校正站姿範圍的 85% 以上；不再用固定 5% / knee 155° 追頂端。
-    const stillStanding = Number.isFinite(holdStandProgress) && holdStandProgress >= CONTROL_HOLD_ENTRY_RATIO;
+    const stillStanding = Number.isFinite(holdStandCompletion) && holdStandCompletion >= CONTROL_HOLD_ENTRY_RATIO;
 
     if(!stillStanding){
       st.holdStartMs = null;
@@ -2519,8 +2518,9 @@ function updateControlledSitMode(metrics, nowMs){
     if(pos === null) return;
     const deltaY = st.lastHipY === null ? 0 : hipY - st.lastHipY;
     st.lastHipY = hipY;
-    
-    const descentLike = hipAngle < 170 && deltaY > 0;
+
+    // Hold 已完成後，再用短時間 time-based debounce 確認真的開始下降；不依賴固定幀數。
+    const descentLike = pos > 0.05 && deltaY > 0;
     if(descentLike){
       if(st.descentCandidateMs === null){
         st.descentCandidateMs = nowMs;
@@ -2537,7 +2537,7 @@ function updateControlledSitMode(metrics, nowMs){
       });
       if(nowMs - st.descentCandidateMs >= CONTROL_ONSET_CONFIRM_MS){
         st.state = 'DESCENDING';
-        st.startMs = st.descentCandidateMs; 
+        st.startMs = st.descentCandidateMs; // 回推到真正 movement onset，不把確認延遲算掉。
         st.samples = st.candidateSamples.slice();
         st.seatCandidateMs = null;
         lastSpokenSecond = null;
@@ -2570,14 +2570,14 @@ function updateControlledSitMode(metrics, nowMs){
       speak(String(sec));
     }
 
-    const seated = hipAngle < 110 && kneeAngle < 120 && pos > 0.88;
+    const seated = hipAngle < 110 && kneeAngle < 120 && pos > 0.72;
     if(seated){
       if(st.seatCandidateMs === null) st.seatCandidateMs = nowMs;
     }else{
       st.seatCandidateMs = null;
     }
 
-    if(st.seatCandidateMs !== null && nowMs - st.seatCandidateMs >= CONTROL_END_CONFIRM_MS){ //怪怪的
+    if(st.seatCandidateMs !== null && nowMs - st.seatCandidateMs >= CONTROL_END_CONFIRM_MS){
       const actualSec = Math.max(0, (st.seatCandidateMs - st.startMs) / 1000);
       let repSamples = st.samples.filter(s => s.t <= actualSec + 1e-6);
       const finalSample = interpolateSample(st.samples, actualSec);
@@ -2615,6 +2615,7 @@ function updateHeelControlMode(metrics, nowMs){
   if(!Number.isFinite(angle)) return;
   const st = heelControlState;
 
+  // 每個 Heel Rep 先用下肢＋足部 SideSelector 選側，進入 Baseline 後就鎖住到 Rep 結束。
   if(st.state === 'WAIT_STAND'){
     setControlBodyState(getText('game-heel-stand'), 'var(--yellow)');
     if(Number.isFinite(kneeAngle) && kneeAngle > 160){
@@ -2622,7 +2623,6 @@ function updateHeelControlMode(metrics, nowMs){
       st.state = 'BASELINE';
       st.baselineBuf = [];
       st.baselineAngle = null;
-      lastSpokenSecond = null;
       st.baselineStartMs = nowMs;
       st.peakAngle = null;
       st.holdReferenceAngle = null;
@@ -2641,6 +2641,7 @@ function updateHeelControlMode(metrics, nowMs){
     if(Number.isFinite(base)) st.baselineAngle = base;
     setControlBodyState(getText('game-heel-baseline'), 'var(--blue2)');
 
+    // 先用真實時間建立約 0.5 秒 baseline；不是「數滿幾幀」才開始。
     const baselineReady = Number.isFinite(st.baselineStartMs) && (nowMs - st.baselineStartMs >= CONTROL_HEEL_BASELINE_MS);
     if(baselineReady && Number.isFinite(st.baselineAngle) && angle > st.baselineAngle + 4){
       st.state = 'RAISING';
@@ -2654,12 +2655,15 @@ function updateHeelControlMode(metrics, nowMs){
   if(st.state === 'RAISING'){
     st.peakAngle = Math.max(st.peakAngle ?? angle, angle);
     st.lastAngle = angle;
-    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle) 
-      ? baselineAngle+((calibratedHeelMaxAngle-baseline) * CONTROL_HOLD_ENTRY_RATIO)
+
+    // Heel 不再追「真正 Peak」。校正 Stage 1 已取得個人的最大 Heel–Toe angle；
+    // 當本次角度達到校正最大值的 85% 就直接進入固定 3 秒 Hold。
+    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle)
+      ? calibratedHeelMaxAngle * CONTROL_HOLD_ENTRY_RATIO
       : null;
     if(Number.isFinite(holdThreshold) && angle >= holdThreshold){
       st.state = 'HOLD';
-      st.holdReferenceAngle = holdThreshold; 
+      st.holdReferenceAngle = holdThreshold; // 只保存進入門檻；Hold 計時不再因抬得更高而重設。
       st.holdStartMs = nowMs;
       setControlBodyState(getText('game-heel-hold'), 'var(--green)');
       updateControlRemaining(CONTROL_HOLD_SEC, 'game-hold-remaining');
@@ -2668,7 +2672,12 @@ function updateHeelControlMode(metrics, nowMs){
   }
 
   if(st.state === 'HOLD'){
+    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle)
+      ? calibratedHeelMaxAngle * CONTROL_HOLD_ENTRY_RATIO
+      : null;
     const withinHoldZone = Number.isFinite(holdThreshold) && angle >= holdThreshold;
+
+    // 只要仍在個人校正 70% 以上，3 秒持續累積；抬得更高不會重設倒數。
     if(!withinHoldZone){
       st.holdStartMs = null;
       setControlBodyState(getText('game-heel-hold-recover'), 'var(--yellow)');
@@ -2676,13 +2685,17 @@ function updateHeelControlMode(metrics, nowMs){
       st.lastAngle = angle;
       return;
     }
+
     if(st.holdStartMs === null) st.holdStartMs = nowMs;
     const holdElapsed = (nowMs - st.holdStartMs) / 1000;
     updateControlRemaining(Math.max(0, CONTROL_HOLD_SEC - holdElapsed), 'game-hold-remaining');
     st.lastAngle = angle;
+
     if(holdElapsed >= CONTROL_HOLD_SEC){
       st.state = 'WAIT_LOWER';
+      // 下降分析從 Hold 完成當下的實際角度開始，而不是從校正最大值或歷史 peak 開始。
       st.lowerStartAngle = angle;
+      st.peakAngle = angle;
       st.lowerCandidateMs = null;
       st.candidateSamples = [];
       setControlBodyState(getText('game-heel-wait-lower'), 'var(--green)');
@@ -2694,11 +2707,11 @@ function updateHeelControlMode(metrics, nowMs){
   if(st.state === 'WAIT_LOWER'){
     const lowerStart = Number.isFinite(st.lowerStartAngle) ? st.lowerStartAngle : st.peakAngle;
     const range = lowerStart - st.baselineAngle;
-    if(range <= 5) return;
+    if(range <= 1) return;
     const pos = clamp01((lowerStart - angle) / range);
-    const delta = st.lastAngle === null ? 0 : st.lastAngle - angle;
+    const delta = st.lastAngle === null ? 0 : angle - st.lastAngle;
     st.lastAngle = angle;
-    const loweringLike = angle <= lowerStart - CONTROL_HEEL_START_DROP_DEG && delta > 0;
+    const loweringLike = angle <= lowerStart - CONTROL_HEEL_START_DROP_DEG && delta <= 0;
 
     if(loweringLike){
       if(st.lowerCandidateMs === null){
@@ -2709,9 +2722,10 @@ function updateHeelControlMode(metrics, nowMs){
       st.candidateSamples.push({t: ct, position: pos, heelAngle: angle});
       if(nowMs - st.lowerCandidateMs >= CONTROL_ONSET_CONFIRM_MS){
         st.state = 'LOWERING';
-        st.startMs = st.lowerCandidateMs; 
+        st.startMs = st.lowerCandidateMs; // 回推到下降真正開始點。
         st.samples = st.candidateSamples.slice();
         st.baselineCandidateMs = null;
+        lastSpokenSecond = null;
         setControlBodyState(getText('game-heel-lowering'), 'var(--yellow)');
       }
     }else{
@@ -2735,7 +2749,7 @@ function updateHeelControlMode(metrics, nowMs){
       lastSpokenSecond = sec;
       speak(String(sec));
     }
-    
+
     const atBaseline = pos >= 0.88 && angle <= st.baselineAngle + 2;
     if(atBaseline){
       if(st.baselineCandidateMs === null) st.baselineCandidateMs = nowMs;
@@ -2895,7 +2909,6 @@ function triggerControlTrainingEnd(){
   if(gState==='win'||gState==='over') return;
   gState='win'; detecting=false;
   stopVideoRecording(null); // 第一版控制訓練只產生前端報告，不啟動 Heavy。
-  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   const avgScore=controlSessionReps.length?Math.round(controlSessionReps.reduce((a,r)=>a+r.controlScore,0)/controlSessionReps.length):0;
   showOverlay('✅', selMode==='controlled_sit'?'控制坐下完成':'腳跟控制完成', '本次分析由前端 MediaPipe Full 即時資料產生。', true, [
@@ -3162,14 +3175,6 @@ function disconnectPhoneCam(){
 }
 
 
-/* ── 遊戲結束後停止攝影機（失敗/通關/時間到都要釋放鏡頭，避免持續閃爍）── */
-function stopCameraAfterGameEnd(){
-  if (videoElement && videoElement.srcObject) {
-    videoElement.srcObject.getTracks().forEach(t => t.stop());
-    videoElement.srcObject = null;
-  }
-}
-
 /* ── GAME EVENTS ── */
 function triggerCaught(msg){
   if(gState==='over')return;
@@ -3183,7 +3188,6 @@ function triggerCaught(msg){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
   stopBGM();
   ensureAudio();
   playSfx('caught');
@@ -3200,7 +3204,7 @@ function triggerCaught(msg){
     setTimeout(()=>{rf.style.transition=''},600);
   }
 
-  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
+  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
   triggerGameDiagnosis();
 }
 
@@ -3216,10 +3220,9 @@ function triggerWin(){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3229,7 +3232,6 @@ function triggerStoryLevelClear(title, storyText){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
-  stopCameraAfterGameEnd();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3249,7 +3251,6 @@ function triggerRhythmEnd(stats){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
-  stopCameraAfterGameEnd();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3282,10 +3283,9 @@ function triggerTimedEnd(){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'timeup',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-average-score')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-avg-score')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -4497,18 +4497,7 @@ let counter = 0;
 let calibTimerId = null;
 let userStandHipBaseline = null;
 let calibStage = 0;             // 0: 定位, 1: 站起+墊腳尖, 2: 坐下, 3: 完成
-let calibHoldTime = 0;          // 動作維持時間計時器（單位：真實秒數）
-let lastCalibTickTs = null;     // 上一次計時的時間戳，用來換算成真實秒數
-
-/* 💡 校正各階段所需的維持秒數。
-   之前是用「每次呼叫 +0.1」來累加，但這個函式是掛在 requestAnimationFrame 裡，
-   每秒會被呼叫數十次（依螢幕更新率而定，常見 60 次/秒），
-   所以實際上遠不到設定的秒數就會被判定完成，導致「進度累積得太快」。
-   這裡改成用真實經過時間 (performance.now() 差值) 累加，
-   並把秒數稍微拉長一點，讓校正更穩定、不容易誤判。 */
-const CALIB_HOLD_SIT_SEC = 3.5;
-const CALIB_HOLD_STAND_SEC = 2.5;
-const CALIB_HOLD_SIT_BACK_SEC = 3.5;
+let calibHoldTime = 0;          // 動作維持時間計時器
 let calibMaxHipY = null;        // 坐下時的骨盆高度 (數值最大 = 螢幕最低點 = 椅面位置)
 let calibMinHipY = null;        // 墊腳尖時的骨盆高度 (數值最小 = 螢幕最高點)
 let calibratedHeelMaxAngle = null; // 校正 Stage 1 墊腳尖時取得的最大 Heel–Toe angle
@@ -4607,7 +4596,6 @@ function launchGameWithCalibration() {
   // 初始化校正變數
   calibStage = 0;
   calibHoldTime = 0;
-  lastCalibTickTs = null;
   calibMaxHipY = null;
   calibMinHipY = null;
   calibratedHeelMaxAngle = null;
@@ -4644,17 +4632,6 @@ function checkCalibrationPosition(landmarks) {
   const boxText = document.getElementById('calib-text');
   const calibBox = document.getElementById('calib-box');
   const timerText = document.getElementById('calib-timer');
-
-  // 💡 用真實時間差 (秒) 來累加維持時間，而不是每次呼叫固定 +0.1，
-  // 這樣不管螢幕更新率是 30fps 還是 60fps，校正所需時間都會是實際的秒數。
-  const nowTs = performance.now();
-  let calibDt = 0;
-  if (lastCalibTickTs !== null) {
-    calibDt = (nowTs - lastCalibTickTs) / 1000;
-    // 切分頁籤/掉幀後可能出現異常大的 dt，限制上限避免一次跳太多
-    calibDt = Math.min(calibDt, 0.1);
-  }
-  lastCalibTickTs = nowTs;
   
   // 強制隱藏原本會擋住畫面的巨大計時文字
   if (timerText) timerText.style.display = 'none';
@@ -4762,7 +4739,7 @@ function checkCalibrationPosition(landmarks) {
     case 0:
       updateTextAndSpeak(getText('calib-step-sit'), getText('speech-hold-sit'));
       if (isSitting) {
-        calibHoldTime += calibDt;
+        calibHoldTime += 0.1;
         if (calibBox) calibBox.style.borderColor = "rgba(0, 255, 170, 0.8)";
       } else {
         calibHoldTime = 0;
@@ -4770,9 +4747,9 @@ function checkCalibrationPosition(landmarks) {
       }     
       
       // 呼叫 UI 更新
-      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, CALIB_HOLD_SIT_SEC, isSitting ? '#87a07c' : '#FFAA00');
+      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, 3, isSitting ? '#87a07c' : '#FFAA00');
       
-      if (calibHoldTime >= CALIB_HOLD_SIT_SEC) {
+      if (calibHoldTime >= 3) {
         calibMaxHipY = curHipY; 
         calibTopShoulderY = curShoulderY; 
         calibStage = 1;
@@ -4787,7 +4764,7 @@ function checkCalibrationPosition(landmarks) {
       if (calibBox) calibBox.style.borderColor = "rgba(64, 144, 255, 0.9)";
       
       if (curHipY !== null && calibMaxHipY !== null && curHipY < (calibMaxHipY - 20)) {
-        calibHoldTime += calibDt;
+        calibHoldTime += 0.1;
         if (calibMinHipY === null || curHipY < calibMinHipY) {
           calibMinHipY = curHipY;
           userStandHipBaseline = curHipY; 
@@ -4798,9 +4775,9 @@ function checkCalibrationPosition(landmarks) {
         }
       }
 
-      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, CALIB_HOLD_STAND_SEC, '#4090FF');
+      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, 2, '#4090FF');
 
-      if (calibHoldTime >= CALIB_HOLD_STAND_SEC) { 
+      if (calibHoldTime >= 2) { 
         calibStage = 2;
         calibHoldTime = 0;
         if (typeof playSfx === 'function') playSfx('green');
@@ -4818,13 +4795,13 @@ function checkCalibrationPosition(landmarks) {
         let shoulderPassed = (curShoulderY !== null && calibTopShoulderY !== null && curShoulderY > (calibTopShoulderY - 60));
         
         if (hipPassed || shoulderPassed) {
-          calibHoldTime += calibDt;
+          calibHoldTime += 0.1;
           if (curHipY !== null && calibMaxHipY !== null && curHipY > calibMaxHipY) calibMaxHipY = curHipY;
         }
 
-        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, CALIB_HOLD_SIT_BACK_SEC, '#FFAA00');
+        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, 3, '#FFAA00');
 
-        if (calibHoldTime >= CALIB_HOLD_SIT_BACK_SEC) {
+        if (calibHoldTime >= 3) {
           calibStage = 3; 
         }      
       }    
