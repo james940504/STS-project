@@ -2462,11 +2462,11 @@ function updateControlledSitMode(metrics, nowMs){
     lockControlSide(metrics.selected_side);
   }
 
-  // 原 STS 四階段抵達 3 後，再確認已回到個人校正站姿範圍的 85% 以上，才進入固定 3 秒 Hold。
-  // StandCompletion = 1 - Pcalib，其中 Pcalib=0 為校正站姿、1 為校正坐姿。
-  const calibStandPos = normalizedSitPosition(hipY, userStandHipBaseline);
-  const standCompletion = calibStandPos === null ? null : (1 - calibStandPos);
-  if(stsPhase === 3 && st.state === 'WAIT_STAND' && Number.isFinite(standCompletion) && standCompletion >= CONTROL_HOLD_ENTRY_RATIO){
+  // 原 STS 四階段抵達 3 後，再確認已回到個人校正站姿範圍的 70% 以上，才進入固定 3 秒 Hold。
+  // standProgress = 1 - Pcalib，其中 Pcalib=0 為校正站姿、1 為校正坐姿。
+  const sitProgress = normalizedSitPosition(hipY, userStandHipBaseline);
+  const standProgress = sitProgress === null ? null : (1 - sitProgress);
+  if(stsPhase === 3 && st.state === 'WAIT_STAND' && Number.isFinite(standProgress) && standProgress >= CONTROL_HOLD_ENTRY_RATIO){
     lockControlSide(metrics.selected_side);
     st.state = 'HOLD';
     st.standHipY = hipY;
@@ -2483,10 +2483,10 @@ function updateControlledSitMode(metrics, nowMs){
   }
 
   if(st.state === 'HOLD'){
-    const holdCalibPos = normalizedSitPosition(hipY, userStandHipBaseline);
-    const holdStandCompletion = holdCalibPos === null ? null : (1 - holdCalibPos);
+    const holdSitProgress = normalizedSitPosition(hipY, userStandHipBaseline);
+    const holdStandProgress = holdSitProgress === null ? null : (1 - holdSitProgress);
     // Hold 期間只要求仍維持在個人校正站姿範圍的 85% 以上；不再用固定 5% / knee 155° 追頂端。
-    const stillStanding = Number.isFinite(holdStandCompletion) && holdStandCompletion >= CONTROL_HOLD_ENTRY_RATIO;
+    const stillStanding = Number.isFinite(holdStandProgress) && holdStandProgress >= CONTROL_HOLD_ENTRY_RATIO;
 
     if(!stillStanding){
       st.holdStartMs = null;
@@ -2518,9 +2518,8 @@ function updateControlledSitMode(metrics, nowMs){
     if(pos === null) return;
     const deltaY = st.lastHipY === null ? 0 : hipY - st.lastHipY;
     st.lastHipY = hipY;
-
-    // Hold 已完成後，再用短時間 time-based debounce 確認真的開始下降；不依賴固定幀數。
-    const descentLike = pos > 0.05 && deltaY > 0;
+    
+    const descentLike = hipAngle < 170 && deltaY > 0;
     if(descentLike){
       if(st.descentCandidateMs === null){
         st.descentCandidateMs = nowMs;
@@ -2537,7 +2536,7 @@ function updateControlledSitMode(metrics, nowMs){
       });
       if(nowMs - st.descentCandidateMs >= CONTROL_ONSET_CONFIRM_MS){
         st.state = 'DESCENDING';
-        st.startMs = st.descentCandidateMs; // 回推到真正 movement onset，不把確認延遲算掉。
+        st.startMs = st.descentCandidateMs; 
         st.samples = st.candidateSamples.slice();
         st.seatCandidateMs = null;
         lastSpokenSecond = null;
@@ -2570,14 +2569,14 @@ function updateControlledSitMode(metrics, nowMs){
       speak(String(sec));
     }
 
-    const seated = hipAngle < 110 && kneeAngle < 120 && pos > 0.72;
+    const seated = hipAngle < 110 && kneeAngle < 120 && pos > 0.88;
     if(seated){
       if(st.seatCandidateMs === null) st.seatCandidateMs = nowMs;
     }else{
       st.seatCandidateMs = null;
     }
 
-    if(st.seatCandidateMs !== null && nowMs - st.seatCandidateMs >= CONTROL_END_CONFIRM_MS){
+    if(st.seatCandidateMs !== null && nowMs - st.seatCandidateMs >= CONTROL_END_CONFIRM_MS){ //怪怪的
       const actualSec = Math.max(0, (st.seatCandidateMs - st.startMs) / 1000);
       let repSamples = st.samples.filter(s => s.t <= actualSec + 1e-6);
       const finalSample = interpolateSample(st.samples, actualSec);
