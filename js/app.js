@@ -2655,10 +2655,10 @@ function updateHeelControlMode(metrics, nowMs){
     st.peakAngle = Math.max(st.peakAngle ?? angle, angle);
     st.lastAngle = angle;
 
-    // Heel 不再追「真正 Peak」。校正 Stage 1 已取得個人的最大 Heel–Toe angle；
-    // 當本次角度達到校正最大值的 85% 就直接進入固定 3 秒 Hold。
-    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle)
-      ? calibratedHeelMaxAngle * CONTROL_HOLD_ENTRY_RATIO
+    // 校正 Stage 1 已取得個人的最大 Heel–Toe angle；
+    // Hold 門檻以「本 Rep baseline → 個人校正最大值」的活動範圍比例計算。
+    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle) && Number.isFinite(st.baselineAngle)
+      ? st.baselineAngle + (calibratedHeelMaxAngle - st.baselineAngle) * CONTROL_HOLD_ENTRY_RATIO
       : null;
     if(Number.isFinite(holdThreshold) && angle >= holdThreshold){
       st.state = 'HOLD';
@@ -2671,12 +2671,9 @@ function updateHeelControlMode(metrics, nowMs){
   }
 
   if(st.state === 'HOLD'){
-    const holdThreshold = Number.isFinite(calibratedHeelMaxAngle)
-      ? calibratedHeelMaxAngle * CONTROL_HOLD_ENTRY_RATIO
-      : null;
-    const withinHoldZone = Number.isFinite(holdThreshold) && angle >= holdThreshold;
+    const withinHoldZone = Number.isFinite(st.holdReferenceAngle) && angle >= st.holdReferenceAngle;
 
-    // 只要仍在個人校正 70% 以上，3 秒持續累積；抬得更高不會重設倒數。
+    // 只要仍高於本 Rep 進入 Hold 時固定下來的 reference，3 秒持續累積；抬得更高不會重設倒數。
     if(!withinHoldZone){
       st.holdStartMs = null;
       setControlBodyState(getText('game-heel-hold-recover'), 'var(--yellow)');
@@ -2694,7 +2691,6 @@ function updateHeelControlMode(metrics, nowMs){
       st.state = 'WAIT_LOWER';
       // 下降分析從 Hold 完成當下的實際角度開始，而不是從校正最大值或歷史 peak 開始。
       st.lowerStartAngle = angle;
-      st.peakAngle = angle;
       st.lowerCandidateMs = null;
       st.candidateSamples = [];
       setControlBodyState(getText('game-heel-wait-lower'), 'var(--green)');
