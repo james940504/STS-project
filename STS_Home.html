@@ -214,20 +214,18 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // ====== Supabase 設定：換成你自己專案的值 ======
-    // Project Settings → API 裡可以找到這兩個值
-    const SUPABASE_URL = "https://heutehjgcoecgafpvxwo.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_pknjuK0FYqGAlJScP8shjQ_9ffXPaTk";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // 如果已經登入過（有有效 session），直接跳去遊戲主頁
     (async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        window.location.href = "index.html";
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = "index.html";
+        }
+      } catch (e) {
+        // 連不到後端，就留在登入頁讓使用者手動操作
       }
     })();
 
@@ -269,32 +267,26 @@
 
       setLoading('register-btn', true, '註冊');
 
-      // 1. 建立驗證帳號
-      const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: { data: { username } }
-      });
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password })
+        });
+        const data = await res.json();
 
-      if (error) {
         setLoading('register-btn', false, '註冊');
-        showMsg('register-msg', '註冊失敗：' + error.message, 'error');
-        return;
-      }
 
-      // profiles 資料列會由資料庫觸發器（on_auth_user_created）自動建立，
-      // 前端不需要再手動 insert，避免 RLS 政策擋下未登入狀態的寫入。
+        if (!data.success) {
+          showMsg('register-msg', '註冊失敗：' + data.message, 'error');
+          return;
+        }
 
-      setLoading('register-btn', false, '註冊');
-
-      if (data.session) {
-        // 沒有開啟 email 驗證，註冊完直接是登入狀態
         showMsg('register-msg', '註冊成功，正在進入遊戲...', 'success');
         setTimeout(() => { window.location.href = "index.html"; }, 800);
-      } else {
-        // 有開啟 email 驗證，需要先去信箱點連結
-        showMsg('register-msg', '註冊成功！請至信箱收取驗證信後再登入。', 'success');
-        setTimeout(() => switchForm('login-form'), 1500);
+      } catch (e) {
+        setLoading('register-btn', false, '註冊');
+        showMsg('register-msg', '註冊失敗：連不到伺服器，請確認 server.py 有在執行', 'error');
       }
     }
 
@@ -310,41 +302,37 @@
 
       setLoading('login-btn', true, '登入');
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
 
-      setLoading('login-btn', false, '登入');
+        setLoading('login-btn', false, '登入');
 
-      if (error) {
-        showMsg('login-msg', '登入失敗：' + error.message, 'error');
-        return;
+        if (!data.success) {
+          showMsg('login-msg', '登入失敗：' + data.message, 'error');
+          return;
+        }
+
+        showMsg('login-msg', '登入成功，正在進入遊戲...', 'success');
+        setTimeout(() => { window.location.href = "index.html"; }, 500);
+      } catch (e) {
+        setLoading('login-btn', false, '登入');
+        showMsg('login-msg', '登入失敗：連不到伺服器，請確認 server.py 有在執行', 'error');
       }
-
-      showMsg('login-msg', '登入成功，正在進入遊戲...', 'success');
-      setTimeout(() => { window.location.href = "index.html"; }, 500);
     }
 
-    // --- 忘記密碼 ---
+    // --- 忘記密碼（MySQL 版本尚未串接寄信服務，先提示聯絡我們） ---
     async function handleForgotPassword() {
       const email = document.getElementById('forgot-email').value.trim();
       if (!email) {
         showMsg('forgot-msg', '請輸入電子郵件', 'error');
         return;
       }
-
-      setLoading('forgot-btn', true, '發送重設連結');
-
-      // redirectTo 可視需要改成你重設密碼頁面的網址
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
-      });
-
-      setLoading('forgot-btn', false, '發送重設連結');
-
-      if (error) {
-        showMsg('forgot-msg', '發送失敗：' + error.message, 'error');
-        return;
-      }
-      showMsg('forgot-msg', '重設密碼連結已寄出，請至信箱查收。', 'success');
+      showMsg('forgot-msg', '此功能尚未開放（需要額外架設寄信服務），如需重設密碼請聯絡我們協助處理。', 'error');
     }
 
     // --- 粒子宇宙設定 ---

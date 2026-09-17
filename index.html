@@ -8,6 +8,36 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/social.css">
 <link rel="stylesheet" href="css/legal.css">
+<script>
+  window.currentPlayer = null; // { id, username, email, coins }
+
+  // 沒登入就直接踢回登入頁；其他程式碼可以 await window.playerReady 確保玩家資料已載入
+  window.playerReady = (async () => {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if (!data.success) {
+        window.location.href = "STS_Home.html";
+        return null;
+      }
+      window.currentPlayer = data.user;
+      return window.currentPlayer;
+    } catch (e) {
+      window.location.href = "STS_Home.html";
+      return null;
+    }
+  })();
+
+  async function handleLogout() {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('登出時發生例外：', e);
+    } finally {
+      window.location.href = "STS_Home.html";
+    }
+  }
+</script>
 </head>
 <body>
 

@@ -221,6 +221,7 @@ const i18n = {
     'lbl-complete-time': '完成時間',
     'lbl-total-sts': '總坐站次數',
     'lbl-time-bonus': '時間獎勵',
+    'lbl-average-score': '平均分數',
     'lbl-avg-score': '平均每次',
     'cr-base': '基礎（每10分=1枚）',
     'cr-diff': '難度倍率',
@@ -627,6 +628,7 @@ const i18n = {
     'lbl-complete-time': 'Clear Time',
     'lbl-total-sts': 'Total STS Reps',
     'lbl-time-bonus': 'Time Bonus',
+    'lbl-average-score': 'Average Score',
     'lbl-avg-score': 'Avg per Rep',
     'cr-base': 'Base (1 Coin / 10 Pts)',
     'cr-diff': 'Difficulty Multiplier',
@@ -1252,31 +1254,48 @@ function _uid(){ return (window.currentPlayer && window.currentPlayer.id) ? wind
 function getSaveKey(){ return 'posture123_save_v2_' + _uid(); }
 function getLBKey(){ return 'posture123_lb_v2_' + _uid(); }
 function loadSave(){try{return JSON.parse(localStorage.getItem(getSaveKey())||'{}')}catch{return{}}}
-function writeSave(d){localStorage.setItem(getSaveKey(),JSON.stringify(d))}
+// 只寫本機、不觸發同步。用於「用資料庫的存檔覆蓋本機」這種情境，避免多一次無意義的網路來回。
+function _writeSaveLocalOnly(d){ localStorage.setItem(getSaveKey(), JSON.stringify(d)); }
+// 一般用途：寫本機 + 排程一次同步到後端。任務、成就、擁有道具、簽到、金幣...等只要是
+// 透過 writeSave() 存的東西，都會自動一起同步，不用每個地方各自呼叫同步函式。
+function writeSave(d){
+  _writeSaveLocalOnly(d);
+  scheduleSaveSync(d);
+}
 function getCoins(){return loadSave().coins||0}
-function addCoins(n){const s=loadSave();s.coins=(s.coins||0)+n;writeSave(s);updateCoinUI();syncCoinsToServer(s.coins)}
-function spendCoins(n){const s=loadSave();if((s.coins||0)<n)return false;s.coins-=n;writeSave(s);updateCoinUI();syncCoinsToServer(s.coins);return true}
+function addCoins(n){const s=loadSave();s.coins=(s.coins||0)+n;writeSave(s);updateCoinUI()}
+function spendCoins(n){const s=loadSave();if((s.coins||0)<n)return false;s.coins-=n;writeSave(s);updateCoinUI();return true}
 function isOwned(id){return(loadSave().owned||[]).includes(id)}
 function ownItem(id){const s=loadSave();s.owned=s.owned||[];if(!s.owned.includes(id))s.owned.push(id);writeSave(s)}
 function getEquipped(cat){return loadSave().equipped?.[cat]||null}
 function setEquipped(cat,id){const s=loadSave();s.equipped=s.equipped||{};s.equipped[cat]=id;writeSave(s)}
 function updateCoinUI(){const c=getCoins();document.getElementById('coin-count').textContent=c.toLocaleString();const sc=document.getElementById('shop-coin-count');if(sc)sc.textContent=c.toLocaleString()}
 
-// 把目前金幣數同步寫回 Supabase 的 profiles 表，讓玩家換裝置登入也能看到一樣的金幣。
-// 這裡故意不 await，避免每次加減金幣都卡住畫面；失敗只在 console 留紀錄，不影響本機遊戲體驗。
-function syncCoinsToServer(coins){
-  if (!window.currentPlayer || !window.supabaseClient) return;
-  window.supabaseClient
-    .from('profiles')
-    .update({ coins })
-    .eq('id', window.currentPlayer.id)
-    .then(({ error }) => {
-      if (error) {
-        console.error('金幣同步到伺服器失敗：', error.message);
-      } else {
-        window.currentPlayer.coins = coins;
+// 把整包本機存檔（金幣、擁有道具、任務、成就、簽到紀錄...）同步寫回後端資料庫，
+// 讓玩家換裝置登入也能還原一樣的進度。用 debounce 是因為短時間內可能連續觸發多次
+// writeSave（例如結算畫面一次更新好幾項任務進度），避免一口氣打好幾次 API。
+let _saveSyncTimer = null;
+function scheduleSaveSync(d){
+  if (!window.currentPlayer) return; // 還沒登入完成就先不同步，等 playerReady later 再說
+  clearTimeout(_saveSyncTimer);
+  _saveSyncTimer = setTimeout(() => syncSaveToServer(d), 600);
+}
+function syncSaveToServer(save){
+  if (!window.currentPlayer) return;
+  fetch('/api/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ save })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        console.error('進度同步到伺服器失敗：', data.message);
+      } else if (typeof save.coins === 'number') {
+        window.currentPlayer.coins = save.coins;
       }
-    });
+    })
+    .catch(e => console.error('進度同步發生例外：', e));
 }
 
 const ALL_CHARS=[...BASE_CHARS,...SHOP_CHARS];
@@ -2904,6 +2923,7 @@ function triggerControlTrainingEnd(){
   if(gState==='win'||gState==='over') return;
   gState='win'; detecting=false;
   stopVideoRecording(null); // 第一版控制訓練只產生前端報告，不啟動 Heavy。
+  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   const avgScore=controlSessionReps.length?Math.round(controlSessionReps.reduce((a,r)=>a+r.controlScore,0)/controlSessionReps.length):0;
   showOverlay('✅', selMode==='controlled_sit'?'控制坐下完成':'腳跟控制完成', '本次分析由前端 MediaPipe Full 即時資料產生。', true, [
@@ -3170,6 +3190,14 @@ function disconnectPhoneCam(){
 }
 
 
+/* ── 遊戲結束後停止攝影機（0917 版本先合併；手機鏡頭再玩一次的 lifecycle 後續再調整）── */
+function stopCameraAfterGameEnd(){
+  if (videoElement && videoElement.srcObject) {
+    videoElement.srcObject.getTracks().forEach(t => t.stop());
+    videoElement.srcObject = null;
+  }
+}
+
 /* ── GAME EVENTS ── */
 function triggerCaught(msg){
   if(gState==='over')return;
@@ -3183,6 +3211,7 @@ function triggerCaught(msg){
       mode:selMode,
       difficulty:selDiffKey
     });
+  stopCameraAfterGameEnd();
   stopBGM();
   ensureAudio();
   playSfx('caught');
@@ -3199,7 +3228,7 @@ function triggerCaught(msg){
     setTimeout(()=>{rf.style.transition=''},600);
   }
 
-  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
+  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
   triggerGameDiagnosis();
 }
 
@@ -3215,9 +3244,10 @@ function triggerWin(){
       mode:selMode,
       difficulty:selDiffKey
     });
+  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3227,6 +3257,7 @@ function triggerStoryLevelClear(title, storyText){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
+  stopCameraAfterGameEnd();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3246,6 +3277,7 @@ function triggerRhythmEnd(stats){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
+  stopCameraAfterGameEnd();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3278,9 +3310,10 @@ function triggerTimedEnd(){
       mode:selMode,
       difficulty:selDiffKey
     });
+  stopCameraAfterGameEnd();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'timeup',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-avg-score')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-average-score')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -4201,32 +4234,22 @@ window.addEventListener('DOMContentLoaded', async () => {
   // 等待 index.html 裡的登入檢查與玩家資料抓取完成（見 window.playerReady）
   const player = window.playerReady ? await window.playerReady : null;
 
-  const s = loadSave();
   if (player) {
-    if (!player.starter_given) {
-      // 這個帳號從沒領過新手金幣：發 1000 並寫回資料庫記錄「已領過」
-      s.coins = (player.coins || 0) + 1000;
-      s.starterGiven = true;
-      writeSave(s);
-      const { error } = await window.supabaseClient
-        .from('profiles')
-        .update({ coins: s.coins, starter_given: true })
-        .eq('id', player.id);
-      if (!error) {
-        player.coins = s.coins;
-        player.starter_given = true;
-      }
-    } else {
-      // 已經領過：用資料庫存的金幣覆蓋本機，確保跨裝置看到一致的數字
-      s.coins = player.coins || 0;
+    // 用資料庫存的整包進度（金幣、擁有道具、任務、成就、簽到...）覆蓋本機，
+    // 確保同一帳號在任何裝置登入都看到一致的進度。
+    // 用 _writeSaveLocalOnly 而非 writeSave，避免「剛從資料庫讀出來又馬上寫回去」這種多餘的同步。
+    const serverSave = (player.save && typeof player.save === 'object') ? player.save : {};
+    if (typeof serverSave.coins !== 'number') serverSave.coins = player.coins || 0;
+    serverSave.starterGiven = true;
+    _writeSaveLocalOnly(serverSave);
+  } else {
+    // 沒有登入系統（理論上不會發生，因為 index.html 會擋掉未登入者），保留原本本機邏輯
+    const s = loadSave();
+    if (!s.starterGiven) {
+      s.coins = (s.coins || 0) + 1000;
       s.starterGiven = true;
       writeSave(s);
     }
-  } else if (!s.starterGiven) {
-    // 沒有登入系統（理論上不會發生，因為 index.html 會擋掉未登入者），保留原本本機邏輯
-    s.coins = (s.coins || 0) + 1000;
-    s.starterGiven = true;
-    writeSave(s);
   }
 
   initParticles();
@@ -4492,7 +4515,13 @@ let counter = 0;
 let calibTimerId = null;
 let userStandHipBaseline = null;
 let calibStage = 0;             // 0: 定位, 1: 站起+墊腳尖, 2: 坐下, 3: 完成
-let calibHoldTime = 0;          // 動作維持時間計時器
+let calibHoldTime = 0;          // 動作維持時間計時器（單位：真實秒數）
+let lastCalibTickTs = null;     // 上一次校正更新的時間戳，用來換算真實經過秒數
+
+// 校正流程秒數沿用目前既有 protocol；只修正計時方式，不改訓練流程。
+const CALIB_HOLD_SIT_SEC = 3.0;
+const CALIB_HOLD_STAND_SEC = 2.0;
+const CALIB_HOLD_SIT_BACK_SEC = 3.0;
 let calibMaxHipY = null;        // 坐下時的骨盆高度 (數值最大 = 螢幕最低點 = 椅面位置)
 let calibMinHipY = null;        // 墊腳尖時的骨盆高度 (數值最小 = 螢幕最高點)
 let calibratedHeelMaxAngle = null; // 校正 Stage 1 墊腳尖時取得的最大 Heel–Toe angle
@@ -4591,6 +4620,7 @@ function launchGameWithCalibration() {
   // 初始化校正變數
   calibStage = 0;
   calibHoldTime = 0;
+  lastCalibTickTs = null;
   calibMaxHipY = null;
   calibMinHipY = null;
   calibratedHeelMaxAngle = null;
@@ -4627,6 +4657,16 @@ function checkCalibrationPosition(landmarks) {
   const boxText = document.getElementById('calib-text');
   const calibBox = document.getElementById('calib-box');
   const timerText = document.getElementById('calib-timer');
+
+  // 用真實時間差累加校正維持時間，避免 requestAnimationFrame 幀率不同造成校正過快。
+  const nowTs = performance.now();
+  let calibDt = 0;
+  if (lastCalibTickTs !== null) {
+    calibDt = (nowTs - lastCalibTickTs) / 1000;
+    // 切換分頁或掉幀時限制單次累積量，避免一次跳過太多進度。
+    calibDt = Math.min(calibDt, 0.1);
+  }
+  lastCalibTickTs = nowTs;
   
   // 強制隱藏原本會擋住畫面的巨大計時文字
   if (timerText) timerText.style.display = 'none';
@@ -4734,7 +4774,7 @@ function checkCalibrationPosition(landmarks) {
     case 0:
       updateTextAndSpeak(getText('calib-step-sit'), getText('speech-hold-sit'));
       if (isSitting) {
-        calibHoldTime += 0.1;
+        calibHoldTime += calibDt;
         if (calibBox) calibBox.style.borderColor = "rgba(0, 255, 170, 0.8)";
       } else {
         calibHoldTime = 0;
@@ -4742,9 +4782,9 @@ function checkCalibrationPosition(landmarks) {
       }     
       
       // 呼叫 UI 更新
-      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, 3, isSitting ? '#87a07c' : '#FFAA00');
+      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, CALIB_HOLD_SIT_SEC, isSitting ? '#87a07c' : '#FFAA00');
       
-      if (calibHoldTime >= 3) {
+      if (calibHoldTime >= CALIB_HOLD_SIT_SEC) {
         calibMaxHipY = curHipY; 
         calibTopShoulderY = curShoulderY; 
         calibStage = 1;
@@ -4759,7 +4799,7 @@ function checkCalibrationPosition(landmarks) {
       if (calibBox) calibBox.style.borderColor = "rgba(64, 144, 255, 0.9)";
       
       if (curHipY !== null && calibMaxHipY !== null && curHipY < (calibMaxHipY - 20)) {
-        calibHoldTime += 0.1;
+        calibHoldTime += calibDt;
         if (calibMinHipY === null || curHipY < calibMinHipY) {
           calibMinHipY = curHipY;
           userStandHipBaseline = curHipY; 
@@ -4770,9 +4810,9 @@ function checkCalibrationPosition(landmarks) {
         }
       }
 
-      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, 2, '#4090FF');
+      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, CALIB_HOLD_STAND_SEC, '#4090FF');
 
-      if (calibHoldTime >= 2) { 
+      if (calibHoldTime >= CALIB_HOLD_STAND_SEC) { 
         calibStage = 2;
         calibHoldTime = 0;
         if (typeof playSfx === 'function') playSfx('green');
@@ -4790,13 +4830,13 @@ function checkCalibrationPosition(landmarks) {
         let shoulderPassed = (curShoulderY !== null && calibTopShoulderY !== null && curShoulderY > (calibTopShoulderY - 60));
         
         if (hipPassed || shoulderPassed) {
-          calibHoldTime += 0.1;
+          calibHoldTime += calibDt;
           if (curHipY !== null && calibMaxHipY !== null && curHipY > calibMaxHipY) calibMaxHipY = curHipY;
         }
 
-        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, 3, '#FFAA00');
+        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, CALIB_HOLD_SIT_BACK_SEC, '#FFAA00');
 
-        if (calibHoldTime >= 3) {
+        if (calibHoldTime >= CALIB_HOLD_SIT_BACK_SEC) {
           calibStage = 3; 
         }      
       }    

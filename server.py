@@ -16,7 +16,9 @@ from pathlib import Path
 from typing import Any
 
 import cv2
-from flask import Flask, jsonify, request, send_from_directory, url_for
+import pymysql
+from flask import Flask, jsonify, request, send_from_directory, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from analysis import AnalysisError, analyze_video_with_heavy
 
@@ -27,6 +29,22 @@ RECORDS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, static_folder=None)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
+# Flask session cookie 簽章 key；正式部署請用 STS_SECRET_KEY 環境變數覆蓋。
+app.secret_key = os.environ.get("STS_SECRET_KEY", "dev-secret-change-me")
+
+# MySQL 連線設定。團隊可透過 STS_DB_* 環境變數使用各自的本機/部署資料庫。
+DB_CONFIG = {
+    "host": os.environ.get("STS_DB_HOST", "127.0.0.1"),
+    "user": os.environ.get("STS_DB_USER", "root"),
+    "password": os.environ.get("STS_DB_PASSWORD", "sts115"),
+    "database": os.environ.get("STS_DB_NAME", "sts_game"),
+    "charset": "utf8mb4",
+    "cursorclass": pymysql.cursors.DictCursor,
+}
+
+
+def get_db():
+    return pymysql.connect(**DB_CONFIG)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("sts-server")
@@ -191,6 +209,186 @@ def _session_info_from_form() -> dict[str, Any]:
         "language": str(request.form.get("language", "zh-TW")),
         "calibration_integrated": False,
     }
+
+
+@app.post("/api/register")
+def api_register():
+    data = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not username or not email or not password:
+        return jsonify({"success": False, "message": "請填寫完整資料"}), 400
+    if len(password) < 6:
+        return jsonify({"success": False, "message": "密碼至少需要 6 個字元"}), 400
+
+    password_hash = generate_password_hash(password)
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM users WHERE email=%s OR username=%s",
+                (email, username),
+            )
+            if cur.fetchone():
+                return jsonify({"success": False, "message": "帳號或信箱已被使用"}), 409
+
+            cur.execute(
+                "INSERT INTO users (username, email, password_hash, coins, starter_given) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (username, email, password_hash, 1000, True),
+            )
+            conn.commit()
+            user_id = cur.lastrowid
+    finally:
+        conn.close()
+
+    session["user_id"] = user_id
+    return jsonify({
+        "success": True,
+        "user": {"id": user_id, "username": username, "email": email, "coins": 1000, "save": {}},
+    })
+
+
+@app.post("/api/login")
+def api_login():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "請輸入電子郵件與密碼"}), 400
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+            user = cur.fetchone()
+    finally:
+        conn.close()
+
+    if not user or not check_password_hash(user["password_hash"], password):
+        return jsonify({"success": False, "message": "帳號或密碼錯誤"}), 401
+
+    try:
+        save = json.loads(user["save_data"]) if user["save_data"] else {}
+    except (TypeError, ValueError):
+        save = {}
+
+    session["user_id"] = user["id"]
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "coins": user["coins"],
+            "save": save,
+        },
+    })
+
+
+@app.post("/api/logout")
+def api_logout():
+    session.pop("user_id", None)
+    return jsonify({"success": True})
+
+
+@app.get("/api/me")
+def api_me():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, username, email, coins, save_data FROM users WHERE id=%s",
+                (user_id,),
+            )
+            user = cur.fetchone()
+    finally:
+        conn.close()
+
+    if not user:
+        session.pop("user_id", None)
+        return jsonify({"success": False, "message": "帳號不存在"}), 401
+
+    try:
+        save = json.loads(user["save_data"]) if user["save_data"] else {}
+    except (TypeError, ValueError):
+        save = {}
+
+    return jsonify({
+        "success": True,
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "coins": user["coins"],
+            "save": save,
+        },
+    })
+
+
+@app.post("/api/coins")
+def api_update_coins():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+
+    data = request.get_json(silent=True) or {}
+    try:
+        coins = int(data.get("coins"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "coins 必須是數字"}), 400
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET coins=%s WHERE id=%s", (coins, user_id))
+            conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True, "coins": coins})
+
+
+@app.post("/api/save")
+def api_save():
+    """把整包本機存檔（金幣、擁有道具、任務、成就、簽到紀錄...）同步寫回資料庫，
+    讓同一個帳號換裝置登入時可以還原完整進度。"""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+
+    data = request.get_json(silent=True) or {}
+    save = data.get("save")
+    if not isinstance(save, dict):
+        return jsonify({"success": False, "message": "save 必須是物件"}), 400
+
+    save_json = json.dumps(save, ensure_ascii=False)
+    # coins 額外拉出來更新獨立欄位，方便之後做排行榜等查詢；save_data 裡也會留一份完整備份。
+    try:
+        coins = int(save.get("coins", 0))
+    except (TypeError, ValueError):
+        coins = 0
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET save_data=%s, coins=%s WHERE id=%s",
+                (save_json, coins, user_id),
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+    return jsonify({"success": True})
 
 
 @app.get("/")
