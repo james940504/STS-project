@@ -221,6 +221,7 @@ const i18n = {
     'lbl-complete-time': '完成時間',
     'lbl-total-sts': '總坐站次數',
     'lbl-time-bonus': '時間獎勵',
+    'cr-time': '時間獎勵倍率',
     'lbl-avg-score': '平均每次',
     'cr-base': '基礎（每10分=1枚）',
     'cr-diff': '難度倍率',
@@ -627,6 +628,7 @@ const i18n = {
     'lbl-complete-time': 'Clear Time',
     'lbl-total-sts': 'Total STS Reps',
     'lbl-time-bonus': 'Time Bonus',
+    'cr-time': 'Time Bonus Multiplier',
     'lbl-avg-score': 'Avg per Rep',
     'cr-base': 'Base (1 Coin / 10 Pts)',
     'cr-diff': 'Difficulty Multiplier',
@@ -1059,19 +1061,74 @@ async function sendAIMessage() {
 }
 
 /* ── 遊戲設定核心邏輯：音效、粒子 ── */
-function openSettings() {
+function openSettings(fromGame = false) {
   applySettingsToUI();
   const modal = document.getElementById('ov-settings');
   if (modal) modal.classList.remove('off');
+  const lobbyActions = document.getElementById('set-lobby-actions');
+  const gameActions = document.getElementById('set-game-actions');
+  if (lobbyActions) lobbyActions.style.display = fromGame ? 'none' : 'flex';
+  if (gameActions) gameActions.style.display = fromGame ? 'flex' : 'none';
 }
 
-/* 遊戲畫面右上角設定鍵專用：先暫停遊戲，再打開跟主選單一致的設定面板 */
+/* 遊戲畫面右上角設定鍵專用：先暫停遊戲，再打開跟主選單一致的設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
 function openInGameSettings() {
   if (gState === 'playing') {
     pauseGame();
     settingsPausedGame = true;
   }
-  openSettings();
+  openSettings(true);
+}
+
+/* 設定面板裡的「登出」：只會在大廳（主選單）開啟設定時看得到 */
+async function logoutFromSettings() {
+  const confirmMsg = (gameSettings.lang === 'en') ? 'Log out?' : '確定要登出嗎？';
+  if (!confirm(confirmMsg)) return;
+  ensureAudio(); playSfx('click');
+  try {
+    if (window.supabaseClient && window.supabaseClient.auth && typeof window.supabaseClient.auth.signOut === 'function') {
+      await window.supabaseClient.auth.signOut();
+    }
+  } catch (e) {
+    console.error('登出失敗：', e);
+  }
+  window.currentPlayer = null;
+  location.reload();
+}
+
+/* 設定面板裡的「再玩一次」：只在遊戲進行中開啟設定時看得到，關掉設定與暫停畫面後直接重開一局 */
+function restartFromSettings() {
+  settingsPausedGame = false; // 我們要直接重開，不要讓 closeSettings() 的邏輯把舊的一局恢復
+  const modal = document.getElementById('ov-settings');
+  if (modal) modal.classList.add('off');
+  document.getElementById('ov-pause').classList.remove('on');
+  isPaused = false;
+  ensureAudio(); playSfx('click');
+  const liveStream = videoElement?.srcObject && videoElement.srcObject.getVideoTracks().some(t => t.readyState === 'live');
+  if (!liveStream || !poseLandmarker) { launchGame(); return; }
+  resetGameState();
+  gState = 'ready';
+  detecting = true;
+  lastFrame = performance.now();
+  if (detectLoopId) cancelAnimationFrame(detectLoopId);
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  detectLoopId = requestAnimationFrame(detectLoopMP);
+  gameLoopId = requestAnimationFrame(gameLoop);
+  countdownStart(beginPlay);
+}
+
+/* 設定面板裡的「退出遊戲回大廳」：只在遊戲進行中開啟設定時看得到 */
+function quitToLobbyFromSettings() {
+  settingsPausedGame = false;
+  const modal = document.getElementById('ov-settings');
+  if (modal) modal.classList.add('off');
+  document.getElementById('ov-pause').classList.remove('on');
+  isPaused = false;
+  ensureAudio(); playSfx('click');
+  if (typeof clearActiveChallenge === 'function') clearActiveChallenge();
+  if (typeof onRhythmGameEnd === 'function') onRhythmGameEnd();
+  cleanupGame();
+  goTo('scr-menu');
 }
 
 function closeSettings() {
@@ -2096,7 +2153,7 @@ function switchLight(to){
     speak(getText('light-green-ui')); 
   }
   else if(to==='yellow'){
-    lightDur=1.5;dollTgt=90;ensureAudio();playSfx('yellow');
+    lightDur=2.2;dollTgt=90;ensureAudio();playSfx('yellow');
     speak(getText('light-yellow-ui'), 1.3); 
   }
   else{
@@ -2904,6 +2961,7 @@ function triggerControlTrainingEnd(){
   if(gState==='win'||gState==='over') return;
   gState='win'; detecting=false;
   stopVideoRecording(null); // 第一版控制訓練只產生前端報告，不啟動 Heavy。
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   const avgScore=controlSessionReps.length?Math.round(controlSessionReps.reduce((a,r)=>a+r.controlScore,0)/controlSessionReps.length):0;
   showOverlay('✅', selMode==='controlled_sit'?'控制坐下完成':'腳跟控制完成', '本次分析由前端 MediaPipe Full 即時資料產生。', true, [
@@ -3170,6 +3228,15 @@ function disconnectPhoneCam(){
 }
 
 
+function releaseCameraNow(){
+  if (videoElement && videoElement.srcObject) {
+    videoElement.srcObject.getTracks().forEach(t => t.stop());
+    videoElement.srcObject = null;
+  }
+  const camMsg = document.getElementById('cam-msg');
+  if (camMsg) camMsg.style.display = '';
+}
+
 /* ── GAME EVENTS ── */
 function triggerCaught(msg){
   if(gState==='over')return;
@@ -3183,6 +3250,7 @@ function triggerCaught(msg){
       mode:selMode,
       difficulty:selDiffKey
     });
+  releaseCameraNow();
   stopBGM();
   ensureAudio();
   playSfx('caught');
@@ -3199,14 +3267,33 @@ function triggerCaught(msg){
     setTimeout(()=>{rf.style.transition=''},600);
   }
 
-  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
+  setTimeout(()=>{if(gState!=='over')return;showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
   triggerGameDiagnosis();
+}
+
+/* ── 時間獎勵倍率（金幣用，不影響分數） ──
+   只在「經典通關」模式且成功通關時生效：完成得越快，金幣倍率越高。
+   秒數門檻依各難度的燈號步調抓一個合理區間，之後可依實際遊玩數據再微調，
+   改這個表就好，不用動下面的計算邏輯。 */
+const TIME_BONUS_TIERS = {
+  easy:   [{ withinSec: 90,  mul: 2.0 }, { withinSec: 150, mul: 1.5 }, { withinSec: 220, mul: 1.2 }],
+  normal: [{ withinSec: 75,  mul: 2.0 }, { withinSec: 130, mul: 1.5 }, { withinSec: 190, mul: 1.2 }],
+  hard:   [{ withinSec: 60,  mul: 2.0 }, { withinSec: 110, mul: 1.5 }, { withinSec: 160, mul: 1.2 }]
+};
+function getTimeBonusMultiplier(diffKey, elapsedSec, mode, result){
+  if(mode !== 'classic' || result !== 'win') return 1;
+  const tiers = TIME_BONUS_TIERS[diffKey] || TIME_BONUS_TIERS.normal;
+  for(const t of tiers){ if(elapsedSec <= t.withinSec) return t.mul; }
+  return 1;
 }
 
 function triggerWin(){
   if(isControlMode()){triggerControlTrainingEnd();return;}
   gState='win';detecting=false;
-  const bonus=Math.max(0,300-elapsed)*8;score+=bonus;
+  // 💡 修正：這裡以前會把時間獎勵直接加進 score，導致「最終分數」跟玩家實際拿到的姿勢分數對不起來
+  //    （快速通關時分數會被灌到好幾倍）。現在 score 維持玩家真正打出來的分數，
+  //    時間快慢改成只影響金幣倍率（見 calcCoins() 的 timeMul），不再動 score 本身。
+  const timeMul = getTimeBonusMultiplier(selDiffKey, elapsed, selMode, 'win');
   stopVideoRecording({
       result:'win',
       gameScore:Math.round(score),
@@ -3215,9 +3302,10 @@ function triggerWin(){
       mode:selMode,
       difficulty:selDiffKey
     });
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{if(gState!=='win')return;showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:timeMul>1?('×'+timeMul.toFixed(1)+' 🪙'):'—',l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3227,6 +3315,7 @@ function triggerStoryLevelClear(title, storyText){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
+  releaseCameraNow();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3246,6 +3335,7 @@ function triggerRhythmEnd(stats){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
+  releaseCameraNow();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3278,9 +3368,10 @@ function triggerTimedEnd(){
       mode:selMode,
       difficulty:selDiffKey
     });
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'timeup',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-avg-score')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{if(gState!=='over')return;showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-avg-score')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3289,8 +3380,9 @@ function calcCoins(){
   const base=Math.floor(score/100);
   const diffMul=selDiff.coinMul;
   const modeMul=MODES[selMode].coinMul;
+  const timeMul=getTimeBonusMultiplier(selDiffKey, elapsed, selMode, gState);
   const bonus=(score>=1000?30:score>=500?10:0)+(gState==='win'&&selMode==='classic'?50:0);
-  return{base,diffMul,modeMul,bonus,total:Math.max(0,Math.round(base*diffMul*modeMul)+bonus)};
+  return{base,diffMul,modeMul,timeMul,bonus,total:Math.max(0,Math.round(base*diffMul*modeMul*timeMul)+bonus)};
 }
 
 function collectCoinsAndContinue(){
@@ -3299,7 +3391,7 @@ function collectCoinsAndContinue(){
   const input = document.getElementById('name-input');
   if(input) input.value='';
   
-  const {base,diffMul,modeMul,bonus,total}=calcCoins();
+  const {base,diffMul,modeMul,timeMul,bonus,total}=calcCoins();
   document.getElementById('ov-result').classList.remove('on');
   document.getElementById('cr-amount').textContent='+'+total+'🪙';
   
@@ -3311,6 +3403,7 @@ function collectCoinsAndContinue(){
     <div class="cr-row">${getText('cr-base')}：<span>+${base}🪙</span></div>
     <div class="cr-row">${getText('cr-diff')}（${diffName}）：<span>×${diffMul}</span></div>
     <div class="cr-row">${getText('cr-mode')}（${modeName}）：<span>×${modeMul.toFixed(1)}</span></div>
+    ${timeMul>1?`<div class="cr-row" style="color:var(--gold);">${getText('cr-time')}：<span>×${timeMul.toFixed(1)}</span></div>`:''}
     ${bonus>0?`<div class="cr-row">${getText('cr-bonus')}：<span>+${bonus}🪙</span></div>`:''}
     <div class="cr-row" style="color:var(--gold);font-weight:800;">${getText('cr-total-held')}：<span>${(getCoins()+total).toLocaleString()}🪙</span></div>`;
   document.getElementById('coin-reward').classList.add('on');
@@ -3407,7 +3500,6 @@ function showOverlay(icon,title,sub,buttons,stats=[]){
   document.getElementById('ov-icon').textContent=icon;document.getElementById('ov-title').textContent=title;document.getElementById('ov-sub').textContent=sub;
   document.getElementById('ov-stats').innerHTML=stats.map(s=>`<div class="sbox"><div class="sv">${s.v}</div><div class="sl">${s.l}</div></div>`).join('');
   ov.querySelectorAll('.ov-btns .btn').forEach(b=>b.style.display=buttons?'':'none');
-  document.getElementById('name-wrap').style.display=buttons?'flex':'none';
   ov.classList.add('on');
 }
 
@@ -4492,7 +4584,11 @@ let counter = 0;
 let calibTimerId = null;
 let userStandHipBaseline = null;
 let calibStage = 0;             // 0: 定位, 1: 站起+墊腳尖, 2: 坐下, 3: 完成
-let calibHoldTime = 0;          // 動作維持時間計時器
+let calibHoldTime = 0;          // 動作維持時間計時器（單位：真實秒數）
+let lastCalibTickTs = null;     // 上一次計時的時間戳，用來換算成真實秒數
+const CALIB_HOLD_SIT_SEC = 3.5;
+const CALIB_HOLD_STAND_SEC = 2.5;
+const CALIB_HOLD_SIT_BACK_SEC = 3.5;
 let calibMaxHipY = null;        // 坐下時的骨盆高度 (數值最大 = 螢幕最低點 = 椅面位置)
 let calibMinHipY = null;        // 墊腳尖時的骨盆高度 (數值最小 = 螢幕最高點)
 let calibratedHeelMaxAngle = null; // 校正 Stage 1 墊腳尖時取得的最大 Heel–Toe angle
@@ -4591,6 +4687,7 @@ function launchGameWithCalibration() {
   // 初始化校正變數
   calibStage = 0;
   calibHoldTime = 0;
+  lastCalibTickTs = null;
   calibMaxHipY = null;
   calibMinHipY = null;
   calibratedHeelMaxAngle = null;
@@ -4627,7 +4724,18 @@ function checkCalibrationPosition(landmarks) {
   const boxText = document.getElementById('calib-text');
   const calibBox = document.getElementById('calib-box');
   const timerText = document.getElementById('calib-timer');
-  
+
+  // 💡 用真實時間差 (秒) 來累加維持時間，而不是每次呼叫固定 +0.1，
+  // 這樣不管螢幕更新率是 30fps 還是 60fps，校正所需時間都會是實際的秒數。
+  const nowTs = performance.now();
+  let calibDt = 0;
+  if (lastCalibTickTs !== null) {
+    calibDt = (nowTs - lastCalibTickTs) / 1000;
+    // 切分頁籤/掉幀後可能出現異常大的 dt，限制上限避免一次跳太多
+    calibDt = Math.min(calibDt, 0.1);
+  }
+  lastCalibTickTs = nowTs;
+
   // 強制隱藏原本會擋住畫面的巨大計時文字
   if (timerText) timerText.style.display = 'none';
 
@@ -4734,7 +4842,7 @@ function checkCalibrationPosition(landmarks) {
     case 0:
       updateTextAndSpeak(getText('calib-step-sit'), getText('speech-hold-sit'));
       if (isSitting) {
-        calibHoldTime += 0.1;
+        calibHoldTime += calibDt;
         if (calibBox) calibBox.style.borderColor = "rgba(0, 255, 170, 0.8)";
       } else {
         calibHoldTime = 0;
@@ -4742,9 +4850,9 @@ function checkCalibrationPosition(landmarks) {
       }     
       
       // 呼叫 UI 更新
-      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, 3, isSitting ? '#87a07c' : '#FFAA00');
+      updateCalibrationUI(getText('calib-center-sit'), calibHoldTime, CALIB_HOLD_SIT_SEC, isSitting ? '#87a07c' : '#FFAA00');
       
-      if (calibHoldTime >= 3) {
+      if (calibHoldTime >= CALIB_HOLD_SIT_SEC) {
         calibMaxHipY = curHipY; 
         calibTopShoulderY = curShoulderY; 
         calibStage = 1;
@@ -4759,7 +4867,7 @@ function checkCalibrationPosition(landmarks) {
       if (calibBox) calibBox.style.borderColor = "rgba(64, 144, 255, 0.9)";
       
       if (curHipY !== null && calibMaxHipY !== null && curHipY < (calibMaxHipY - 20)) {
-        calibHoldTime += 0.1;
+        calibHoldTime += calibDt;
         if (calibMinHipY === null || curHipY < calibMinHipY) {
           calibMinHipY = curHipY;
           userStandHipBaseline = curHipY; 
@@ -4770,9 +4878,9 @@ function checkCalibrationPosition(landmarks) {
         }
       }
 
-      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, 2, '#4090FF');
+      updateCalibrationUI(getText('calib-center-tiptoe'), calibHoldTime, CALIB_HOLD_STAND_SEC, '#4090FF');
 
-      if (calibHoldTime >= 2) { 
+      if (calibHoldTime >= CALIB_HOLD_STAND_SEC) { 
         calibStage = 2;
         calibHoldTime = 0;
         if (typeof playSfx === 'function') playSfx('green');
@@ -4790,13 +4898,13 @@ function checkCalibrationPosition(landmarks) {
         let shoulderPassed = (curShoulderY !== null && calibTopShoulderY !== null && curShoulderY > (calibTopShoulderY - 60));
         
         if (hipPassed || shoulderPassed) {
-          calibHoldTime += 0.1;
+          calibHoldTime += calibDt;
           if (curHipY !== null && calibMaxHipY !== null && curHipY > calibMaxHipY) calibMaxHipY = curHipY;
         }
 
-        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, 3, '#FFAA00');
+        updateCalibrationUI(getText('calib-center-sit-back'), calibHoldTime, CALIB_HOLD_SIT_BACK_SEC, '#FFAA00');
 
-        if (calibHoldTime >= 3) {
+        if (calibHoldTime >= CALIB_HOLD_SIT_BACK_SEC) {
           calibStage = 3; 
         }      
       }    

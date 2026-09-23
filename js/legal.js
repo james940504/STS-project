@@ -83,33 +83,35 @@ function renderLegalContent(mode) {
   // 4. 寫入內容
   el.innerHTML = (curLang === 'en') ? contentEn : contentZh;
 
-  // 5. 按鈕與模式切換
+  // 5. 勾選框永遠顯示（不再分 view / onboarding），勾選狀態 = 目前是否已同意
   const agreeRow = document.getElementById('legal-agree-row');
+  const checkbox = document.getElementById('legal-agree-checkbox');
+  if (!agreeRow || !checkbox) return;
+  agreeRow.style.display = 'flex';
+  checkbox.checked = hasAgreedToLegal();
+  updateLegalButtons();
+}
+
+/* 是否為「尚未同意」的狀態下打開視窗（決定要不要顯示「同意並開始使用」按鈕） */
+let legalOpenedUnagreed = false;
+
+/* 按鈕規則：
+   - 開啟時尚未同意，且現在已勾選 → 顯示「同意並開始使用」
+   - 其他情況 → 顯示「關閉」 */
+function updateLegalButtons() {
   const agreeBtn = document.getElementById('legal-agree-btn');
   const closeBtn = document.getElementById('legal-close-btn');
   const checkbox = document.getElementById('legal-agree-checkbox');
-  if (!agreeRow || !agreeBtn || !closeBtn || !checkbox) return;
-
-  // 💡【關鍵修復】如果沒有傳 mode，自動根據當前顯示狀態判定是 view 還是 onboarding
-  if (!mode) {
-    mode = (agreeRow.style.display !== 'none' && agreeRow.style.display !== '') ? 'onboarding' : 'view';
-  }
-
-  if (mode === 'view') {
-    agreeRow.style.display = 'none';
-    agreeBtn.style.display = 'none';
-    closeBtn.style.display = '';
-  } else {
-    agreeRow.style.display = 'flex';
-    agreeBtn.style.display = '';
-    closeBtn.style.display = 'none';
-  }
+  if (!agreeBtn || !closeBtn || !checkbox) return;
+  const showAgree = checkbox.checked && legalOpenedUnagreed;
+  agreeBtn.style.display = showAgree ? '' : 'none';
+  closeBtn.style.display = showAgree ? 'none' : '';
 }
-
 
 function openLegalOverlay(mode) {
   const modal = document.getElementById('ov-legal');
   if (!modal) return;
+  legalOpenedUnagreed = !hasAgreedToLegal();
   renderLegalContent(mode);
   modal.classList.remove('off');
 }
@@ -123,22 +125,119 @@ function closeLegalOverlay() {
 
 function agreeToLegal() {
   const checkbox = document.getElementById('legal-agree-checkbox');
-  const curLang = window.currentLang || localStorage.getItem('app_lang') || 'zh-TW';
 
   if (!checkbox || !checkbox.checked) {
-    if (typeof showToast === 'function') {
-      const toastMsg = (curLang === 'en')
-        ? 'Reminder: please read and check the box to agree to the Privacy & Safety Notice.'
-        : '提醒：請先閱讀並勾選同意隱私權與安全聲明';
-      showToast(toastMsg, 'var(--red)');
-    }
-  } else {
-    const s = loadSave();
-    s.legalConsent = { version: LEGAL_VERSION, agreedAt: Date.now() };
-    writeSave(s);
+    legalToast(legalText('remind'), 'var(--red)');
+    if (typeof playSfx === 'function') playSfx('click');
+    return;                                   // 未勾選：提醒後保持視窗開啟
   }
+  // 勾選當下其實已經存檔（見 onLegalCheckboxChange），這裡再確認一次
+  if (!hasAgreedToLegal()) saveLegalConsent(true);
   if (typeof playSfx === 'function') playSfx('click');
   closeLegalOverlay();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   同意狀態控管：未同意 → 主選單所有功能鎖定（隱私權按鈕除外）
+   ══════════════════════════════════════════════════════════════ */
+
+function legalLang() {
+  return (typeof gameSettings !== 'undefined' && gameSettings.lang)
+      || window.currentLang
+      || localStorage.getItem('app_lang')
+      || 'zh-TW';
+}
+
+const LEGAL_TEXT = {
+  'zh-TW': {
+    remind:  '提醒：請先閱讀並勾選同意隱私權與安全聲明',
+    locked:  '請先勾選同意隱私權與安全聲明，才能使用此功能',
+    agreed:  '已同意，現在可以開始使用了',
+    revoked: '已取消同意，需重新勾選同意才能使用遊戲功能'
+  },
+  'en': {
+    remind:  'Reminder: please read and check the box to agree to the Privacy & Safety Notice.',
+    locked:  'Please check the box to agree to the Privacy & Safety Notice before using this feature.',
+    agreed:  'Agreed. You can now use all features.',
+    revoked: 'Consent withdrawn. Features stay locked until you agree again.'
+  }
+};
+function legalText(key) {
+  const d = LEGAL_TEXT[legalLang()] || LEGAL_TEXT['zh-TW'];
+  return d[key];
+}
+
+/* showToast 的 z-index(9999) 比聲明視窗(10000)低，所以提示會被蓋住；這裡把剛建立的提示拉到最上層 */
+function legalToast(msg, color) {
+  if (typeof showToast !== 'function') return;
+  showToast(msg, color);
+  const t = document.body.lastElementChild;
+  if (t && t.style) t.style.zIndex = '10002';
+}
+
+function saveLegalConsent(agreed) {
+  const s = loadSave();
+  if (agreed) s.legalConsent = { version: LEGAL_VERSION, agreedAt: Date.now() };
+  else delete s.legalConsent;
+  writeSave(s);
+}
+
+/* 依同意狀態切換主選單的「鎖定」外觀（灰階 + 隱私權按鈕閃爍提示） */
+function applyConsentLock() {
+  document.body.classList.toggle('consent-locked', !hasAgreedToLegal());
+}
+
+/* 聲明視窗裡的勾選框：勾選 = 立刻同意並存檔；取消勾選 = 立刻撤銷，遊戲功能重新鎖定 */
+function onLegalCheckboxChange() {
+  const checkbox = document.getElementById('legal-agree-checkbox');
+  if (!checkbox) return;
+  if (typeof playSfx === 'function') playSfx('click');
+
+  if (checkbox.checked) {
+    saveLegalConsent(true);
+    legalToast(legalText('agreed'), 'var(--green)');
+  } else {
+    saveLegalConsent(false);
+    // 撤銷後：收起 AI 教練視窗，並確保回到主選單（例如從遊戲說明頁打開聲明再取消勾選）
+    const chat = document.getElementById('ai-chat-window');
+    if (chat) chat.classList.add('off');
+    const menu = document.getElementById('scr-menu');
+    if (menu && menu.classList.contains('off') && typeof goTo === 'function') goTo('scr-menu');
+    legalToast(legalText('revoked'), 'var(--yellow)');
+  }
+  applyConsentLock();
+  updateLegalButtons();
+}
+
+/* 攔截點擊（capture 階段，比按鈕自己的 onclick 更早）：
+   未同意時，主選單、右上角按鈕、AI 教練按鈕一律不執行，只跳提示。
+   帶有 data-consent-exempt 的元素（隱私權按鈕、底部隱私權連結）不受影響。 */
+let _lastLockedToast = 0;
+document.addEventListener('click', function (e) {
+  if (hasAgreedToLegal()) return;
+  const t = e.target;
+  if (!(t instanceof Element)) return;
+  if (!t.closest('#scr-menu, #sys-top-right, #ai-chat-btn')) return;
+  if (t.closest('[data-consent-exempt]')) return;
+  if (!t.closest('button, [onclick]')) return;      // 點到空白舞台不用提示
+
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const now = Date.now();
+  if (now - _lastLockedToast > 700) {
+    _lastLockedToast = now;
+    legalToast(legalText('locked'), 'var(--red)');
+  }
+}, true);
+
+/* 每次切換畫面後重新確認鎖定外觀（登入完成後存檔 key 可能改變） */
+if (typeof goTo === 'function') {
+  const _origGoTo = goTo;
+  window.goTo = function () {
+    const r = _origGoTo.apply(this, arguments);
+    applyConsentLock();
+    return r;
+  };
 }
 
 // 💡 補上：監聽語言切換事件，即時重新渲染條款視窗
@@ -151,8 +250,26 @@ window.addEventListener('languageChanged', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
+  const cb = document.getElementById('legal-agree-checkbox');
+  if (cb) cb.addEventListener('change', onLegalCheckboxChange);
+  applyConsentLock();
   if (!hasAgreedToLegal()) {
     openLegalOverlay('onboarding');
+  }
+
+  /* 登入資料載入完成後（window.playerReady，見 app.js）存檔 key 會從 guest 換成玩家帳號，
+     存檔內容也可能被伺服器上的進度取代 → 這時候要重新判斷一次同意狀態：
+     - 更新主選單的鎖定外觀
+     - 如果視窗只是因為「還沒載入到帳號存檔」才彈出來，而該帳號其實早就同意過，就自動關閉 */
+  if (window.playerReady && typeof window.playerReady.then === 'function') {
+    window.playerReady.then(() => {
+      applyConsentLock();
+      const modal = document.getElementById('ov-legal');
+      if (modal && !modal.classList.contains('off')) {
+        if (hasAgreedToLegal() && legalOpenedUnagreed) modal.classList.add('off');
+        else renderLegalContent();
+      }
+    }).catch(() => {});
   }
 });
 window.renderLegalContent = renderLegalContent;

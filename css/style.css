@@ -1237,3 +1237,453 @@ body.high-contrast .rhythm-tempo-card{border-width:3px;}
 .rhythm-judge-text.judge-good{color:var(--green);}
 .rhythm-judge-text.judge-miss{color:var(--red);}
 body.high-contrast #rhythm-hud{border-width:3px;}
+
+/* ==========================================================================
+   shop-theme.css — 商城木頭質感重製
+   只重新設計外觀，不改變任何 HTML 結構或 class 名稱：
+     #scr-shop、.shop-header、.shop-coins、.shop-tabs / .shop-tab、
+     #shop-grid 底下的 .shop-item（.shop-item-preview / -name / -desc / -cost、
+     .equipped-tag、.owned-tag）與購買按鈕（.shop-item-btn 系列）都沿用
+     app.js 的 renderShop() 產生的既有 class。
+   載入順序：放在 style.css／social.css 之後（同一層即可，靠選擇器優先度覆蓋）。
+   全部用 CSS 漸層畫木紋與燈光，沒有用到任何外部圖片，所以不需要額外素材。
+   ========================================================================== */
+
+:root {
+  --wood-dark:   #3a2114;
+  --wood-mid:    #6b3d20;
+  --wood-light:  #8a5a30;
+  --wood-panel:  #5a331d;
+  --wood-plank:  #4a2b18;
+  --gold:        #e8c15a;
+  --gold-bright: #ffe9a8;
+  --lantern-red: #7a1f1f;
+  --price-red:   #8a2020;
+}
+
+/* ---------- 整體背景：深木紋牆面 ----------
+   注意：#scr-shop 本身繼承 style.css 的 .scr（position:fixed; inset:0），
+   靠這個滿版鋪底色；這裡絕對不能再設 position，
+   不然會蓋掉 fixed，讓整個畫面版面坍塌。
+   木紋節疤改用一個內層 wrapper（.shop-wood-bg）來畫，不動 #scr-shop 本身的定位。 */
+#scr-shop {
+  padding: 18px 22px 26px;
+  gap: 14px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, var(--wood-mid), var(--wood-dark) 70%);
+}
+/* 木紋節疤裝飾（純 CSS 畫的橢圓漸層）：貼在 body 上，蓋在背景之上、內容之下 */
+#scr-shop::before {
+  content: "";
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 26px 10px at 12% 18%, rgba(0,0,0,.18), transparent 70%),
+    radial-gradient(ellipse 20px 8px at 80% 62%, rgba(0,0,0,.15), transparent 70%),
+    radial-gradient(ellipse 30px 12px at 55% 88%, rgba(0,0,0,.14), transparent 70%);
+  mix-blend-mode: multiply;
+}
+#scr-shop > * { position: relative; z-index: 1; }
+
+/* ---------- 頂部橫幅：商城標題 + 貨幣 ---------- */
+.shop-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 12px 22px;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, var(--wood-light), var(--wood-panel));
+  border: 3px solid #2a170d;
+  box-shadow: 0 4px 0 #2a170d, inset 0 2px 0 rgba(255,255,255,.15), inset 0 -8px 14px rgba(0,0,0,.35);
+}
+.shop-header .scr-title {
+  margin: 0;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 0 #2a170d, 0 0 14px rgba(255,220,140,.5);
+  font-weight: 900;
+}
+.shop-header .scr-title span { color: #fff; }
+
+.shop-coins {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-weight: 900;
+  font-size: 1.15em;
+  color: var(--gold-bright);
+  background: linear-gradient(180deg, #2a170d, #1a0f08);
+  border: 2px solid var(--gold);
+  border-radius: 30px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.6);
+}
+
+/* ---------- 左側分類：圓形木牌吊飾 ---------- */
+.shop-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.shop-tab {
+  padding: 10px 22px;
+  font-weight: 800;
+  color: #f2dcae;
+  background: radial-gradient(circle at 35% 30%, var(--wood-light), var(--wood-panel) 75%);
+  border: 3px solid #2a170d;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #2a170d, inset 0 2px 3px rgba(255,255,255,.2);
+  transition: transform .15s, box-shadow .15s, color .15s;
+}
+.shop-tab:hover { transform: translateY(-2px); }
+.shop-tab.active {
+  color: #2a170d;
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 75%);
+  border-color: #a5781f;
+  box-shadow: 0 3px 0 #a5781f, 0 0 16px rgba(255,220,140,.6), inset 0 2px 3px rgba(255,255,255,.5);
+}
+
+/* ---------- 商品格：吊掛在木架上的樣子 ---------- */
+#shop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));   /* 沿用 style.css 原本的 4 欄，不要跟它打架 */
+  gap: 26px 20px;
+  width: 100%;
+  max-width: 1530px;
+  padding: 10px 4px 4px;
+  overflow-y: auto;
+}
+
+.shop-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 34px 14px 16px;
+  border-radius: 16px 16px 10px 10px;
+  background: linear-gradient(180deg, #7a4a28, var(--wood-panel) 60%);
+  border: 3px solid #2a170d;
+  box-shadow:
+    0 6px 0 #2a170d,               /* 木架厚度 */
+    0 10px 14px rgba(0,0,0,.45),
+    inset 0 2px 0 rgba(255,255,255,.12);
+}
+/* 頂端垂下的木釘，掛著商品的感覺 */
+.shop-item::before {
+  content: "";
+  position: absolute;
+  top: -9px; left: 50%;
+  transform: translateX(-50%);
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #caa25a, #6b4a24 75%);
+  border: 2px solid #2a170d;
+  box-shadow: 0 3px 4px rgba(0,0,0,.4);
+}
+/* 聚光燈光暈，呼應參考圖商品上方的扇形光 */
+.shop-item::after {
+  content: "";
+  position: absolute;
+  top: 6px; left: 50%;
+  width: 130%; height: 90px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at top, rgba(255,224,150,.35), transparent 70%);
+  pointer-events: none;
+}
+
+.shop-item-preview {
+  position: relative;
+  z-index: 1;
+  width: 76px; height: 76px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 6px 8px rgba(0,0,0,.5));
+}
+.shop-item-preview canvas { max-width: 100%; max-height: 100%; }
+
+.shop-item-name {
+  position: relative; z-index: 1;
+  font-weight: 900;
+  color: #fff2d6;
+  text-shadow: 0 2px 0 #2a170d;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.shop-item-desc {
+  position: relative; z-index: 1;
+  font-size: .85em;
+  color: #d8c2a0;
+  text-align: center;
+  margin-bottom: 10px;
+  min-height: 1.4em;
+}
+
+/* 價格：紅色捲軸吊牌，對照參考圖的紅色 ¥ 按鈕 */
+.shop-item-cost {
+  position: relative; z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 18px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  color: var(--gold-bright);
+  background: linear-gradient(180deg, #a53434, var(--price-red));
+  border: 2px solid #3a1010;
+  border-radius: 20px;
+  box-shadow: 0 3px 0 #3a1010, inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* app.js 除了加 .equipped-tag/.owned-tag 這兩個小標籤，也會在卡片本身加 .equipped/.owned，
+   style.css 原本會讓它們變金框/綠框，這裡蓋掉，改成木架上更亮的「聚光燈」效果 */
+.shop-item.owned    { border-color: #7fbf5a; box-shadow: 0 6px 0 #2a170d, 0 10px 14px rgba(0,0,0,.45), 0 0 16px rgba(120,220,120,.25); }
+.shop-item.equipped { border-color: var(--gold); box-shadow: 0 6px 0 #2a170d, 0 10px 14px rgba(0,0,0,.45), 0 0 20px rgba(255,224,140,.55); }
+.shop-item:hover { transform: translateY(-3px); }
+
+.equipped-tag, .owned-tag {
+  position: absolute;
+  top: 8px; right: 8px;
+  z-index: 2;
+  font-size: .72em;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: #2a170d;
+}
+.equipped-tag { background: var(--gold-bright); box-shadow: 0 0 8px rgba(255,224,150,.7); }
+.owned-tag    { background: #c9c9c9; }
+
+/* 購買 / 裝備按鈕：延續紅色吊牌的質感，狀態用色相區分 */
+.shop-item-btn {
+  position: relative; z-index: 1;
+  width: 100%;
+  padding: 9px 0;
+  font-weight: 900;
+  border: 2px solid #2a170d;
+  border-radius: 22px;
+  cursor: pointer;
+  transition: transform .12s, filter .12s;
+}
+.shop-item-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+.shop-btn-buy {
+  color: var(--gold-bright);
+  background: linear-gradient(180deg, #a53434, var(--price-red));
+  box-shadow: 0 3px 0 #3a1010;
+}
+.shop-btn-equip {
+  color: #2a170d;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 3px 0 #a5781f;
+}
+.shop-btn-equipped {
+  color: #fff;
+  background: linear-gradient(180deg, #4a8a4a, #2e5c2e);
+  box-shadow: 0 3px 0 #1c3a1c;
+  cursor: default;
+}
+.shop-btn-equipped:hover { transform: none; filter: none; }
+.shop-btn-broke {
+  color: #cbb9a0;
+  background: linear-gradient(180deg, #5a4632, #3a2c1e);
+  box-shadow: 0 3px 0 #241a10;
+  cursor: not-allowed;
+}
+.shop-btn-broke:hover { transform: none; filter: none; }
+
+/* ---------- 底部返回鈕：木牌樣式，呼應整體主題 ---------- */
+#scr-shop > .btn.btn-ghost {
+  position: relative; z-index: 1;
+  color: #f2dcae;
+  background: linear-gradient(180deg, var(--wood-light), var(--wood-panel));
+  border: 2px solid #2a170d;
+  box-shadow: 0 3px 0 #2a170d;
+}
+
+/* ---------- 手機／窄螢幕：兩欄，分類換行 ---------- */
+@media (max-width: 640px) {
+  #shop-grid { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+  .shop-header { justify-content: center; }
+  .shop-coins { margin-left: 0; }
+}
+
+/* ==========================================================================
+   signin-theme.css — 每日簽到重製（可愛彩帶風格）
+   只重新設計外觀，完全沿用既有 class（app.js 的 renderCalendar() 產生的
+   .cal-day / .cal-day-num / .cal-day-icon / .cal-day-reward / .missed-badge，
+   以及 #cal-wrap / .cal-header / .cal-title / .cal-retro-info / .cal-week）。
+   載入順序：放在 style.css 之後即可（同一層用選擇器優先度覆蓋）。
+   ========================================================================== */
+
+/* ---------- 背景卡片：從深藍方框改成柔和的圓角卡片 ---------- */
+#cal-wrap {
+  background: linear-gradient(180deg, #2a3a6b, #1c2850);
+  border: none;
+  border-radius: 28px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+/* ---------- 標題：彩帶橫幅 ---------- */
+#scr-signin .scr-title {
+  position: relative;
+  display: inline-block;
+  margin: 0 0 22px;
+  padding: 12px 46px;
+  font-size: 1.7em;
+  color: #fff;
+  background: linear-gradient(180deg, #ffd45e, #ff9f43);
+  border-radius: 10px;
+  box-shadow: 0 6px 0 #d9720f, 0 10px 18px rgba(0,0,0,.35);
+  text-shadow: 0 2px 0 rgba(120,60,0,.4);
+}
+#scr-signin .scr-title span { color: #fff3; color: #6b2e00; }
+/* 彩帶兩端的小三角尾巴 */
+#scr-signin .scr-title::before,
+#scr-signin .scr-title::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: 0; height: 0;
+  border-style: solid;
+}
+#scr-signin .scr-title::before {
+  left: 0;
+  border-width: 10px 12px 0 0;
+  border-color: #d9720f transparent transparent transparent;
+}
+#scr-signin .scr-title::after {
+  right: 0;
+  border-width: 10px 0 0 12px;
+  border-color: #d9720f transparent transparent transparent;
+}
+
+/* ---------- 卡片內的月份 + 補簽資訊 ---------- */
+.cal-header { margin-bottom: 14px; }
+.cal-title {
+  font-size: 1.5em;
+  color: #fff;
+}
+.cal-retro-info {
+  background: rgba(255,255,255,.12);
+  color: #cfe0ff;
+  font-weight: 700;
+}
+.cal-retro-info span { color: #ffd45e; }
+
+/* ---------- 星期列 ---------- */
+.cal-week {
+  color: #93a6e0;
+  margin-bottom: 10px;
+}
+
+/* ---------- 日期格：改成圓形小徽章 ---------- */
+.cal-grid { gap: 6px 4px; }
+
+.cal-day {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.06);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+  transition: transform .15s;
+}
+.cal-day.empty { background: transparent; box-shadow: none; }
+
+/* 日期數字：縮小移到左上角當作小標註，不搶主要視覺 */
+.cal-day-num {
+  position: absolute;
+  top: 8%; left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: .62em;
+  font-weight: 700;
+  color: rgba(255,255,255,.55);
+  z-index: 2;
+}
+
+/* 已簽到：綠色漸層圓 + 白色打勾，呼應參考圖的藍色打勾圓 */
+.cal-day.signed {
+  background: linear-gradient(160deg, #58d6a0, #1fae7a);
+  box-shadow: 0 4px 10px rgba(31,174,122,.45);
+}
+.cal-day.signed .cal-day-num { color: rgba(255,255,255,.75); }
+.cal-day.signed .cal-day-icon {
+  font-size: 1.5em;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+}
+
+/* 今天可簽到：金黃漸層圓，維持原本的脈動提示 */
+.cal-day.today-not-signed {
+  background: linear-gradient(160deg, #ffe28a, #ffb23e);
+  border: none;
+  box-shadow: 0 4px 14px rgba(255,178,62,.5);
+}
+.cal-day.today-not-signed .cal-day-num { color: rgba(120,60,0,.7); }
+.cal-day.today-not-signed .cal-day-reward {
+  color: #6b3600;
+}
+
+/* 未來（還沒到）：淺灰圓，維持鎖定的感覺但更柔和 */
+.cal-day.future {
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.05);
+}
+.cal-day.future .cal-day-num { color: rgba(255,255,255,.3); }
+
+/* 錯過（可補簽 / 已鎖定）：淡紅圓 */
+.cal-day.missed {
+  background: rgba(255,90,110,.18);
+  box-shadow: inset 0 0 0 2px rgba(255,90,110,.35);
+}
+.cal-day.missed:hover { transform: scale(1.08); }
+.cal-day.missed.retro-locked { background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08); }
+
+/* 獎勵金幣（次要資訊）：縮小、放在圓的下緣，跟主圖示（打勾／鎖）不搶位置 */
+.cal-day-reward {
+  position: absolute;
+  bottom: 10%; left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: .5em;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.cal-day-icon { position: relative; z-index: 2; }
+
+/* 補簽小提示：從方形紅牌改成小圓角吊牌，貼在圓的右上角 */
+.missed-badge {
+  top: -4px; right: -4px;
+  background: linear-gradient(160deg, #ff7a7a, var(--red));
+  border: 2px solid #1c2850;
+  border-radius: 10px;
+  font-size: .58em;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+
+/* ---------- 關閉按鈕：圓潤糖果色 ---------- */
+#scr-signin > .btn.btn-ghost {
+  background: linear-gradient(180deg, #4d6bd6, #33449e);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  box-shadow: 0 4px 0 #263578, 0 8px 16px rgba(0,0,0,.3);
+}
+#scr-signin > .btn.btn-ghost:hover { filter: brightness(1.08); }
+
+/* ---------- 手機窄螢幕：格子再縮小一點，數字跟金額也跟著縮 ---------- */
+@media (max-width: 480px) {
+  .cal-day-num { font-size: .56em; }
+  .cal-day-reward { font-size: .44em; }
+  .cal-day.signed .cal-day-icon, .cal-day-icon { font-size: 1.2em; }
+}
