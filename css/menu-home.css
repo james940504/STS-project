@@ -268,6 +268,40 @@
 #scr-menu .hm-lamp-g { animation: hmLampG 10s infinite; filter: drop-shadow(0 0 10px #27c46b); }
 #scr-menu .hm-lamp-y { animation: hmLampY 10s infinite; filter: drop-shadow(0 0 10px #ffc93c); }
 #scr-menu .hm-lamp-r { animation: hmLampR 10s infinite; filter: drop-shadow(0 0 10px #ff4d4f); }
+
+/* ---------- 正中央：玩家目前裝備的角色（放大展示） ----------
+   水平置中在整個螢幕，跟紅綠燈的位置無關（螢幕夠寬時不會疊到）；
+   底部跟紅綠燈共用同一條「地面基準線」（bottom: 5.4em + 9em），
+   角色站在同一個水平上，頂部盡量往上延伸到活動入口那排下方，
+   讓角色本體可以放到最大。 */
+#scr-menu .hm-char-preview {
+  position: absolute;
+  left: 50%;
+  top: 6.6em;
+  bottom: calc(5.4em + 9em);
+  transform: translateX(-50%);
+  width: 40em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+#scr-menu .hm-char-preview img {
+  height: 35em;               /* 原本圖片本身只有 180px，maxWidth/maxHeight 這種「上限」規則從沒被卡到過，
+                                  等於完全沒放大；改成直接指定高度，量測過原尺寸後這裡是兩倍 */
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 .5em 1em rgba(0, 0, 0, .5))
+    drop-shadow(0 0 1.6em rgba(120, 180, 255, .45));
+  animation: hmCharBob 3.4s ease-in-out infinite;
+}
+@keyframes hmCharBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-.35em); }
+}
 @keyframes hmLampG { 0%, 50% { opacity: 1 } 54%, 100% { opacity: 0 } }
 @keyframes hmLampY { 0%, 52% { opacity: 0 } 56%, 68% { opacity: 1 } 72%, 100% { opacity: 0 } }
 @keyframes hmLampR { 0%, 70% { opacity: 0 } 74%, 96% { opacity: 1 } 100% { opacity: 0 } }
@@ -456,6 +490,15 @@ body:has(#scr-menu:not(.off)) #coin-display #coin-count {
   width: 56px; height: 56px;
   font-size: 2em;
 }
+
+/* 手機鏡頭配對、分享卡片這類彈出視窗（.overlay-modal）是疊在主選單「上面」的，
+   主選單本身並沒有離開（goTo() 沒被呼叫，menu-only-icon 不會被隱藏），
+   所以浮動的 AI 教練鈕跟右上角設定／商城，這時候要另外手動蓋掉。 */
+body:has(.overlay-modal.on) #ai-chat-btn,
+body:has(.overlay-modal.on) #sys-top-right {
+  display: none !important;
+}
+
 body:has(#scr-menu:not(.off)) #ai-chat-btn {
   /* 第 2 格：起點 9u + 1 格 × (7.4u + 1u 間距)，再置中於 6u 寬的欄位 */
   left: calc(var(--hm-u) * 2);
@@ -534,7 +577,9 @@ body.consent-locked #scr-menu .hm-btn[data-consent-exempt] .hm-face {
 }
 
 /* ==========================================================================
-   直向螢幕（手機直拿）：縮減版排法，避免元素重疊
+   直向螢幕（手機直拿、平板直拿）：改成由上而下的「流式」排版
+   （橫向用的絕對定位在直向放不下 5 個入口，所以整個改成一欄一欄排下來，
+    內容比螢幕高時，整個主選單可以往下捲）
    ========================================================================== */
 @media (max-aspect-ratio: 1/1) {
   :root {
@@ -543,13 +588,32 @@ body.consent-locked #scr-menu .hm-btn[data-consent-exempt] .hm-face {
     --hm-ts-base: 1.15;               /* 直向螢幕字較小，標籤預設放大 15% */
     --hm-ts: 1.15;
   }
+  #scr-menu { overflow-x: hidden; overflow-y: auto; align-items: stretch; justify-content: flex-start; }
+  #scr-menu .hm-stage {
+    position: relative; inset: auto;
+    flex: 0 0 auto;                   /* 不要被壓縮：內容比螢幕高時，整個主選單改成可捲動 */
+    width: 100%; min-height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.6em;
+    padding-bottom: 8em;              /* 右下角留給 🤖，底部留給隱私權連結 */
+  }
+  #scr-menu .hm-stage > * { position: relative; left: auto; right: auto; top: auto; bottom: auto; }
+  #scr-menu .hm-floor { position: absolute; bottom: 0; }
   #scr-menu .hm-hero { display: none; }
-  #scr-menu .hm-profile { min-width: 20.5em; padding-left: 7.2em; padding-right: 3em; }
+  #scr-menu .hm-profile { order: 0; }
+  #scr-menu .hm-char-preview { order: 1; height: 11em; width: 100%; flex: none; transform: none; }
+  #scr-menu .hm-char-preview img { max-height: 11em; animation: none; }
+  #scr-menu .hm-events  { order: 2; }
+  #scr-menu .hm-side    { order: 3; }
+  #scr-menu .hm-actions { order: 4; }
+  #scr-menu .hm-dock    { order: 5; }
+
+  #scr-menu .hm-profile { align-self: flex-start; flex: none; min-width: 20.5em; padding-left: 7.2em; padding-right: 3em; margin-bottom: 3em; }
   #scr-menu .hm-title { font-size: 1.9em; }
   #scr-menu .hm-sub { display: none; }
   #sys-top-right .hm-shop { width: 6.6em; padding-left: 1.4em; }
   #sys-top-right .hm-shop::after { display: none; }
-  /* 金幣移到設定／商店的正下方，不和左上角的檔案條搶位置 */
+  /* 金幣移到設定／商店的正下方 */
   body:has(#scr-menu:not(.off)) #coin-display {
     top: calc(var(--hm-u) * 5.6);
     right: 0;
@@ -559,31 +623,35 @@ body.consent-locked #scr-menu .hm-btn[data-consent-exempt] .hm-face {
     padding: 0 calc(var(--hm-u) * 1.2) 0 calc(var(--hm-u) * 2.4);
     border-radius: 0 0 0 calc(var(--hm-u) * .9);
   }
-  #scr-menu .hm-events { left: 1.6em; top: 8.4em; gap: 2em; }
-  #scr-menu .hm-side { top: 20em; }
-  body:has(#scr-menu:not(.off)) #ai-chat-btn { top: calc(var(--hm-u) * 28.4); }
-  #scr-menu .hm-actions { left: 0; right: 0; justify-content: center; bottom: 20em; gap: 1.6em; }
+
+  /* 上方入口：放不下就自動換行 */
+  #scr-menu .hm-events { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4em 1.8em; width: 100%; padding: 0 1em; }
+  /* 左側小圖示變成橫排；🤖 在直向時固定在右下角，這一格不需要 */
+  #scr-menu .hm-side { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 1em; width: 100%; padding: 0 1em; }
+  #scr-menu .hm-side-slot { display: none; }
+  #scr-menu .hm-small { height: auto; }
+  #scr-menu .hm-actions { display: flex; justify-content: center; gap: 1.6em; width: 100%; padding-top: 1em; }
   #scr-menu .hm-big { width: 9.6em; height: 9.6em; }
   #scr-menu .hm-big::after, #scr-menu .hm-big-txt { font-size: 2.1em; }
-  #scr-menu .hm-dock { left: 1em; bottom: 4em; }
-}
+  #scr-menu .hm-dock { display: flex; justify-content: center; gap: .6em; width: 100%; padding: 1.4em .6em 0; }
+  #scr-menu .hm-dock-btn { width: 6.8em; }
+  #scr-menu .hm-dock-btn .hm-face { width: calc(var(--hm-u) * 5.4); height: calc(var(--hm-u) * 5.4); font-size: calc(var(--hm-u) * 2.8); }
+  #scr-menu .hm-dock-btn::before { top: 4em; width: 6.6em; height: 2em; }
+  #scr-menu .hm-dock-btn::after, #scr-menu .hm-dock-btn .hm-lbl { font-size: calc(1.3em * var(--hm-ts)); letter-spacing: 0; max-width: 100%; }
+  #scr-menu .hm-legal { position: absolute; left: 0; right: 0; bottom: .7em; }
 
-/* 手機直拿（窄）：中間的空位放縮小版紅綠燈 */
-@media (max-aspect-ratio: 1/1) and (max-width: 560px) {
-  #scr-menu .hm-hero {
-    display: block;
-    right: 5em; bottom: 27.6em; top: auto;
-    height: min(27em, 30vh);
+  /* 🤖 AI 教練：直向時放在右下角（小圓鈕、不顯示下方文字） */
+  body:has(#scr-menu:not(.off)) #ai-chat-btn {
+    left: auto; top: auto;
+    right: calc(var(--hm-u) * 1.4); bottom: calc(var(--hm-u) * 2.2);
   }
+  body:has(#scr-menu:not(.off)) #ai-chat-btn::after { display: none; }
+  body:has(#scr-menu:not(.off)) #ai-chat-window { left: 3vw; right: auto; bottom: calc(var(--hm-u) * 8); }
 }
 
-/* 直向但不算很長的螢幕（小手機、平板直拿）：左側直排會撞到下面的按鈕 → 改成橫排 */
-@media (max-aspect-ratio: 1/1) and (min-aspect-ratio: 55/100) {
-  #scr-menu .hm-hero { display: none !important; }
-  #scr-menu .hm-side { flex-direction: row; top: 20.5em; left: 1.3em; gap: 1em; }
-  /* 🤖 在橫排的第 2 格：起點 1.3u + 1 格 × (6u + 1u) + 置中 0.7u */
-  body:has(#scr-menu:not(.off)) #ai-chat-btn { left: calc(var(--hm-u) * 9); top: calc(var(--hm-u) * 20.5); }
-  #scr-menu .hm-actions { bottom: 17.6em; }
+/* 平板直拿：畫面比較寬，u 不用那麼大，5 個入口才排得成一列 */
+@media (min-aspect-ratio: 6/10) and (max-aspect-ratio: 1/1) {
+  :root { --hm-u: max(6px, min(1.9vw, 1.3vh)); }
 }
 
 /* ==========================================================================

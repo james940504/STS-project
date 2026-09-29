@@ -44,6 +44,8 @@ const i18n = {
     // ── 5. 各個畫面標題與步驟 ──
     'chars-title': '選擇<span>角色</span>',
     'chars-next': '下一步：選模式 →',
+    'chars-confirm': '確定',
+    'nav-chars-label': '角色',
     'mode-title': '選擇<span>模式</span>',
     'mode-next': '下一步：選難度 →',
     'mode-start-control': '開始訓練 ▶',
@@ -157,16 +159,16 @@ const i18n = {
     'legal-btn-agree': '同意並開始使用', 'legal-btn-close': '關閉',
 
     // ── 12. JS 動態渲染資料的 Key ──
-    'char-blue-name': '藍騎士', 'char-blue-tag': '穩健型',
-    'char-red-name': '紅勇士', 'char-red-tag': '攻擊型',
-    'char-green-name': '綠精靈', 'char-green-tag': '速度型',
-    'char-gold-name': '金武士', 'char-gold-tag': '輔助型',
-    'char-violet-name': '紫幻靈', 'char-violet-tag': '神秘型',
-    'char-cyan-name': '青電俠', 'char-cyan-tag': '閃電型',
-    'char-pink-name': '粉花精', 'char-pink-tag': '治癒型',
-    'char-orange-name': '橙焰將', 'char-orange-tag': '爆發型',
-    'char-silver-name': '銀宇士', 'char-silver-tag': '宇宙型',
-    'char-rainbow-name': '彩虹俠', 'char-rainbow-tag': '終極型',
+    // 角色改版：3 個免費 + 17 個商城角色，全部換成使用者提供的插畫圖檔（見 ALL_CHARS 的 img 欄位）
+    'char-ghost-name': '小幽靈', 'char-ghost-tag': '調皮型',
+    'char-mimic-name': '寶箱怪', 'char-mimic-tag': '詭計型',
+    'char-k9dog-name': '警犬波美', 'char-k9dog-tag': '忠誠型',
+    'char-firemon-name': '炎獄魔', 'char-firemon-tag': '灼熱型',
+    'char-genbu-name': '玄武', 'char-genbu-tag': '守護型',
+    'char-seiryu-name': '青龍', 'char-seiryu-tag': '疾風型',
+    'char-byakko-name': '白虎', 'char-byakko-tag': '敏捷型',
+    'char-suzaku-name': '朱雀', 'char-suzaku-tag': '鳳凰型',
+    'char-summoner-name': '召喚術士', 'char-summoner-tag': '神秘型',
 
     'mode-classic-name': '🎬 經典通關', 'mode-classic-desc': '達到 100% 進度即可獲勝，適合新手與基本訓練。',
     'mode-infinite-name': '♾️ 無盡模式', 'mode-infinite-desc': '沒有終點！盡你所能前進取得歷史最高分。',
@@ -451,6 +453,8 @@ const i18n = {
     // ── 5. Screen Titles ──
     'chars-title': 'Select <span>Character</span>',
     'chars-next': 'Next: Mode →',
+    'chars-confirm': 'Confirm',
+    'nav-chars-label': 'Character',
     'mode-title': 'Select <span>Mode</span>',
     'mode-next': 'Next: Difficulty →',
     'mode-start-control': 'Start Training ▶',
@@ -564,16 +568,15 @@ const i18n = {
     'legal-btn-agree': 'Agree and Start', 'legal-btn-close': 'Close',
 
     // ── 12. Dynamic Values ──
-    'char-blue-name': 'Blue Knight', 'char-blue-tag': 'Balanced',
-    'char-red-name': 'Red Warrior', 'char-red-tag': 'Aggressive',
-    'char-green-name': 'Green Elf', 'char-green-tag': 'Speedy',
-    'char-gold-name': 'Gold Samurai', 'char-gold-tag': 'Support',
-    'char-violet-name': 'Violet Spirit', 'char-violet-tag': 'Mystic',
-    'char-cyan-name': 'Cyan Flash', 'char-cyan-tag': 'Electric',
-    'char-pink-name': 'Pink Pixie', 'char-pink-tag': 'Healing',
-    'char-orange-name': 'Orange General', 'char-orange-tag': 'Burst',
-    'char-silver-name': 'Silver Space', 'char-silver-tag': 'Cosmic',
-    'char-rainbow-name': 'Rainbow Man', 'char-rainbow-tag': 'Ultimate',
+    'char-ghost-name': 'Little Ghost', 'char-ghost-tag': 'Playful',
+    'char-mimic-name': 'Mimic Chest', 'char-mimic-tag': 'Trickster',
+    'char-k9dog-name': 'K9 Pomeranian', 'char-k9dog-tag': 'Loyal',
+    'char-firemon-name': 'Inferno Fiend', 'char-firemon-tag': 'Scorching',
+    'char-genbu-name': 'Genbu', 'char-genbu-tag': 'Guardian',
+    'char-seiryu-name': 'Seiryu', 'char-seiryu-tag': 'Swift',
+    'char-byakko-name': 'Byakko', 'char-byakko-tag': 'Agile',
+    'char-suzaku-name': 'Suzaku', 'char-suzaku-tag': 'Phoenix',
+    'char-summoner-name': 'Summoner', 'char-summoner-tag': 'Mystic',
 
     'mode-classic-name': '🎬 Classic', 'mode-classic-desc': 'Reach 100% progress to win. Best for beginners.',
     'mode-infinite-name': '♾️ Infinite', 'mode-infinite-desc': 'No limits! Go as far as you can for the high score.',
@@ -889,20 +892,25 @@ const i18n = {
 };
 
 // ── 以下為調整成翻譯 Key 結構的寫死陣列 ──
+/* 角色圖檔放在 img/chars/ 底下，跟 index.html 同一層；换角色只要改這兩個陣列，
+   img 是圖檔路徑，glow 是遊戲畫面裡角色專屬的發光顏色（跟畫面上的姿勢分數呼應），
+   cost 是商城售價，之後想調整難度/售價平衡，只改這裡的數字就好。 */
 const BASE_CHARS = [
-  { id: 'blue', nameKey: 'char-blue-name', tagKey: 'char-blue-tag', color: '#2080FF', acc: '#80C0FF', badge: '🔵', free: true },
-  { id: 'red', nameKey: 'char-red-name', tagKey: 'char-red-tag', color: '#FF3050', acc: '#FF9090', badge: '🔴', free: true },
-  { id: 'green', nameKey: 'char-green-name', tagKey: 'char-green-tag', color: '#00CC6A', acc: '#7AFFA6', badge: '🟢', free: true }
+  { id: 'ghost',  nameKey: 'char-ghost-name',  tagKey: 'char-ghost-tag',  img: 'img/chars/halloween_obake_kasou.png',      glow: '#B9C3D6', badge: '👻', free: true },
+  { id: 'mimic',  nameKey: 'char-mimic-name',  tagKey: 'char-mimic-tag',  img: 'img/chars/character_game_mimic.png',       glow: '#C97A3D', badge: '📦', free: true },
+  { id: 'k9dog',  nameKey: 'char-k9dog-name',  tagKey: 'char-k9dog-tag',  img: 'img/chars/police_dog_pome.png',            glow: '#DCE3EA', badge: '🐕', free: true }
 ];
 
 const SHOP_CHARS = [
-  { id: 'gold', nameKey: 'char-gold-name', tagKey: 'char-gold-tag', color: '#FFD700', acc: '#FFF4B3', badge: '🟡', cost: 1200 },
-  { id: 'violet', nameKey: 'char-violet-name', tagKey: 'char-violet-tag', color: '#B026FF', acc: '#E6B3FF', badge: '🟣', cost: 1500 },
-  { id: 'cyan', nameKey: 'char-cyan-name', tagKey: 'char-cyan-tag', color: '#00E5FF', acc: '#B3F7FF', badge: '🌐', cost: 1800 },
-  { id: 'pink', nameKey: 'char-pink-name', tagKey: 'char-pink-tag', color: '#FF66B2', acc: '#FFCCE6', badge: '🌸', cost: 2000 },
-  { id: 'orange', nameKey: 'char-orange-name', tagKey: 'char-orange-tag', color: '#FF6600', acc: '#FFCCB3', badge: '🟠', cost: 2500 },
-  { id: 'silver', nameKey: 'char-silver-name', tagKey: 'char-silver-tag', color: '#CCCCCC', acc: '#FFFFFF', badge: '⚪', cost: 3000 },
-  { id: 'rainbow', nameKey: 'char-rainbow-name', tagKey: 'char-rainbow-tag', color: 'linear-gradient(45deg,#FF0000,#00FF00,#0000FF)', acc: '#FFFFFF', badge: '🌈', cost: 5000 }
+  // 💡 原本這裡還有 11 隻《航海王》角色，考量版權問題已經移除，
+  //    只留下原創／泛用妖怪主題的 6 隻。之後若有新的安全圖源，
+  //    照這個物件格式加進陣列就能擴充商城角色數量。
+  { id: 'firemon',   nameKey: 'char-firemon-name',   tagKey: 'char-firemon-tag',   img: 'img/chars/character_cthulhu_cthugha.png',   glow: '#FF6A2A', badge: '🔥', cost: 1500 },
+  { id: 'genbu',     nameKey: 'char-genbu-name',     tagKey: 'char-genbu-tag',     img: 'img/chars/fantasy_genbu.png',               glow: '#2FA84F', badge: '🐢', cost: 2000 },
+  { id: 'byakko',    nameKey: 'char-byakko-name',    tagKey: 'char-byakko-tag',    img: 'img/chars/youkai_byakko.png',               glow: '#B0B8C1', badge: '🐯', cost: 2200 },
+  { id: 'seiryu',    nameKey: 'char-seiryu-name',    tagKey: 'char-seiryu-tag',    img: 'img/chars/fantasy_seiryu.png',              glow: '#2FA0E0', badge: '🐉', cost: 2500 },
+  { id: 'suzaku',    nameKey: 'char-suzaku-name',    tagKey: 'char-suzaku-tag',    img: 'img/chars/youkai_suzaku.png',               glow: '#FF4433', badge: '🐦', cost: 2800 },
+  { id: 'summoner',  nameKey: 'char-summoner-name',  tagKey: 'char-summoner-tag',  img: 'img/chars/fantasy_mahoujin_syoukan.png',    glow: '#8A4FD1', badge: '🔮', cost: 3200 }
 ];
 
 const SHOP_TRAILS = [
@@ -1316,7 +1324,20 @@ function spendCoins(n){const s=loadSave();if((s.coins||0)<n)return false;s.coins
 function isOwned(id){return(loadSave().owned||[]).includes(id)}
 function ownItem(id){const s=loadSave();s.owned=s.owned||[];if(!s.owned.includes(id))s.owned.push(id);writeSave(s)}
 function getEquipped(cat){return loadSave().equipped?.[cat]||null}
-function setEquipped(cat,id){const s=loadSave();s.equipped=s.equipped||{};s.equipped[cat]=id;writeSave(s)}
+function setEquipped(cat,id){const s=loadSave();s.equipped=s.equipped||{};s.equipped[cat]=id;writeSave(s);if(cat==='chars')renderMenuCharPreview()}
+
+/* 主選單中間留白處：放大顯示玩家目前裝備的角色，換裝後（setEquipped 見上）跟著即時更新。
+   找不到已裝備角色時（例如全新玩家還沒特別選過）就退回第一個免費角色。 */
+function renderMenuCharPreview(){
+  const img = document.getElementById('hm-char-img');
+  if(!img) return;
+  const id = getEquipped('chars');
+  const ch = (typeof ALL_CHARS !== 'undefined' && ALL_CHARS.find(c=>c.id===id)) || (typeof BASE_CHARS !== 'undefined' && BASE_CHARS[0]);
+  if(!ch) return;
+  img.src = ch.img;
+  img.alt = getText(ch.nameKey) || '';
+}
+window.renderMenuCharPreview = renderMenuCharPreview;
 function updateCoinUI(){const c=getCoins();document.getElementById('coin-count').textContent=c.toLocaleString();const sc=document.getElementById('shop-coin-count');if(sc)sc.textContent=c.toLocaleString()}
 
 // 把目前金幣數同步寫回 Supabase 的 profiles 表，讓玩家換裝置登入也能看到一樣的金幣。
@@ -1799,6 +1820,52 @@ function initParticles(){
 }
 
 /* ── CHAR GRID ── */
+/* 選角畫面現在有兩種進入方式，「下一步」按鈕的行為要跟著不一樣：
+   - 'play'  從「開始遊戲」／教學頁「去選角色」／接受好友挑戰 進來：跟原本一樣，選完角色繼續去選模式。
+   - 'equip' 從主選單「角色」圖示進來：選完角色只是「換裝」，按鈕改叫「確定」，
+             存成預設裝備角色（會連動主選單中間放大顯示的角色，見 setEquipped()），
+             然後直接返回主選單，不進入選模式／選難度／開始遊戲的流程。 */
+let charsScreenIntent = 'play';
+
+function openCharsScreen(intent){
+  charsScreenIntent = intent || 'play';
+  if(charsScreenIntent === 'equip'){
+    // 從主選單「角色」進來：預先把目前裝備的角色設成選取狀態，畫面上才會看到正確的那張卡被框起來
+    const curId = getEquipped('chars');
+    const curChar = (typeof ALL_CHARS !== 'undefined') && ALL_CHARS.find(c=>c.id===curId);
+    if(curChar) selChar = curChar;
+  }
+  buildCharGrid();   // 順便刷新一次，確保剛買的角色也能立刻選取
+  updateCharsNextButton();
+  goTo('scr-chars');
+  playSfx('click');
+}
+
+function updateCharsNextButton(){
+  const btn = document.getElementById('chars-next-btn');
+  if(!btn) return;
+  if(charsScreenIntent === 'equip'){
+    btn.textContent = getText('chars-confirm');
+    btn.onclick = () => {
+      setEquipped('chars', selChar.id);
+      playSfx('click');
+      goTo('scr-menu');
+    };
+  } else {
+    btn.textContent = getText('chars-next');
+    btn.onclick = () => {
+      goTo('scr-mode');
+      playSfx('click');
+      buildModeGrid();
+    };
+  }
+}
+/* 語言切換時，applyLanguageUI() 會用 data-i18n="chars-next" 把按鈕文字重設回「下一步…」，
+   這裡在事件之後重新套用一次，確保「確定」模式下文字不會被打回原狀。 */
+window.addEventListener('languageChanged', () => {
+  if (typeof updateCharsNextButton === 'function') updateCharsNextButton();
+});
+
 function buildCharGrid(){
   const grid=document.getElementById('char-grid');grid.innerHTML='';
   ALL_CHARS.forEach((ch,i)=>{
@@ -1823,7 +1890,32 @@ function buildCharGrid(){
     setTimeout(()=>drawCharPreview(document.getElementById(`cc-${ch.id}`),ch),10);
   });
 }
-function drawCharPreview(cvs,ch){if(!cvs)return;const ctx=cvs.getContext('2d');ctx.clearRect(0,0,cvs.width,cvs.height);drawStickFigure(ctx,cvs.width/2,cvs.height/2+6,28,ch,false)}
+/* 角色圖片快取：同一個角色在選角畫面、商城格子都會重複用到同一張圖，
+   只在第一次用到時建立 Image 物件，之後直接重複使用，不用每次都重新載入。 */
+const _charImgCache = {};
+function getCharImage(ch){
+  if(!_charImgCache[ch.id]){
+    const img = new Image();
+    img.src = ch.img;
+    _charImgCache[ch.id] = img;
+  }
+  return _charImgCache[ch.id];
+}
+function drawCharPreview(cvs,ch){
+  if(!cvs) return;
+  const ctx = cvs.getContext('2d');
+  const img = getCharImage(ch);
+  const paint = () => {
+    if(!cvs.isConnected && cvs.width===0) return; // 畫面切換時卡片可能已經被移除
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    if(!img.naturalWidth) return;
+    const scale = Math.min(cvs.width/img.naturalWidth, cvs.height/img.naturalHeight) * 0.94;
+    const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
+    ctx.drawImage(img, (cvs.width-w)/2, cvs.height-h-2, w, h);
+  };
+  if(img.complete && img.naturalWidth) paint();
+  else img.addEventListener('load', paint, { once:true });
+}
 
 /* ── MODE GRID ── */
 function buildModeGrid() {
@@ -2213,36 +2305,37 @@ function drawPlayer(ctx,W,H){
   if(selMode==='infinite'){px=sx+30+(ex-sx-60)*(.15+((repsCount%10)/10)*.7)}
   else{px=sx+10+(ex-sx-20)*Math.min(progress,1)}
   const py=ty+th/2;
-  ctx.save();ctx.shadowColor=selChar.color;ctx.shadowBlur=14+(posture.total/100)*12;
+  ctx.save();ctx.shadowColor=selChar.glow||'#4090FF';ctx.shadowBlur=14+(posture.total/100)*12;
   const controlMoving = isControlMode() && performance.now() < controlMoveUntil;
-  drawStickFigure(ctx,px,py,25,selChar,controlMoving || (!isControlMode() && light==='green'&&stsState==='sit'));ctx.restore();
+  drawCharSprite(ctx,px,py,25,selChar,controlMoving || (!isControlMode() && light==='green'&&stsState==='sit'));ctx.restore();
   if(posture.total>0&&gState==='playing'){
     const s=Math.round(posture.total),sc=s>=80?'#00CC6A':s>=60?'#FFAA00':'#FF3050';
     ctx.fillStyle=sc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(s,px,py-46);
   }
 }
 
-function drawStickFigure(ctx,cx,cy,sz,ch,moving){
-  const t=performance.now()/1000;
-  const lg=moving?Math.sin(t*7)*.32:0,ag=moving?Math.sin(t*7+1)*.38:0;
-  if(ch.rainbow){const hue=(t*60)%360;ctx.strokeStyle=`hsl(${hue},90%,60%)`;ctx.fillStyle=`hsl(${hue},90%,60%)`}
-  else{ctx.strokeStyle=ch.color;ctx.fillStyle=ch.color}
-  ctx.lineWidth=2.5;ctx.lineCap='round';
-  ctx.beginPath();ctx.arc(cx,cy-sz*.85,sz*.22,0,Math.PI*2);ctx.fill();
-  // Hat
-  const eqHat=getEquipped('hats');
-  if(eqHat){ctx.save();ctx.font=`${sz*.55}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText({'hat_crown':'👑','hat_glass':'😎','hat_halo':'😇','hat_horn':'😈'}[eqHat]||'',cx,cy-sz*1.3);ctx.restore()}
-  else if(ch.id==='gold'){ctx.fillStyle='#FFD700';ctx.beginPath();ctx.moveTo(cx,cy-sz*1.18);ctx.lineTo(cx-sz*.16,cy-sz*1.0);ctx.lineTo(cx+sz*.16,cy-sz*1.0);ctx.closePath();ctx.fill()}
-  else if(ch.id==='red'){for(let k=-1;k<=1;k++){ctx.fillStyle=ch.color;ctx.beginPath();ctx.moveTo(cx+k*sz*.13,cy-sz*1.08);ctx.lineTo(cx+k*sz*.13-sz*.06,cy-sz*.92);ctx.lineTo(cx+k*sz*.13+sz*.06,cy-sz*.92);ctx.closePath();ctx.fill()}}
-  if(ch.rainbow)ctx.fillStyle=`hsl(${(t*60+120)%360},90%,60%)`;else ctx.fillStyle=ch.color;
-  ctx.fillRect(cx-2,cy-sz*.58,4,sz*.52);
-  if(ch.rainbow)ctx.strokeStyle=`hsl(${(t*60+60)%360},90%,60%)`;else ctx.strokeStyle=ch.color;
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.06);ctx.lineTo(cx-sz*.28*Math.sin(lg+.28),cy+sz*.55);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.06);ctx.lineTo(cx+sz*.28*Math.sin(lg+.28),cy+sz*.55);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.4);ctx.lineTo(cx-sz*.38,cy-sz*.08+ag*sz*.18);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.4);ctx.lineTo(cx+sz*.38,cy-sz*.08-ag*sz*.18);ctx.stroke();
-  if(ch.id==='blue'&&!ch.rainbow){ctx.fillStyle=ch.acc;ctx.beginPath();ctx.arc(cx,cy-sz*.35,sz*.07,0,Math.PI*2);ctx.fill()}
-  if(ch.id==='green'){ctx.fillStyle=ch.acc;ctx.font=`bold ${sz*.2}px system-ui`;ctx.textAlign='center';ctx.fillText('★',cx,cy-sz*.28)}
+/* 角色改用插畫圖檔繪製（取代原本用線條畫的小人）。
+   sz 維持跟原本 drawStickFigure() 一樣的呼叫方式（半身高度單位），
+   圖片依原始比例縮放、腳底對齊 cy，走動時輕微上下彈跳當作動態回饋。
+   getEquipped('hats') 的道具頭飾維持原樣疊在頭頂。 */
+function drawCharSprite(ctx,cx,cy,sz,ch,moving){
+  const img = getCharImage(ch);
+  if(!img.naturalWidth) return; // 圖片還沒載入完成，這一幀先不畫，下一幀會自然補上
+  const t = performance.now()/1000;
+  const bob = moving ? Math.abs(Math.sin(t*7))*sz*.12 : 0;
+  const targetH = sz*2.15;
+  const scale = targetH / img.naturalHeight;
+  const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
+  const x = cx - w/2, y = cy - h + sz*.35 - bob;
+  ctx.drawImage(img, x, y, w, h);
+
+  const eqHat = getEquipped('hats');
+  if(eqHat){
+    ctx.save();
+    ctx.font = `${sz*.5}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText({'hat_crown':'👑','hat_glass':'😎','hat_halo':'😇','hat_horn':'😈'}[eqHat]||'', cx, y + h*.06);
+    ctx.restore();
+  }
 }
 
 function drawDoll(ctx,W,H){
@@ -3600,7 +3693,7 @@ function renderShop(){
 
       const owned=isOwned(ch.id),equipped=getEquipped('chars')===ch.id;
       const item=document.createElement('div');item.className='shop-item'+(equipped?' equipped':owned?' owned':'');
-      const cvs=document.createElement('canvas');cvs.width=72;cvs.height=72;
+      const cvs=document.createElement('canvas');cvs.width=160;cvs.height=160;
       
       item.innerHTML=`<div class="shop-item-preview"></div>
         <div class="shop-item-name">${ch.badge} ${name}</div>
@@ -4324,6 +4417,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initParticles();
   initAICoachAndSettings();
   buildCharGrid();
+  renderMenuCharPreview();
   updateCoinUI();
   checkSignInStatus(); // 初始化檢查右上角小紅點
   

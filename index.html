@@ -79,6 +79,11 @@
       </svg>
     </div>
 
+    <!-- 正中央：玩家目前裝備的角色放大展示，換裝後由 app.js 的 renderMenuCharPreview() 即時更新 -->
+    <div class="hm-char-preview" aria-hidden="true">
+      <img id="hm-char-img" src="" alt="">
+    </div>
+
     <!-- 左上：檔案條（對應截圖左上角的玩家資訊） -->
     <div class="hm-profile">
       <div class="hm-badge" aria-hidden="true">🚦</div>
@@ -105,14 +110,14 @@
 
     <!-- 左下：圖示列（招募／球員／陣容／裝備／羈絆 那一排） -->
     <nav class="hm-dock">
-      <button class="hm-btn hm-dock-btn hm-txt" onclick="goTo('scr-chars');playSfx('click')"><span class="hm-face" aria-hidden="true">🧍</span><span class="hm-lbl" data-i18n="chars-title">選擇<span>角色</span></span></button>
+      <button class="hm-btn hm-dock-btn hm-txt" id="nav-chars" onclick="openCharsScreen('equip')"><span class="hm-face" aria-hidden="true">🧍</span><span class="hm-lbl" data-i18n="nav-chars-label">角色</span></button>
       <button class="hm-btn hm-dock-btn menu-only-icon" onclick="openAchievementsScreen()" data-i18n-attr="title:title-achievements"><span class="hm-face" aria-hidden="true">🏅</span></button>
       <button class="hm-btn hm-dock-btn menu-only-icon" onclick="goTutorial();playSfx('click')" data-i18n-attr="title:title-tutorial"><span class="hm-face" aria-hidden="true">📜</span></button>
     </nav>
 
     <!-- 右下：三顆大按鈕（挑戰／聯盟／聯賽） -->
     <div class="hm-actions">
-      <button class="hm-big hm-start hm-txt" onclick="goTo('scr-chars');playSfx('click')"><span class="hm-big-ico" aria-hidden="true"><svg viewBox="0 0 64 64" width="1em" height="1em"><path d="M20 10 L54 32 L20 54 Z" fill="#fff" stroke="rgba(0,50,20,.35)" stroke-width="3" stroke-linejoin="round"/></svg></span><span class="hm-big-txt" data-i18n="menu-btn-start">開始遊戲</span></button>
+      <button class="hm-big hm-start hm-txt" id="btn-start-game" onclick="openCharsScreen('play')"><span class="hm-big-ico" aria-hidden="true"><svg viewBox="0 0 64 64" width="1em" height="1em"><path d="M20 10 L54 32 L20 54 Z" fill="#fff" stroke="rgba(0,50,20,.35)" stroke-width="3" stroke-linejoin="round"/></svg></span><span class="hm-big-txt" data-i18n="menu-btn-start">開始遊戲</span></button>
       <button class="hm-big menu-only-icon" onclick="openChallengeScreen()" data-i18n-attr="title:title-challenge"><span class="hm-big-ico" aria-hidden="true">🤝</span></button>
       <button class="hm-big menu-only-icon" onclick="goTo('scr-board');playSfx('click');renderBoard()" data-i18n-attr="title:title-board"><span class="hm-big-ico" aria-hidden="true">🏆</span></button>
     </div>
@@ -128,7 +133,7 @@
   <div class="char-grid" id="char-grid"></div>
   <div style="display:flex;gap:10px;">
     <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="btn-back">← 返回</button>
-    <button class="btn btn-blue" onclick="goTo('scr-mode');playSfx('click');buildModeGrid()" data-i18n="chars-next">下一步：選模式 →</button>
+    <button class="btn btn-blue" id="chars-next-btn" data-i18n="chars-next">下一步：選模式 →</button>
   </div>
 </div>
 
@@ -184,7 +189,7 @@
   </div>
   <div style="display:flex;gap:10px;">
     <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="tut-btn-menu">← 返回主選單</button>
-    <button class="btn btn-blue" onclick="goTo('scr-chars');playSfx('click')" data-i18n="tut-btn-chars">去選角色 ▶</button>
+    <button class="btn btn-blue" onclick="openCharsScreen('play')" data-i18n="tut-btn-chars">去選角色 ▶</button>
   </div>
 </div>
 
@@ -488,7 +493,7 @@
   </div>
 </div>
 
-<div id="ov-phonecam" class="overlay-modal"style="margin-top:5em;">
+<div id="ov-phonecam" class="overlay-modal">
   <div class="scr-title" style="margin-bottom:0.6em;">🤳 使用<span>手機鏡頭</span>（測試版）</div>
   <p style="font-size:1.6em;color:var(--dim);text-align:center;max-width:420px;margin:0 0 14px;">
     用手機掃描下方 QR Code，或在手機瀏覽器輸入配對碼開啟連線頁面。電腦和手機只要都能上網就能連線；在同一個 WiFi 下連線品質最好，不同網路（例如手機用行動網路）也能連，但延遲會稍微高一點。
@@ -504,7 +509,7 @@
       </div>
       <div>
         <div style="font-size:1.6em;color:var(--dim);margin-bottom:2px;">連線網址</div>
-        <textarea id="phonecam-link" readonly rows="2" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:8px;font-size:1.5em;width:13em;resize:none;"></textarea>
+        <textarea id="phonecam-link" readonly rows="3" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--white);padding:8px;font-size:1.5em;resize:none;"></textarea>
       </div>
       <button class="btn btn-ghost" style="padding:6px 12px;font-size:1.45em;" onclick="copyPhoneCamLink()">📋 複製連結</button>
     </div>
