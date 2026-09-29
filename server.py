@@ -36,7 +36,7 @@ app.secret_key = os.environ.get("STS_SECRET_KEY", "dev-secret-change-me")
 DB_CONFIG = {
     "host": os.environ.get("STS_DB_HOST", "127.0.0.1"),
     "user": os.environ.get("STS_DB_USER", "root"),
-    "password": os.environ.get("STS_DB_PASSWORD", "sts115"),
+    "password": os.environ.get("STS_DB_PASSWORD", "imnptu114"),
     "database": os.environ.get("STS_DB_NAME", "sts_game"),
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor,
@@ -420,6 +420,9 @@ def css_file(filename: str):
 def js_file(filename: str):
     return send_from_directory(BASE_DIR / "js", filename)
 
+@app.get("/img/<path:filename>")
+def img_file(filename: str):
+    return send_from_directory(BASE_DIR / "img", filename)
 
 @app.get("/api/health")
 def health():
