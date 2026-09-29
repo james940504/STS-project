@@ -1,0 +1,426 @@
+/* ==========================================================================
+   responsive.css — 全站響應式（每個畫面）
+   載入順序：必須放在所有樣式表最後（index.html 已處理）。
+   斷點：
+     ≤ 1100px           平板橫向、小筆電
+     ≤ 760px 或 直向    手機、平板直拿：單欄、可捲動
+     高度 ≤ 640px       手機橫拿、矮視窗：縮小間距與字級
+   原則：桌面（1100px 以上）的外觀不動；只在需要時覆蓋。
+   ========================================================================== */
+
+:root {
+  /* 遊戲畫面 16:9 容器的寬度（與 style.css 的 #scr-game 相同算法，改用 dvh 避開手機網址列） */
+  --gw: min(100vw, calc(100vh * 16 / 9));
+}
+@supports (height: 100dvh) {
+  :root { --gw: min(100vw, calc(100dvh * 16 / 9)); }
+}
+
+/* ── 0. 視窗高度：手機瀏覽器的網址列會讓 100vh 比可見範圍高 ── */
+html, body { height: 100vh; }
+@supports (height: 100dvh) {
+  html, body { height: 100dvh; }
+}
+
+/* 觸控裝置沒有 hover：取消卡片「浮起」效果，避免點完之後卡在浮起狀態 */
+@media (hover: none) {
+  .char-card:hover, .mode-card:hover, .diff-card:hover, .shop-item:hover,
+  .ach-card:hover, .preset-btn:hover, .btn:hover { transform: none; }
+}
+
+/* 通用：避免長內容被撐出畫面 */
+img, canvas, video { max-width: 100%; }
+
+/* ==========================================================================
+   2. ≤ 1100px：平板橫向、小筆電
+   ========================================================================== */
+@media (max-width: 1100px) {
+  html, body { font-size: clamp(12px, 1.4vw, 16px); }
+
+  .char-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); width: min(94vw, 900px); }
+  .char-card { min-width: 0; }
+
+  .ach-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); max-width: 94vw; }
+  .shop-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); max-width: 94vw; }
+
+  .board-header, .shop-header { flex-wrap: wrap; justify-content: center; }
+  .board-table-wrap { width: min(1050px, 94vw) !important; }
+  #board-table { min-width: 620px; }
+  #board-table th, #board-table td { white-space: nowrap; }
+
+  #ov-settings > div[style*="width:640px"],
+  #ov-settings .card { width: min(640px, 92vw) !important; }
+
+  .ov-btns { flex-wrap: wrap; justify-content: center; }
+}
+
+/* ==========================================================================
+   3. 共用「緊湊」規則：手機 / 直拿 / 矮視窗
+      → 畫面內容比視窗高時可以捲動，並且短的時候仍然置中
+   ========================================================================== */
+@media (max-width: 760px), (max-aspect-ratio: 1/1), (max-height: 640px) {
+
+  .scr:not(#scr-menu):not(#scr-game) {
+    overflow-y: auto;
+    justify-content: flex-start !important;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  /* 內容比視窗高時，讓整個畫面捲動，而不是把每個區塊壓扁 */
+  .scr:not(#scr-menu):not(#scr-game) > * { flex-shrink: 0; }
+  .shop-grid, .ach-grid { overflow: visible; }
+  /* 第一個與最後一個子元素用 auto margin：內容短時置中，內容長時從頂端開始可捲動 */
+  .scr:not(#scr-menu):not(#scr-game) > :first-child { margin-top: auto; }
+  .scr:not(#scr-menu):not(#scr-game) > :last-child  { margin-bottom: auto; }
+
+  .overlay-modal { overflow-y: auto; justify-content: flex-start; }
+  .overlay-modal > :first-child { margin-top: auto; }
+  .overlay-modal > :last-child  { margin-bottom: auto; }
+
+  /* 按鈕列：放不下就換行 */
+  .scr div[style*="display:flex"][style*="gap:10px"] { flex-wrap: wrap; justify-content: center; }
+
+  /* AI 教練聊天室不要超出畫面 */
+  #ai-chat-window {
+    width: min(420px, 94vw);
+    height: min(520px, 68vh);
+    right: 3vw;
+    bottom: 84px;
+  }
+  @supports (height: 100dvh) { #ai-chat-window { height: min(520px, 68dvh); } }
+  #ai-preset-questions { padding: 0 8px; gap: 8px; }
+
+  /* 🤖 固定在右下角，會蓋到畫面底部的按鈕 → 各畫面底部多留一段空間，捲動時不會被擋住 */
+  .scr:not(#scr-menu):not(#scr-game):not(#ov-legal):not(#ov-settings) { padding-bottom: max(76px, env(safe-area-inset-bottom)); }
+}
+
+/* ==========================================================================
+   4. ≤ 760px 或 直拿：手機與平板直向
+   ========================================================================== */
+@media (max-width: 760px), (max-aspect-ratio: 1/1) {
+
+  html, body { font-size: clamp(13px, 2.1vw, 17px); }
+  .scr { gap: 14px; }
+  .scr-title { font-size: 1.7em; }
+  .btn { padding: 12px 22px; font-size: 1.1em; border-radius: 12px; }
+
+  /* ── 選角色 ── */
+  .char-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(150px, 44%), 1fr));
+    width: 100%; max-width: 640px;
+    max-height: calc(100vh - 210px);
+    gap: 10px;
+  }
+  @supports (height: 100dvh) { .char-grid { max-height: calc(100dvh - 210px); } }
+  .char-card { padding: 12px 6px; border-radius: 16px; border-width: 2px; }
+  .char-canvas { width: 60px; height: auto; margin-bottom: 8px; }
+  .char-lock { border-radius: 14px; }
+
+  /* ── 選模式 / 難度 ── */
+  .mode-grid, .diff-grid { flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; }
+  .mode-card, .diff-card { min-width: 0; width: min(440px, 100%); padding: 14px 16px; border-radius: 16px; border-width: 2px; }
+  .mode-desc, .diff-desc { max-width: none; }
+  .mode-name, .diff-name { font-size: 1.3em; }
+  .control-time-panel { flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 94vw; }
+
+  /* ── 遊戲說明 ── */
+  #scr-tutorial { margin: 0; }
+  .tut-grid { grid-template-columns: 1fr; width: 100%; max-width: 480px; gap: 10px; }
+  .tut-card { padding: 14px; border-radius: 16px; }
+  .tut-icon { font-size: 2em; margin-bottom: 6px; }
+  .ss-anim { flex-wrap: wrap; justify-content: center; gap: 8px !important; }
+  .ss-fig canvas { width: 54px; height: auto; }
+  .tut-arrow { font-size: 1.4em; }
+  #tut-mode-hint, .safety-mini-note { max-width: 100% !important; width: 100%; padding: 12px 14px !important; }
+  .safety-mini-note { font-size: 1em; }
+
+  /* ── 每日任務 / 成就 ── */
+  #scr-quests, #scr-achievements { padding: 14px 10px; }
+  .quest-item { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
+  .quest-item-icon { font-size: 1.8em; min-width: 36px; }
+  .ach-grid { grid-template-columns: repeat(auto-fill, minmax(min(160px, 46%), 1fr)); gap: 10px; max-width: 100%; width: 100%; max-height: none; }
+  .ach-card { padding: 14px 10px; border-radius: 16px; }
+  .ach-icon { font-size: 2.6em; }
+
+  /* ── 排行榜 ── */
+  .board-header { flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .diff-tabs, .shop-tabs { flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .diff-tab, .shop-tab { padding: 8px 16px; }
+  .season-info { width: 100%; padding: 12px 14px; font-size: 1em; }
+  .board-table-wrap {
+    width: 100% !important;
+    max-height: calc(100vh - 280px) !important;
+    overflow: auto !important;
+  }
+  @supports (height: 100dvh) { .board-table-wrap { max-height: calc(100dvh - 280px) !important; } }
+  #board-table { min-width: 560px; }
+  #board-table th { padding: 8px 10px; font-size: .9em; }
+  #board-table td { padding: 10px; font-size: 1.1em; }
+  .rank-badge { width: 28px; height: 28px; line-height: 24px; }
+
+  /* ── 商城 ── */
+  #scr-shop { padding: 14px 10px; }
+  .shop-header { flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .shop-coins { font-size: 1.2em; padding: 8px 16px; }
+  .shop-grid { grid-template-columns: repeat(auto-fill, minmax(min(160px, 46%), 1fr)); gap: 10px; width: 100%; max-width: 100%; overflow: visible; }
+  .shop-item { padding: 12px 8px; border-radius: 16px; border-width: 2px; }
+  .shop-item-preview { width: 80px; height: 80px; }
+
+  /* ── 每日簽到 ── */
+  #scr-signin { margin: 0 !important; }
+  #cal-wrap { width: 100%; padding: 14px; border-radius: 14px; margin: 0; }
+  .cal-header { flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .cal-title { font-size: 1.4em; }
+  .cal-retro-info { font-size: 1em; }
+  .cal-grid { gap: 5px; }
+  .cal-day { font-size: .8em; border-radius: 8px; }
+  .cal-day-num { font-size: 1.3em; margin-bottom: 0; }
+  .cal-day-icon { font-size: 1.3em; }
+  .cal-day-reward { font-size: .78em; }
+  .missed-badge { font-size: .7em; padding: 2px 4px; top: -5px; right: -5px; }
+
+  /* ── 設定視窗 ── */
+  #ov-settings { gap: 16px !important; padding: 12px; }
+  #set-title { font-size: 2em !important; }
+  #ov-settings > div[style*="width:640px"],
+  #ov-settings .card { width: min(640px, 100%) !important; }
+  #ov-settings .card { padding: 18px 16px !important; gap: 18px !important; border-radius: 18px !important; }
+  #ov-settings span[style*="font-size:1.8em"] { font-size: 1.3em !important; }
+  #set-lang-select { font-size: 1.3em !important; padding: 6px 10px !important; }
+  #set-back-btn { font-size: 1.3em !important; padding: 12px 28px !important; }
+  .set-switch { font-size: 1.25em; }
+
+  /* ── 好友挑戰 ── */
+  #scr-challenge { padding: 14px 12px; }
+  #challenge-code-output, #challenge-code-input { font-size: 1.1em; padding: 12px; border-radius: 12px; }
+  .challenge-preview-ok, .challenge-preview-err { font-size: 1.4em; }
+  #challenge-create-panel p, #challenge-redeem-panel p { font-size: 1em !important; }
+
+  /* ── 分享卡片 / 手機鏡頭配對 ── */
+  #ov-share-card { padding: 12px; }
+  #ov-share-card > div[style*="display:flex"] { flex-wrap: wrap; justify-content: center; }
+  #ov-phonecam { margin-top: 0 !important; padding: 16px 12px; text-align: center; }
+  #ov-phonecam p { font-size: 1.1em !important; }
+  #ov-phonecam textarea { width: 100% !important; max-width: 320px; font-size: 1.05em !important; }
+  #ov-phonecam div[style*="font-size:1.5"], #ov-phonecam div[style*="font-size:1.6"] { font-size: 1.1em !important; }
+  #phonecam-status { font-size: 1.1em !important; }
+
+  /* ── 隱私權視窗（legal.css） ── */
+  #ov-legal { padding: 12px !important; gap: 10px !important; }
+  .legal-content { padding: 14px 16px; border-radius: 16px; border-width: 2px; max-height: calc(100vh - 230px); }
+  @supports (height: 100dvh) { .legal-content { max-height: calc(100dvh - 230px); } }
+  .legal-section { margin-bottom: 20px; }
+  .legal-section h3 { font-size: 1.35em; }
+  .legal-section p { font-size: 1.02em; line-height: 1.65; margin-bottom: 10px; }
+  .legal-updated { font-size: .95em; margin-bottom: 10px; }
+  .legal-checkbox-label { font-size: 1.05em; gap: 10px; text-align: left; }
+  .legal-checkbox-label input[type="checkbox"] { width: 26px; height: 26px; flex: none; }
+
+  /* ── 聯絡我們 ── */
+  #contact-form { max-width: 100% !important; }
+  #contact-form input, #contact-form textarea { width: 100% !important; }
+
+  /* ── 結算 / 暫停 / 金幣獎勵 ──
+     直拿時遊戲右側面板只佔畫面上半部，這三個視窗改成蓋滿整個螢幕，按鈕才不會被擠到下面 */
+  #ov-result, #ov-pause, #coin-reward { position: fixed; inset: 0; }
+  #ov-result { padding: 16px 12px; gap: 10px; }
+  #ov-icon { font-size: 3em; }
+  #ov-title { font-size: 2em; }
+  #ov-sub { font-size: 1.05em; text-align: center; }
+  .stat-row { flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .sbox { min-width: 90px; padding: 10px 14px; border-radius: 12px; }
+  .sv { font-size: 1.5em; }
+  #chart-wrap { max-width: 100%; }
+  #chart-cvs { width: 100%; height: auto; }
+  #recording-result { width: 100%; }
+  .recording-result-head { flex-wrap: wrap; gap: 6px; }
+  #name-wrap { flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .pause-title { font-size: 2.4em; }
+  .pause-stats { flex-wrap: wrap; justify-content: center; }
+  .cr-anim { font-size: 4.5em; }
+  .cr-title { font-size: 2em; margin-top: 6px; }
+  .cr-amount { font-size: 3.2em; }
+  .cr-row { font-size: 1.05em; }
+  .control-table-wrap { overflow-x: auto; }
+  .control-rep-chart { max-width: 100%; height: auto; }
+  .control-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+}
+
+/* ==========================================================================
+   4-2. 直拿：遊戲畫面上下堆疊（上：鏡頭＋遊戲舞台；下：數據面板）
+        只看螢幕比例，橫拿的窄手機不會套用
+   ========================================================================== */
+@media (max-aspect-ratio: 1/1) {
+  /* ── 遊戲畫面：上下堆疊（上：鏡頭＋遊戲舞台；下：數據面板） ── */
+  #scr-game {
+    width: 100vw !important;
+    height: 100vh !important;
+    flex-direction: column !important;
+    font-size: clamp(12px, 3.3vw, 19px);
+  }
+  @supports (height: 100dvh) {
+    #scr-game { width: 100dvw !important; height: 100dvh !important; }
+  }
+  #right-panel {
+    order: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  #left-panel {
+    order: 2;
+    width: 100%; min-width: 0;
+    height: auto; max-height: 32vh;
+    border-right: 0;
+    border-top: 2px solid var(--border);
+    padding: 8px 10px;
+    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-content: start;
+  }
+  @supports (height: 100dvh) { #left-panel { max-height: 32dvh; } }
+  #left-panel > .lbl { display: none; }
+  /* 第 1 列：燈號；第 2 列：狀態與次數；第 3 列：時間 / 總分 / 姿勢分 */
+  #light-badge  { grid-column: 1 / -1; order: 1; font-size: 1.05em; padding: 6px 12px; margin-top: 0; }
+  #ss-panel     { grid-column: 1 / -1; order: 2; padding: 6px 14px !important; gap: 10px !important; }
+  #time-card    { order: 3; }
+  #score-block  { order: 4; padding: 6px !important; background: var(--card2) !important; border: 2px solid var(--border) !important; border-radius: 12px !important; flex-grow: 0; }
+  #posture-card { order: 5; }
+  #rep-time-card{ order: 6; grid-column: 1 / -1; }
+  #ss-body-state { font-size: 1.15em !important; }
+  .ss-rep-num { font-size: 1.7em !important; }
+  .ss-rep-lbl { margin-top: 2px !important; }
+  #time-card, #posture-card, #rep-time-card { padding: 6px; border-radius: 12px; }
+  .time-row { padding: 0; }
+  .time-row strong { font-size: 1.6em; }
+  #p-big { font-size: 1.8em; }
+  #p-grade { margin-top: 2px; padding: 1px 12px; font-size: 1em; }
+  #score-big { font-size: 1.8em; }
+  #score-block .lbl { margin-bottom: 0 !important; font-size: .85em; }
+  #posture-card-label { font-size: .85em; margin-bottom: 0 !important; }
+
+  #cam-wrap {
+    height: auto !important;
+    width: 100%;
+    flex: none;
+    max-height: 34vh;
+    aspect-ratio: 4 / 3;
+  }
+  @supports (height: 100dvh) { #cam-wrap { max-height: 34dvh; } }
+  #cam-wrap canvas, #cam-wrap video { height: 100% !important; }
+  #pose-stage { width: 100%; display: flex; justify-content: center; }
+  #game-stage { min-height: 110px; border-radius: 14px; }
+  #hud { top: 8px; left: 10px; right: 10px; padding: 6px 10px; }
+  .hblock { min-width: 60px; }
+  .hval { font-size: 1.6em; }
+  .hlbl { font-size: .8em; }
+  #move-warn { top: 60px; font-size: 1em; padding: 6px 16px; }
+  #tip-box { bottom: 26px; font-size: 1em; padding: 6px 16px; white-space: normal; max-width: 92%; text-align: center; }
+  #countdown { font-size: 8em; }
+  #rep-fb-score { font-size: 3em; }
+  #recording-live-badge { top: 8px; right: 8px; padding: 5px 10px; font-size: .95em; }
+  #calib-text { font-size: 1.05em; padding: 8px 16px; text-align: center; max-width: 92%; }
+  #calib-box { padding-top: 14px; }
+  #calib-center-label { font-size: clamp(2.2rem, 10vmin, 4.5rem) !important; letter-spacing: 2px !important; }
+  #calib-bottom-bar { font-size: clamp(1.3rem, 6vw, 2.6rem) !important; letter-spacing: 2px !important; bottom: 4% !important; }
+  #game-settings-btn { width: 44px !important; height: 44px !important; font-size: 1.5em !important; top: 8px !important; right: 8px !important; }
+  /* 遊戲中的 🤖 移到左上角，不擋分數 */
+  body:has(#scr-game:not(.off)) #ai-chat-btn {
+    top: 8px; left: 8px; right: auto; bottom: auto;
+    width: 40px; height: 40px; font-size: 1.3em;
+  }
+}
+
+/* ==========================================================================
+   5. 矮視窗（手機橫拿等）：縮小間距與字級
+   ========================================================================== */
+@media (max-height: 640px) {
+  .scr { gap: 10px; }
+  .scr-title { font-size: 1.6em; }
+  .btn { padding: 10px 20px; font-size: 1.05em; }
+  .char-grid { max-height: calc(100vh - 150px); }
+  .mode-card, .diff-card { padding: 12px 16px; }
+  .cal-day { font-size: .85em; }
+  #cal-wrap { padding: 14px; }
+  #ov-settings { gap: 14px !important; }
+  #ov-settings .card { padding: 16px 20px !important; gap: 14px !important; }
+  #set-title { font-size: 1.8em !important; }
+  #ov-legal { gap: 8px !important; }
+  .legal-content { max-height: calc(100vh - 170px); padding: 16px 22px; }
+  @supports (height: 100dvh) { .legal-content { max-height: calc(100dvh - 170px); } }
+  #ai-chat-window { bottom: 70px; height: min(520px, 76vh); }
+  .board-table-wrap { max-height: calc(100vh - 150px) !important; min-height: 140px; }
+  @supports (height: 100dvh) { .board-table-wrap { max-height: calc(100dvh - 150px) !important; } }
+  .cal-day { aspect-ratio: 2 / 1; }
+  .cal-day-reward { display: none; }
+  .ach-grid { max-height: none; }
+}
+
+/* 橫向的矮視窗（手機橫拿）：遊戲畫面維持左右分割，但面板縮小 */
+@media (max-height: 640px) and (min-aspect-ratio: 1/1) {
+  #scr-game { font-size: clamp(10px, calc(var(--gw) * .0115), 21px); }
+  #left-panel {
+    width: clamp(170px, calc(var(--gw) * .27), 350px);
+    min-width: 0;
+    padding: 8px; gap: 8px;
+  }
+  #light-badge { font-size: 1.1em; padding: 6px 8px; margin-top: 0; }
+  #time-card, #posture-card { padding: 6px 8px; }
+  .time-row { padding: 0; }
+  .time-row strong { font-size: 2em; }
+  #p-big { font-size: 2.2em; }
+  #p-grade { margin-top: 4px; padding: 2px 16px; }
+  #score-big { font-size: 2.8em; }
+  #left-panel > .lbl { display: none; }
+  #ss-panel { padding: 8px 12px !important; }
+  #right-panel { padding: 8px 12px; gap: 8px; }
+  #hud { top: 8px; padding: 6px 12px; }
+  #move-warn { top: 62px; }
+  #game-settings-btn { width: 40px !important; height: 40px !important; font-size: 1.3em !important; top: 6px !important; right: 6px !important; }
+}
+
+@media (max-height: 420px) and (min-aspect-ratio: 1/1) {
+  #left-panel { gap: 4px; padding: 5px; }
+  #light-badge { font-size: .95em; padding: 3px 6px; }
+  #time-card, #posture-card { padding: 3px 6px; }
+  .time-row strong { font-size: 1.7em; }
+  #p-big { font-size: 1.7em; }
+  #p-grade { display: none; }
+  #score-big { font-size: 2.2em; }
+  #ss-panel { padding: 4px 10px !important; }
+  #ss-body-state { font-size: 1.4em !important; }
+  .ss-rep-num { font-size: 2em !important; }
+  #posture-card-label, #score-block .lbl { font-size: .85em; margin-bottom: 0 !important; }
+}
+
+/* ==========================================================================
+   6. 一般桌面但視窗偏窄（1200px 以下、橫向）：遊戲左側面板等比縮小
+   ========================================================================== */
+@media (max-width: 1200px) and (min-aspect-ratio: 1/1) {
+  #scr-game { font-size: clamp(10.5px, calc(var(--gw) * .0125), 21.6px); }
+  #left-panel { width: clamp(200px, calc(var(--gw) * .27), 350px); min-width: 0; padding: 1em; gap: .8em; }
+  /* 原本是固定 px 的間距與大數字，視窗縮小時佔比會變大 → 改成跟字級一起縮 */
+  #light-badge { padding: .6em 1em; margin-top: 0; }
+  #time-card, #posture-card { padding: .7em; }
+  #ss-panel { padding: .7em 1em !important; gap: .8em !important; }
+  .time-row { padding: .1em 0; }
+  .time-row strong { font-size: 2.5em; }
+  #p-big { font-size: 2.8em; }
+  #score-big { font-size: 4em; }
+}
+
+/* ==========================================================================
+   7. 極窄手機（≤ 380px）
+   ========================================================================== */
+@media (max-width: 380px) {
+  .char-grid, .ach-grid, .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .ach-desc { min-height: 0; }
+  .btn { padding: 10px 16px; }
+  .cal-grid { gap: 3px; }
+  #board-table { min-width: 520px; }
+}

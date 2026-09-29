@@ -231,7 +231,8 @@ async function challengeFriend(code) {
 
   closeFriendsScreen();
   showToast(`🎯 ${fr_t('fr-chal-start', '目標：超越')}${f.name} ${f.best || 0}${fr_t('score-unit', '分')}`, 'var(--gold)');
-  if (typeof goTo === 'function') goTo('scr-chars');
+  if (typeof openCharsScreen === 'function') openCharsScreen('play');
+  else if (typeof goTo === 'function') goTo('scr-chars');
 }
 
 /* ══════════════════ 對戰戰績 ══════════════════ */

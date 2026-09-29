@@ -1,0 +1,684 @@
+/* ==========================================================================
+   menu-home.css — 主選單「手遊主畫面」排版
+   載入順序：必須放在 style.css / social.css / legal.css 之後（index.html 已處理）
+   只影響主選單（#scr-menu）與主選單上方的 #coin-display / #sys-top-right。
+   ========================================================================== */
+
+:root {
+  /* 1u ≈ 視窗寬度的 1%，但以高度限制，16:9 以外的螢幕也不會爆版 */
+  --hm-u: max(6px, min(1vw, 1.7778vh));
+
+  --hm-ink: #14233a;
+  --hm-paper: #f3f7fc;
+  --hm-paper-2: #d5e1f1;
+  --hm-blue: #1e6fff;
+  --hm-blue-deep: #0b2f6e;
+  --hm-green: #27c46b;
+  --hm-green-deep: #0f6b3a;
+  --hm-amber: #ffb62e;
+  --hm-orange: #ff7a1f;
+  --hm-ring: rgba(190, 220, 255, .95);
+
+  /* 右上角「設定 + 商店」區塊寬度；金幣列會貼在它的左邊 */
+  --hm-actions-w: calc(var(--hm-u) * 17);
+  --hm-ts: 1;                         /* 文字放大倍率：設定裡開「大字體」時由 settings.css 改成 1.15 */
+}
+
+/* ---------- 舞台 ---------- */
+#scr-menu {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  z-index: 10;
+}
+
+#scr-menu .hm-stage {
+  position: absolute;
+  inset: 0;
+  font-size: var(--hm-u);            /* 之後全部用 em 當作 u */
+  font-weight: 700;
+  /* 只畫光暈，不畫實心底色，背景粒子特效仍然看得到 */
+  background:
+    radial-gradient(55% 42% at 6% -6%, rgba(130, 185, 255, .42), transparent 65%),
+    radial-gradient(55% 42% at 97% -8%, rgba(130, 185, 255, .36), transparent 65%),
+    linear-gradient(0deg, rgba(30, 111, 255, .30), transparent 42%);
+}
+
+#scr-menu .hm-stage button {
+  font-family: inherit;
+  font-size: 1em;                    /* <button> 預設不繼承字級，這裡明確設回 1u */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 地面：透視斑馬線（呼應紅綠燈主題） */
+#scr-menu .hm-floor {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 40%;
+  pointer-events: none;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 400' preserveAspectRatio='none'><g fill='white' fill-opacity='.075'><polygon points='452,0 478,0 330,400 170,400'/><polygon points='494,0 520,0 500,400 350,400'/><polygon points='536,0 562,0 660,400 520,400'/><polygon points='578,0 604,0 820,400 680,400'/></g><line x1='0' y1='2' x2='1000' y2='2' stroke='white' stroke-opacity='.14' stroke-width='2'/></svg>") center / 100% 100% no-repeat;
+}
+
+/* ---------- 左上：檔案條 ---------- */
+#scr-menu .hm-profile {
+  position: absolute;
+  left: 0; top: 0;
+  width: max-content; min-width: 25em; height: 6.6em;   /* 標題較長（英文、大字體）時面板會跟著加寬 */
+  display: flex;
+  align-items: center;
+  padding-left: 7.6em;
+  padding-right: 4em;
+  filter: drop-shadow(0 .3em .5em rgba(0, 0, 0, .4));
+}
+#scr-menu .hm-profile::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #fff, var(--hm-paper-2));
+  clip-path: polygon(0 0, 100% 0, calc(100% - 2.2em) 100%, 0 100%);
+}
+#scr-menu .hm-badge {
+  position: absolute;
+  left: calc(var(--hm-u) * 1); top: calc(var(--hm-u) * .6);
+  width: calc(var(--hm-u) * 5.6); height: calc(var(--hm-u) * 5.6);
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: calc(var(--hm-u) * 3); line-height: 1;
+  background: radial-gradient(circle at 35% 28%, #4c93ff, var(--hm-blue-deep));
+  border: calc(var(--hm-u) * .3) solid #fff;
+  box-shadow: 0 0 0 calc(var(--hm-u) * .2) var(--hm-blue), 0 calc(var(--hm-u) * .3) calc(var(--hm-u) * .7) rgba(0, 0, 0, .35);
+}
+#scr-menu .hm-name { position: relative; line-height: 1.15; }
+#scr-menu .hm-title {
+  font-size: 2.1em;
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: var(--hm-ink);
+  white-space: nowrap;
+}
+#scr-menu .hm-title span { color: var(--hm-blue); }
+#scr-menu .hm-sub {
+  font-size: 1.05em;
+  font-weight: 700;
+  color: #5b6f8e;
+  white-space: nowrap;
+}
+
+/* ---------- 共用：按鈕 + 底部文字標籤 ---------- */
+#scr-menu .hm-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .35em;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: 1em;
+  line-height: 1.1;
+}
+/* 標籤預設取 title 屬性 → 語言切換時會自動跟著變（title 由原本的 data-i18n-attr 提供） */
+#scr-menu .hm-btn:not(.hm-txt)::after {
+  content: attr(title);
+  max-width: 9em;
+  text-align: center;
+  text-wrap: balance;               /* 兩行標籤平均斷行，避免「隱私權與安／全聲明」這種斷法 */
+}
+#scr-menu .hm-lbl,
+#scr-menu .hm-btn::after,
+#scr-menu .hm-big::after,
+#scr-menu .hm-big-txt {
+  color: #fff;
+  font-weight: 800;
+  text-shadow:
+    0 .1em 0 #0a1a35, 0 -.1em 0 #0a1a35, .1em 0 0 #0a1a35, -.1em 0 0 #0a1a35,
+    .1em .1em 0 #0a1a35, -.1em .1em 0 #0a1a35, .1em -.1em 0 #0a1a35, -.1em -.1em 0 #0a1a35,
+    0 .15em .4em rgba(0, 0, 0, .55);
+}
+#scr-menu .hm-lbl span { color: inherit; }
+#scr-menu .hm-lbl { text-wrap: balance; }
+
+#scr-menu .hm-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: transform .12s ease, filter .12s ease;
+}
+#scr-menu .hm-btn:hover .hm-face { transform: translateY(-.15em); filter: brightness(1.12); }
+#scr-menu .hm-btn:active .hm-face { transform: scale(.94); }
+#scr-menu .hm-btn:focus-visible { outline: .18em solid #fff; outline-offset: .25em; border-radius: .8em; }
+
+/* 紅點（沿用原本的 .red-dot 樣式，只負責定位） */
+#scr-menu .hm-face .red-dot {
+  position: absolute;
+  top: calc(var(--hm-u) * .1); right: calc(var(--hm-u) * .1);
+  width: calc(var(--hm-u) * 1.7); height: calc(var(--hm-u) * 1.7);
+  border-width: calc(var(--hm-u) * .25);
+  z-index: 2;
+}
+
+/* ---------- 上方：圓形活動入口 ---------- */
+#scr-menu .hm-events {
+  position: absolute;
+  left: 11em; top: 8.4em;
+  display: flex;
+  gap: 2.5em;
+  align-items: flex-start;
+}
+/* .hm-face 自己的 font-size 是表情符號大小，所以尺寸一律用 calc(var(--hm-u) * N) 表示 */
+#scr-menu .hm-round .hm-face {
+  width: calc(var(--hm-u) * 7.6); height: calc(var(--hm-u) * 7.6);
+  font-size: calc(var(--hm-u) * 3.5);
+  line-height: 1;
+  background: radial-gradient(circle at 50% 24%, #3f88f0, #0d2f6b 72%);
+  border: calc(var(--hm-u) * .3) solid var(--hm-ring);
+  box-shadow:
+    0 0 calc(var(--hm-u) * 1.2) rgba(90, 165, 255, .85),
+    inset 0 calc(var(--hm-u) * .3) calc(var(--hm-u) * .6) rgba(255, 255, 255, .4),
+    0 calc(var(--hm-u) * .6) calc(var(--hm-u) * 1) rgba(0, 0, 0, .35);
+}
+#scr-menu .hm-round::after,
+#scr-menu .hm-round .hm-lbl {
+  font-size: calc(1.4em * var(--hm-ts));
+  max-width: 7em;
+  text-align: center;
+  line-height: 1.15;
+}
+
+/* ---------- 左側：直排小圖示 ---------- */
+#scr-menu .hm-side {
+  position: absolute;
+  left: 1.3em; top: 9em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+/* 每個項目固定高度（可容納兩行標籤），🤖 才能精準排在隱私權按鈕正下方 */
+#scr-menu .hm-small { width: 6em; height: 7.4em; }
+#scr-menu .hm-side-slot { width: 6em; height: 7.4em; flex: none; }   /* 🤖 AI 教練的位置（第 2 格） */
+#scr-menu .hm-small .hm-face {
+  width: calc(var(--hm-u) * 4.6); height: calc(var(--hm-u) * 4.6);
+  font-size: calc(var(--hm-u) * 2.2);
+  line-height: 1;
+  background: radial-gradient(circle at 50% 24%, #647a9c, #22334f 75%);
+  border: calc(var(--hm-u) * .22) solid #e8f0fb;
+  box-shadow: inset 0 calc(var(--hm-u) * .15) calc(var(--hm-u) * .3) rgba(255, 255, 255, .35), 0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .6) rgba(0, 0, 0, .4);
+}
+#scr-menu .hm-small::after,
+#scr-menu .hm-small .hm-lbl { font-size: calc(1.05em * var(--hm-ts)); max-width: 6em; }
+
+/* ---------- 左下：圖示列 ---------- */
+#scr-menu .hm-dock {
+  position: absolute;
+  left: 1.6em; bottom: 3.6em;
+  display: flex;
+  gap: .9em;
+  align-items: flex-start;           /* 標籤換行時，圖示仍然對齊 */
+}
+#scr-menu .hm-dock-btn { width: 8.6em; gap: .1em; }
+#scr-menu .hm-dock-btn .hm-face {
+  width: calc(var(--hm-u) * 6.6); height: calc(var(--hm-u) * 6.6);
+  font-size: calc(var(--hm-u) * 3.4);
+  line-height: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 26%, #eef4fb, #b9cbe2 78%);
+  border: calc(var(--hm-u) * .2) solid #fff;
+  box-shadow: 0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .7) rgba(0, 0, 0, .4);
+  z-index: 1;
+}
+/* 圖示底座：對應截圖每顆圖示下面的圓形底盤 */
+#scr-menu .hm-dock-btn::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 5.2em;
+  width: 8.2em; height: 2.4em;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #fff3c9 0, #e7b652 60%, #a5731c 100%);
+  box-shadow: 0 .25em .35em rgba(0, 0, 0, .45);
+}
+#scr-menu .hm-dock-btn::after,
+#scr-menu .hm-dock-btn .hm-lbl {
+  position: relative;
+  z-index: 2;
+  margin-top: .1em;
+  font-size: calc(1.75em * var(--hm-ts));
+  letter-spacing: .06em;
+  max-width: 5.6em;                  /* 英文較長時換成兩行 */
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ---------- 中右：紅綠燈 ---------- */
+#scr-menu .hm-hero {
+  position: absolute;
+  right: 13.1em;
+  bottom: calc(5.4em + 9em);          /* 燈桿底部固定接在大按鈕上緣，各種螢幕比例都不會懸空 */
+  height: 31em;
+  pointer-events: none;
+  filter: drop-shadow(0 1em 1.4em rgba(0, 0, 0, .5));
+}
+#scr-menu .hm-hero svg { height: 100%; width: auto; display: block; overflow: visible; }
+#scr-menu .hm-lamp { opacity: .0; }
+#scr-menu .hm-lamp-g { animation: hmLampG 10s infinite; filter: drop-shadow(0 0 10px #27c46b); }
+#scr-menu .hm-lamp-y { animation: hmLampY 10s infinite; filter: drop-shadow(0 0 10px #ffc93c); }
+#scr-menu .hm-lamp-r { animation: hmLampR 10s infinite; filter: drop-shadow(0 0 10px #ff4d4f); }
+
+/* ---------- 正中央：玩家目前裝備的角色（放大展示） ----------
+   水平置中在整個螢幕，跟紅綠燈的位置無關（螢幕夠寬時不會疊到）；
+   底部跟紅綠燈共用同一條「地面基準線」（bottom: 5.4em + 9em），
+   角色站在同一個水平上，頂部盡量往上延伸到活動入口那排下方，
+   讓角色本體可以放到最大。 */
+#scr-menu .hm-char-preview {
+  position: absolute;
+  left: 50%;
+  top: 6.6em;
+  bottom: calc(5.4em + 9em);
+  transform: translateX(-50%);
+  width: 40em;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+#scr-menu .hm-char-preview img {
+  height: 35em;               /* 原本圖片本身只有 180px，maxWidth/maxHeight 這種「上限」規則從沒被卡到過，
+                                  等於完全沒放大；改成直接指定高度，量測過原尺寸後這裡是兩倍 */
+  width: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 .5em 1em rgba(0, 0, 0, .5))
+    drop-shadow(0 0 1.6em rgba(120, 180, 255, .45));
+  animation: hmCharBob 3.4s ease-in-out infinite;
+}
+@keyframes hmCharBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-.35em); }
+}
+@keyframes hmLampG { 0%, 50% { opacity: 1 } 54%, 100% { opacity: 0 } }
+@keyframes hmLampY { 0%, 52% { opacity: 0 } 56%, 68% { opacity: 1 } 72%, 100% { opacity: 0 } }
+@keyframes hmLampR { 0%, 70% { opacity: 0 } 74%, 96% { opacity: 1 } 100% { opacity: 0 } }
+
+/* ---------- 右下：三顆大按鈕 ---------- */
+#scr-menu .hm-actions {
+  position: absolute;
+  right: 1.6em;
+  bottom: 5.4em;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5em;
+}
+#scr-menu .hm-big {
+  position: relative;
+  width: 11.6em; height: 11.6em;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5em;
+  background: linear-gradient(180deg, #ffffff, var(--hm-paper-2));
+  box-shadow: 0 .35em .6em rgba(0, 0, 0, .45), inset 0 -.25em 0 rgba(20, 35, 58, .12);
+  display: block;
+  color: #fff;
+  transition: transform .12s ease, filter .12s ease;
+}
+#scr-menu .hm-big::before {          /* 內框 */
+  content: "";
+  position: absolute; inset: .7em;
+  border-radius: 1em;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, .22), transparent 55%),
+    linear-gradient(180deg, #2b6fd6, var(--hm-blue-deep));
+  box-shadow: inset 0 0 0 .12em rgba(255, 255, 255, .35);
+}
+#scr-menu .hm-big-ico {
+  position: absolute;
+  left: 0; right: 0; top: calc(var(--hm-u) * 1.9);
+  font-size: calc(var(--hm-u) * 5.6);
+  line-height: 1;
+  text-align: center;
+  filter: drop-shadow(0 .06em .06em rgba(0, 0, 0, .45));
+}
+#scr-menu .hm-big::after,
+#scr-menu .hm-big-txt {
+  position: absolute;
+  left: -14%; right: -14%;
+  bottom: -.55em;
+  text-align: center;
+  font-size: 2.6em;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: .04em;
+  white-space: normal;               /* 英文名稱較長時自動換成兩行，不會超出畫面 */
+  text-wrap: balance;
+}
+#scr-menu .hm-big::after { content: attr(title); }
+/* 英文名稱較長：縮小字級（<html lang> 由 index.html 底部的腳本在切換語言時更新） */
+html[lang="en"] #scr-menu .hm-big::after,
+html[lang="en"] #scr-menu .hm-big-txt { font-size: 1.9em; }
+html[lang="en"] #scr-menu .hm-dock-btn::after,
+html[lang="en"] #scr-menu .hm-dock-btn .hm-lbl { font-size: calc(1.25em * var(--hm-ts)); }
+#scr-menu .hm-big.hm-txt::after { content: none; }
+#scr-menu .hm-big:hover { transform: translateY(-.25em); filter: brightness(1.06); }
+#scr-menu .hm-big:active { transform: scale(.97); }
+#scr-menu .hm-big:focus-visible { outline: .2em solid #fff; outline-offset: .3em; }
+
+/* 「開始遊戲」與另外兩顆同大小、同字體，只有顏色（綠）與光暈不同 */
+#scr-menu .hm-start {
+  box-shadow: 0 0 1.4em rgba(39, 196, 107, .65), 0 .35em .6em rgba(0, 0, 0, .45), inset 0 -.25em 0 rgba(20, 35, 58, .12);
+}
+#scr-menu .hm-start::before {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, .28), transparent 55%),
+    linear-gradient(180deg, #35d67c, var(--hm-green-deep));
+}
+#scr-menu .hm-big-ico svg { display: inline-block; vertical-align: top; }
+
+/* ---------- 底部法律連結 ---------- */
+#scr-menu .hm-legal {
+  position: absolute;
+  left: 0; right: 0; bottom: .7em;
+  text-align: center;
+}
+#scr-menu .hm-legal .legal-footer-link {
+  display: inline-block;
+  position: static;
+  margin: 0;
+  font-size: calc(1.05em * var(--hm-ts));
+  text-shadow: 0 .1em .3em rgba(0, 0, 0, .7);
+}
+
+/* ==========================================================================
+   右上角：金幣列 + 設定 + 商店（這兩個元素在 #scr-menu 外面，所以用 :has 限定只在主選單畫面生效）
+   ========================================================================== */
+#sys-top-right {
+  position: fixed;
+  top: 0; right: 0; left: auto; bottom: auto;
+  width: var(--hm-actions-w);
+  padding: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: calc(var(--hm-u) * .6);
+  font-size: var(--hm-u);
+}
+#sys-top-right .hm-gear,
+#sys-top-right .hm-shop {
+  position: relative;
+  margin: 0;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+  font-weight: 800;
+  color: var(--hm-ink);
+  filter: drop-shadow(0 .25em .35em rgba(0, 0, 0, .4));
+}
+#sys-top-right .hm-gear {
+  width: 4.6em; height: 4.2em;
+  font-size: 1em;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #fff, var(--hm-paper-2));
+  border-radius: 0 0 .9em .9em;
+}
+#sys-top-right .hm-gear span { font-size: 2.1em; line-height: 1; }
+#sys-top-right .hm-shop {
+  width: 11em; height: 5em;
+  display: flex; align-items: center; justify-content: center;
+  gap: .5em;
+  padding-left: 1.2em;
+  background: linear-gradient(180deg, #ffc25a, var(--hm-orange));
+  clip-path: polygon(1.5em 0, 100% 0, 100% 100%, 0 100%);
+  color: #fff;
+}
+#sys-top-right .hm-shop-ico { font-size: 2.2em; line-height: 1; }
+#sys-top-right .hm-shop::after {
+  content: attr(title);
+  font-size: 1.9em;
+  font-weight: 900;
+  text-shadow: 0 .06em 0 rgba(160, 60, 0, .7);
+  white-space: nowrap;
+}
+#sys-top-right .hm-gear:hover,
+#sys-top-right .hm-shop:hover { filter: brightness(1.08) drop-shadow(0 .25em .35em rgba(0, 0, 0, .4)); }
+#sys-top-right .hm-gear:active,
+#sys-top-right .hm-shop:active { transform: scale(.96); }
+#sys-top-right .hm-gear:focus-visible,
+#sys-top-right .hm-shop:focus-visible { outline: .18em solid #fff; outline-offset: -.3em; }
+
+body:has(#scr-menu:not(.off)) #coin-display {
+  position: fixed;
+  top: 0;
+  left: auto;
+  right: calc(var(--hm-actions-w) + var(--hm-u) * .6);
+  bottom: auto;
+  z-index: 500;
+  display: flex !important;   /* goTo() 會在主選單時寫入 inline display:block，這裡要蓋過 */
+  align-items: center;
+  gap: calc(var(--hm-u) * .6);
+  height: calc(var(--hm-u) * 4.2);
+  min-width: calc(var(--hm-u) * 13);
+  padding: 0 calc(var(--hm-u) * 1.6) 0 calc(var(--hm-u) * 2.6);
+  font-size: calc(var(--hm-u) * 1.9);   /* 表情符號 🪙 用這個大小；尺寸一律用 calc(var(--hm-u) * N) */
+  font-weight: 900;
+  line-height: 1;
+  color: var(--hm-ink);
+  background: linear-gradient(180deg, #fff, var(--hm-paper-2));
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(calc(var(--hm-u) * 1.5) 0, 100% 0, 100% 100%, 0 100%);
+}
+body:has(#scr-menu:not(.off)) #coin-display #coin-count {
+  margin-left: auto;
+  font-size: 1em;
+}
+
+/* ==========================================================================
+   🤖 AI 教練：其他畫面維持原本的右下角浮動按鈕；只有在主選單時，
+   移到左側直排、隱私權按鈕的正下方，大小與外觀和其他小圖示一致。
+   （原本寫在 index.html 的 inline style 已搬到這裡）
+   ========================================================================== */
+#ai-chat-btn {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  z-index: 9999;
+  width: 56px; height: 56px;
+  font-size: 2em;
+}
+
+/* 手機鏡頭配對、分享卡片這類彈出視窗（.overlay-modal）是疊在主選單「上面」的，
+   主選單本身並沒有離開（goTo() 沒被呼叫，menu-only-icon 不會被隱藏），
+   所以浮動的 AI 教練鈕跟右上角設定／商城，這時候要另外手動蓋掉。 */
+body:has(.overlay-modal.on) #ai-chat-btn,
+body:has(.overlay-modal.on) #sys-top-right {
+  display: none !important;
+}
+
+body:has(#scr-menu:not(.off)) #ai-chat-btn {
+  /* 第 2 格：起點 9u + 1 格 × (7.4u + 1u 間距)，再置中於 6u 寬的欄位 */
+  left: calc(var(--hm-u) * 2);
+  top: calc(var(--hm-u) * 17.4);
+  right: auto; bottom: auto;
+  width: calc(var(--hm-u) * 4.6); height: calc(var(--hm-u) * 4.6);
+  padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--hm-u) * 2.2);
+  line-height: 1;
+  background: radial-gradient(circle at 50% 24%, #647a9c, #22334f 75%);
+  border: calc(var(--hm-u) * .22) solid #e8f0fb;
+  box-shadow: inset 0 calc(var(--hm-u) * .15) calc(var(--hm-u) * .3) rgba(255, 255, 255, .35), 0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .6) rgba(0, 0, 0, .4);
+  backdrop-filter: none;
+  transition: transform .12s ease, filter .12s ease;
+}
+body:has(#scr-menu:not(.off)) #ai-chat-btn:hover {
+  transform: translateY(calc(var(--hm-u) * -.15));
+  filter: brightness(1.12);
+  background: radial-gradient(circle at 50% 24%, #647a9c, #22334f 75%);
+  border-color: #e8f0fb;
+  box-shadow: inset 0 calc(var(--hm-u) * .15) calc(var(--hm-u) * .3) rgba(255, 255, 255, .35), 0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .6) rgba(0, 0, 0, .4);
+}
+body:has(#scr-menu:not(.off)) #ai-chat-btn:active { transform: scale(.94); }
+body:has(#scr-menu:not(.off)) #ai-chat-btn::after {
+  content: attr(title);
+  position: absolute;
+  top: calc(100% + var(--hm-u) * .35);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--hm-u) * 7);
+  text-align: center;
+  text-wrap: balance;
+  font-size: calc(var(--hm-u) * 1.05 * var(--hm-ts));
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  pointer-events: none;
+  text-shadow:
+    0 .1em 0 #0a1a35, 0 -.1em 0 #0a1a35, .1em 0 0 #0a1a35, -.1em 0 0 #0a1a35,
+    .1em .1em 0 #0a1a35, -.1em .1em 0 #0a1a35, .1em -.1em 0 #0a1a35, -.1em -.1em 0 #0a1a35,
+    0 .15em .4em rgba(0, 0, 0, .55);
+}
+/* 聊天視窗改成從按鈕右側展開，而不是跳到畫面另一邊 */
+body:has(#scr-menu:not(.off)) #ai-chat-window {
+  left: calc(var(--hm-u) * 9);
+  right: auto;
+  bottom: calc(var(--hm-u) * 3);
+}
+
+/* ==========================================================================
+   未同意隱私權（body.consent-locked，由 js/legal.js 切換）：
+   所有功能灰階顯示；隱私權與設定（含語言）按鈕標有 data-consent-exempt，不受鎖定。
+   實際的「點了不會動作、跳提示」由 legal.js 的點擊攔截負責。
+   ========================================================================== */
+body.consent-locked #scr-menu .hm-btn:not([data-consent-exempt]),
+body.consent-locked #scr-menu .hm-big,
+body.consent-locked #sys-top-right .hm-shop,
+body.consent-locked #ai-chat-btn {
+  filter: grayscale(.9) brightness(.72);
+}
+body.consent-locked #scr-menu .hm-btn[data-consent-exempt] .hm-face {
+  animation: hmNudge 1.6s ease-in-out infinite;
+}
+@keyframes hmNudge {
+  0%, 100% {
+    box-shadow: inset 0 calc(var(--hm-u) * .15) calc(var(--hm-u) * .3) rgba(255, 255, 255, .35),
+                0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .6) rgba(0, 0, 0, .4),
+                0 0 0 0 rgba(255, 77, 79, 0);
+  }
+  50% {
+    box-shadow: inset 0 calc(var(--hm-u) * .15) calc(var(--hm-u) * .3) rgba(255, 255, 255, .35),
+                0 calc(var(--hm-u) * .4) calc(var(--hm-u) * .6) rgba(0, 0, 0, .4),
+                0 0 0 calc(var(--hm-u) * .8) rgba(255, 77, 79, .55);
+  }
+}
+
+/* ==========================================================================
+   直向螢幕（手機直拿、平板直拿）：改成由上而下的「流式」排版
+   （橫向用的絕對定位在直向放不下 5 個入口，所以整個改成一欄一欄排下來，
+    內容比螢幕高時，整個主選單可以往下捲）
+   ========================================================================== */
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --hm-u: max(6px, min(2.6vw, 1.7778vh));
+    --hm-actions-w: calc(var(--hm-u) * 11.5);
+    --hm-ts-base: 1.15;               /* 直向螢幕字較小，標籤預設放大 15% */
+    --hm-ts: 1.15;
+  }
+  #scr-menu { overflow-x: hidden; overflow-y: auto; align-items: stretch; justify-content: flex-start; }
+  #scr-menu .hm-stage {
+    position: relative; inset: auto;
+    flex: 0 0 auto;                   /* 不要被壓縮：內容比螢幕高時，整個主選單改成可捲動 */
+    width: 100%; min-height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.6em;
+    padding-bottom: 8em;              /* 右下角留給 🤖，底部留給隱私權連結 */
+  }
+  #scr-menu .hm-stage > * { position: relative; left: auto; right: auto; top: auto; bottom: auto; }
+  #scr-menu .hm-floor { position: absolute; bottom: 0; }
+  #scr-menu .hm-hero { display: none; }
+  #scr-menu .hm-profile { order: 0; }
+  #scr-menu .hm-char-preview { order: 1; height: 11em; width: 100%; flex: none; transform: none; }
+  #scr-menu .hm-char-preview img { max-height: 11em; animation: none; }
+  #scr-menu .hm-events  { order: 2; }
+  #scr-menu .hm-side    { order: 3; }
+  #scr-menu .hm-actions { order: 4; }
+  #scr-menu .hm-dock    { order: 5; }
+
+  #scr-menu .hm-profile { align-self: flex-start; flex: none; min-width: 20.5em; padding-left: 7.2em; padding-right: 3em; margin-bottom: 3em; }
+  #scr-menu .hm-title { font-size: 1.9em; }
+  #scr-menu .hm-sub { display: none; }
+  #sys-top-right .hm-shop { width: 6.6em; padding-left: 1.4em; }
+  #sys-top-right .hm-shop::after { display: none; }
+  /* 金幣移到設定／商店的正下方 */
+  body:has(#scr-menu:not(.off)) #coin-display {
+    top: calc(var(--hm-u) * 5.6);
+    right: 0;
+    height: calc(var(--hm-u) * 3.6);
+    min-width: calc(var(--hm-u) * 10);
+    font-size: calc(var(--hm-u) * 1.7);
+    padding: 0 calc(var(--hm-u) * 1.2) 0 calc(var(--hm-u) * 2.4);
+    border-radius: 0 0 0 calc(var(--hm-u) * .9);
+  }
+
+  /* 上方入口：放不下就自動換行 */
+  #scr-menu .hm-events { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4em 1.8em; width: 100%; padding: 0 1em; }
+  /* 左側小圖示變成橫排；🤖 在直向時固定在右下角，這一格不需要 */
+  #scr-menu .hm-side { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 1em; width: 100%; padding: 0 1em; }
+  #scr-menu .hm-side-slot { display: none; }
+  #scr-menu .hm-small { height: auto; }
+  #scr-menu .hm-actions { display: flex; justify-content: center; gap: 1.6em; width: 100%; padding-top: 1em; }
+  #scr-menu .hm-big { width: 9.6em; height: 9.6em; }
+  #scr-menu .hm-big::after, #scr-menu .hm-big-txt { font-size: 2.1em; }
+  #scr-menu .hm-dock { display: flex; justify-content: center; gap: .6em; width: 100%; padding: 1.4em .6em 0; }
+  #scr-menu .hm-dock-btn { width: 6.8em; }
+  #scr-menu .hm-dock-btn .hm-face { width: calc(var(--hm-u) * 5.4); height: calc(var(--hm-u) * 5.4); font-size: calc(var(--hm-u) * 2.8); }
+  #scr-menu .hm-dock-btn::before { top: 4em; width: 6.6em; height: 2em; }
+  #scr-menu .hm-dock-btn::after, #scr-menu .hm-dock-btn .hm-lbl { font-size: calc(1.3em * var(--hm-ts)); letter-spacing: 0; max-width: 100%; }
+  #scr-menu .hm-legal { position: absolute; left: 0; right: 0; bottom: .7em; }
+
+  /* 🤖 AI 教練：直向時放在右下角（小圓鈕、不顯示下方文字） */
+  body:has(#scr-menu:not(.off)) #ai-chat-btn {
+    left: auto; top: auto;
+    right: calc(var(--hm-u) * 1.4); bottom: calc(var(--hm-u) * 2.2);
+  }
+  body:has(#scr-menu:not(.off)) #ai-chat-btn::after { display: none; }
+  body:has(#scr-menu:not(.off)) #ai-chat-window { left: 3vw; right: auto; bottom: calc(var(--hm-u) * 8); }
+}
+
+/* 平板直拿：畫面比較寬，u 不用那麼大，5 個入口才排得成一列 */
+@media (min-aspect-ratio: 6/10) and (max-aspect-ratio: 1/1) {
+  :root { --hm-u: max(6px, min(1.9vw, 1.3vh)); }
+}
+
+/* ==========================================================================
+   手機橫拿（矮視窗）：整體 u 很小，文字需要額外放大才讀得到
+   ========================================================================== */
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  :root { --hm-ts-base: 1.3; --hm-ts: 1.3; }
+  #scr-menu .hm-side { top: 8em; }
+  #scr-menu .hm-small { width: 8.4em; height: 8em; }
+  #scr-menu .hm-small::after,
+  #scr-menu .hm-small .hm-lbl { max-width: 8.4em; }
+  #scr-menu .hm-side-slot { width: 8.4em; height: 8em; }
+  /* 圖示列的標籤維持單行，避免蓋到上面的左側選單 */
+  #scr-menu .hm-dock-btn::after,
+  #scr-menu .hm-dock-btn .hm-lbl { font-size: 1.4em; }
+  html[lang="en"] #scr-menu .hm-dock-btn::after,
+  html[lang="en"] #scr-menu .hm-dock-btn .hm-lbl { font-size: 1.1em; }
+  /* 第 2 格：起點 8u + 1 格 × (8u + 1u)，再置中於 8.4u 寬的欄位 */
+  body:has(#scr-menu:not(.off)) #ai-chat-btn { left: calc(var(--hm-u) * 3.2); top: calc(var(--hm-u) * 17); }
+}
+
+/* ==========================================================================
+   減少動態：紅綠燈停在綠燈
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  #scr-menu .hm-lamp-g { animation: none; opacity: 1; }
+  #scr-menu .hm-lamp-y, #scr-menu .hm-lamp-r { animation: none; opacity: 0; }
+  #scr-menu .hm-face, #scr-menu .hm-big { transition: none; }
+  body.consent-locked #scr-menu .hm-btn[data-consent-exempt] .hm-face { animation: none; }
+}

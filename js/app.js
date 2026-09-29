@@ -44,6 +44,8 @@ const i18n = {
     // ── 5. 各個畫面標題與步驟 ──
     'chars-title': '選擇<span>角色</span>',
     'chars-next': '下一步：選模式 →',
+    'chars-confirm': '確定',
+    'nav-chars-label': '角色',
     'mode-title': '選擇<span>模式</span>',
     'mode-next': '下一步：選難度 →',
     'mode-start-control': '開始訓練 ▶',
@@ -157,16 +159,16 @@ const i18n = {
     'legal-btn-agree': '同意並開始使用', 'legal-btn-close': '關閉',
 
     // ── 12. JS 動態渲染資料的 Key ──
-    'char-blue-name': '藍騎士', 'char-blue-tag': '穩健型',
-    'char-red-name': '紅勇士', 'char-red-tag': '攻擊型',
-    'char-green-name': '綠精靈', 'char-green-tag': '速度型',
-    'char-gold-name': '金武士', 'char-gold-tag': '輔助型',
-    'char-violet-name': '紫幻靈', 'char-violet-tag': '神秘型',
-    'char-cyan-name': '青電俠', 'char-cyan-tag': '閃電型',
-    'char-pink-name': '粉花精', 'char-pink-tag': '治癒型',
-    'char-orange-name': '橙焰將', 'char-orange-tag': '爆發型',
-    'char-silver-name': '銀宇士', 'char-silver-tag': '宇宙型',
-    'char-rainbow-name': '彩虹俠', 'char-rainbow-tag': '終極型',
+    // 角色改版：3 個免費 + 17 個商城角色，全部換成使用者提供的插畫圖檔（見 ALL_CHARS 的 img 欄位）
+    'char-ghost-name': '小幽靈', 'char-ghost-tag': '調皮型',
+    'char-mimic-name': '寶箱怪', 'char-mimic-tag': '詭計型',
+    'char-k9dog-name': '警犬波美', 'char-k9dog-tag': '忠誠型',
+    'char-firemon-name': '炎獄魔', 'char-firemon-tag': '灼熱型',
+    'char-genbu-name': '玄武', 'char-genbu-tag': '守護型',
+    'char-seiryu-name': '青龍', 'char-seiryu-tag': '疾風型',
+    'char-byakko-name': '白虎', 'char-byakko-tag': '敏捷型',
+    'char-suzaku-name': '朱雀', 'char-suzaku-tag': '鳳凰型',
+    'char-summoner-name': '召喚術士', 'char-summoner-tag': '神秘型',
 
     'mode-classic-name': '🎬 經典通關', 'mode-classic-desc': '達到 100% 進度即可獲勝，適合新手與基本訓練。',
     'mode-infinite-name': '♾️ 無盡模式', 'mode-infinite-desc': '沒有終點！盡你所能前進取得歷史最高分。',
@@ -221,6 +223,7 @@ const i18n = {
     'lbl-complete-time': '完成時間',
     'lbl-total-sts': '總坐站次數',
     'lbl-time-bonus': '時間獎勵',
+    'cr-time': '時間獎勵倍率',
     'lbl-average-score': '平均分數',
     'lbl-avg-score': '平均每次',
     'cr-base': '基礎（每10分=1枚）',
@@ -451,6 +454,8 @@ const i18n = {
     // ── 5. Screen Titles ──
     'chars-title': 'Select <span>Character</span>',
     'chars-next': 'Next: Mode →',
+    'chars-confirm': 'Confirm',
+    'nav-chars-label': 'Character',
     'mode-title': 'Select <span>Mode</span>',
     'mode-next': 'Next: Difficulty →',
     'mode-start-control': 'Start Training ▶',
@@ -564,16 +569,15 @@ const i18n = {
     'legal-btn-agree': 'Agree and Start', 'legal-btn-close': 'Close',
 
     // ── 12. Dynamic Values ──
-    'char-blue-name': 'Blue Knight', 'char-blue-tag': 'Balanced',
-    'char-red-name': 'Red Warrior', 'char-red-tag': 'Aggressive',
-    'char-green-name': 'Green Elf', 'char-green-tag': 'Speedy',
-    'char-gold-name': 'Gold Samurai', 'char-gold-tag': 'Support',
-    'char-violet-name': 'Violet Spirit', 'char-violet-tag': 'Mystic',
-    'char-cyan-name': 'Cyan Flash', 'char-cyan-tag': 'Electric',
-    'char-pink-name': 'Pink Pixie', 'char-pink-tag': 'Healing',
-    'char-orange-name': 'Orange General', 'char-orange-tag': 'Burst',
-    'char-silver-name': 'Silver Space', 'char-silver-tag': 'Cosmic',
-    'char-rainbow-name': 'Rainbow Man', 'char-rainbow-tag': 'Ultimate',
+    'char-ghost-name': 'Little Ghost', 'char-ghost-tag': 'Playful',
+    'char-mimic-name': 'Mimic Chest', 'char-mimic-tag': 'Trickster',
+    'char-k9dog-name': 'K9 Pomeranian', 'char-k9dog-tag': 'Loyal',
+    'char-firemon-name': 'Inferno Fiend', 'char-firemon-tag': 'Scorching',
+    'char-genbu-name': 'Genbu', 'char-genbu-tag': 'Guardian',
+    'char-seiryu-name': 'Seiryu', 'char-seiryu-tag': 'Swift',
+    'char-byakko-name': 'Byakko', 'char-byakko-tag': 'Agile',
+    'char-suzaku-name': 'Suzaku', 'char-suzaku-tag': 'Phoenix',
+    'char-summoner-name': 'Summoner', 'char-summoner-tag': 'Mystic',
 
     'mode-classic-name': '🎬 Classic', 'mode-classic-desc': 'Reach 100% progress to win. Best for beginners.',
     'mode-infinite-name': '♾️ Infinite', 'mode-infinite-desc': 'No limits! Go as far as you can for the high score.',
@@ -628,6 +632,7 @@ const i18n = {
     'lbl-complete-time': 'Clear Time',
     'lbl-total-sts': 'Total STS Reps',
     'lbl-time-bonus': 'Time Bonus',
+    'cr-time': 'Time Bonus Multiplier',
     'lbl-average-score': 'Average Score',
     'lbl-avg-score': 'Avg per Rep',
     'cr-base': 'Base (1 Coin / 10 Pts)',
@@ -889,20 +894,25 @@ const i18n = {
 };
 
 // ── 以下為調整成翻譯 Key 結構的寫死陣列 ──
+/* 角色圖檔放在 img/chars/ 底下，跟 index.html 同一層；换角色只要改這兩個陣列，
+   img 是圖檔路徑，glow 是遊戲畫面裡角色專屬的發光顏色（跟畫面上的姿勢分數呼應），
+   cost 是商城售價，之後想調整難度/售價平衡，只改這裡的數字就好。 */
 const BASE_CHARS = [
-  { id: 'blue', nameKey: 'char-blue-name', tagKey: 'char-blue-tag', color: '#2080FF', acc: '#80C0FF', badge: '🔵', free: true },
-  { id: 'red', nameKey: 'char-red-name', tagKey: 'char-red-tag', color: '#FF3050', acc: '#FF9090', badge: '🔴', free: true },
-  { id: 'green', nameKey: 'char-green-name', tagKey: 'char-green-tag', color: '#00CC6A', acc: '#7AFFA6', badge: '🟢', free: true }
+  { id: 'ghost',  nameKey: 'char-ghost-name',  tagKey: 'char-ghost-tag',  img: 'img/chars/halloween_obake_kasou.png',      glow: '#B9C3D6', badge: '👻', free: true },
+  { id: 'mimic',  nameKey: 'char-mimic-name',  tagKey: 'char-mimic-tag',  img: 'img/chars/character_game_mimic.png',       glow: '#C97A3D', badge: '📦', free: true },
+  { id: 'k9dog',  nameKey: 'char-k9dog-name',  tagKey: 'char-k9dog-tag',  img: 'img/chars/police_dog_pome.png',            glow: '#DCE3EA', badge: '🐕', free: true }
 ];
 
 const SHOP_CHARS = [
-  { id: 'gold', nameKey: 'char-gold-name', tagKey: 'char-gold-tag', color: '#FFD700', acc: '#FFF4B3', badge: '🟡', cost: 1200 },
-  { id: 'violet', nameKey: 'char-violet-name', tagKey: 'char-violet-tag', color: '#B026FF', acc: '#E6B3FF', badge: '🟣', cost: 1500 },
-  { id: 'cyan', nameKey: 'char-cyan-name', tagKey: 'char-cyan-tag', color: '#00E5FF', acc: '#B3F7FF', badge: '🌐', cost: 1800 },
-  { id: 'pink', nameKey: 'char-pink-name', tagKey: 'char-pink-tag', color: '#FF66B2', acc: '#FFCCE6', badge: '🌸', cost: 2000 },
-  { id: 'orange', nameKey: 'char-orange-name', tagKey: 'char-orange-tag', color: '#FF6600', acc: '#FFCCB3', badge: '🟠', cost: 2500 },
-  { id: 'silver', nameKey: 'char-silver-name', tagKey: 'char-silver-tag', color: '#CCCCCC', acc: '#FFFFFF', badge: '⚪', cost: 3000 },
-  { id: 'rainbow', nameKey: 'char-rainbow-name', tagKey: 'char-rainbow-tag', color: 'linear-gradient(45deg,#FF0000,#00FF00,#0000FF)', acc: '#FFFFFF', badge: '🌈', cost: 5000 }
+  // 💡 原本這裡還有 11 隻《航海王》角色，考量版權問題已經移除，
+  //    只留下原創／泛用妖怪主題的 6 隻。之後若有新的安全圖源，
+  //    照這個物件格式加進陣列就能擴充商城角色數量。
+  { id: 'firemon',   nameKey: 'char-firemon-name',   tagKey: 'char-firemon-tag',   img: 'img/chars/character_cthulhu_cthugha.png',   glow: '#FF6A2A', badge: '🔥', cost: 1500 },
+  { id: 'genbu',     nameKey: 'char-genbu-name',     tagKey: 'char-genbu-tag',     img: 'img/chars/fantasy_genbu.png',               glow: '#2FA84F', badge: '🐢', cost: 2000 },
+  { id: 'byakko',    nameKey: 'char-byakko-name',    tagKey: 'char-byakko-tag',    img: 'img/chars/youkai_byakko.png',               glow: '#B0B8C1', badge: '🐯', cost: 2200 },
+  { id: 'seiryu',    nameKey: 'char-seiryu-name',    tagKey: 'char-seiryu-tag',    img: 'img/chars/fantasy_seiryu.png',              glow: '#2FA0E0', badge: '🐉', cost: 2500 },
+  { id: 'suzaku',    nameKey: 'char-suzaku-name',    tagKey: 'char-suzaku-tag',    img: 'img/chars/youkai_suzaku.png',               glow: '#FF4433', badge: '🐦', cost: 2800 },
+  { id: 'summoner',  nameKey: 'char-summoner-name',  tagKey: 'char-summoner-tag',  img: 'img/chars/fantasy_mahoujin_syoukan.png',    glow: '#8A4FD1', badge: '🔮', cost: 3200 }
 ];
 
 const SHOP_TRAILS = [
@@ -1061,19 +1071,74 @@ async function sendAIMessage() {
 }
 
 /* ── 遊戲設定核心邏輯：音效、粒子 ── */
-function openSettings() {
+function openSettings(fromGame = false) {
   applySettingsToUI();
   const modal = document.getElementById('ov-settings');
   if (modal) modal.classList.remove('off');
+  const lobbyActions = document.getElementById('set-lobby-actions');
+  const gameActions = document.getElementById('set-game-actions');
+  if (lobbyActions) lobbyActions.style.display = fromGame ? 'none' : 'flex';
+  if (gameActions) gameActions.style.display = fromGame ? 'flex' : 'none';
 }
 
-/* 遊戲畫面右上角設定鍵專用：先暫停遊戲，再打開跟主選單一致的設定面板 */
+/* 遊戲畫面右上角設定鍵專用：先暫停遊戲，再打開跟主選單一致的設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
 function openInGameSettings() {
   if (gState === 'playing') {
     pauseGame();
     settingsPausedGame = true;
   }
-  openSettings();
+  openSettings(true);
+}
+
+/* 設定面板裡的「登出」：只會在大廳（主選單）開啟設定時看得到 */
+async function logoutFromSettings() {
+  const confirmMsg = (gameSettings.lang === 'en') ? 'Log out?' : '確定要登出嗎？';
+  if (!confirm(confirmMsg)) return;
+  ensureAudio(); playSfx('click');
+  try {
+    if (window.supabaseClient && window.supabaseClient.auth && typeof window.supabaseClient.auth.signOut === 'function') {
+      await window.supabaseClient.auth.signOut();
+    }
+  } catch (e) {
+    console.error('登出失敗：', e);
+  }
+  window.currentPlayer = null;
+  location.reload();
+}
+
+/* 設定面板裡的「再玩一次」：只在遊戲進行中開啟設定時看得到，關掉設定與暫停畫面後直接重開一局 */
+function restartFromSettings() {
+  settingsPausedGame = false; // 我們要直接重開，不要讓 closeSettings() 的邏輯把舊的一局恢復
+  const modal = document.getElementById('ov-settings');
+  if (modal) modal.classList.add('off');
+  document.getElementById('ov-pause').classList.remove('on');
+  isPaused = false;
+  ensureAudio(); playSfx('click');
+  const liveStream = videoElement?.srcObject && videoElement.srcObject.getVideoTracks().some(t => t.readyState === 'live');
+  if (!liveStream || !poseLandmarker) { launchGame(); return; }
+  resetGameState();
+  gState = 'ready';
+  detecting = true;
+  lastFrame = performance.now();
+  if (detectLoopId) cancelAnimationFrame(detectLoopId);
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  detectLoopId = requestAnimationFrame(detectLoopMP);
+  gameLoopId = requestAnimationFrame(gameLoop);
+  countdownStart(beginPlay);
+}
+
+/* 設定面板裡的「退出遊戲回大廳」：只在遊戲進行中開啟設定時看得到 */
+function quitToLobbyFromSettings() {
+  settingsPausedGame = false;
+  const modal = document.getElementById('ov-settings');
+  if (modal) modal.classList.add('off');
+  document.getElementById('ov-pause').classList.remove('on');
+  isPaused = false;
+  ensureAudio(); playSfx('click');
+  if (typeof clearActiveChallenge === 'function') clearActiveChallenge();
+  if (typeof onRhythmGameEnd === 'function') onRhythmGameEnd();
+  cleanupGame();
+  goTo('scr-menu');
 }
 
 function closeSettings() {
@@ -1268,7 +1333,20 @@ function spendCoins(n){const s=loadSave();if((s.coins||0)<n)return false;s.coins
 function isOwned(id){return(loadSave().owned||[]).includes(id)}
 function ownItem(id){const s=loadSave();s.owned=s.owned||[];if(!s.owned.includes(id))s.owned.push(id);writeSave(s)}
 function getEquipped(cat){return loadSave().equipped?.[cat]||null}
-function setEquipped(cat,id){const s=loadSave();s.equipped=s.equipped||{};s.equipped[cat]=id;writeSave(s)}
+function setEquipped(cat,id){const s=loadSave();s.equipped=s.equipped||{};s.equipped[cat]=id;writeSave(s);if(cat==='chars')renderMenuCharPreview()}
+
+/* 主選單中間留白處：放大顯示玩家目前裝備的角色，換裝後（setEquipped 見上）跟著即時更新。
+   找不到已裝備角色時（例如全新玩家還沒特別選過）就退回第一個免費角色。 */
+function renderMenuCharPreview(){
+  const img = document.getElementById('hm-char-img');
+  if(!img) return;
+  const id = getEquipped('chars');
+  const ch = (typeof ALL_CHARS !== 'undefined' && ALL_CHARS.find(c=>c.id===id)) || (typeof BASE_CHARS !== 'undefined' && BASE_CHARS[0]);
+  if(!ch) return;
+  img.src = ch.img;
+  img.alt = getText(ch.nameKey) || '';
+}
+window.renderMenuCharPreview = renderMenuCharPreview;
 function updateCoinUI(){const c=getCoins();document.getElementById('coin-count').textContent=c.toLocaleString();const sc=document.getElementById('shop-coin-count');if(sc)sc.textContent=c.toLocaleString()}
 
 // 把整包本機存檔（金幣、擁有道具、任務、成就、簽到紀錄...）同步寫回後端資料庫，
@@ -1761,6 +1839,52 @@ function initParticles(){
 }
 
 /* ── CHAR GRID ── */
+/* 選角畫面現在有兩種進入方式，「下一步」按鈕的行為要跟著不一樣：
+   - 'play'  從「開始遊戲」／教學頁「去選角色」／接受好友挑戰 進來：跟原本一樣，選完角色繼續去選模式。
+   - 'equip' 從主選單「角色」圖示進來：選完角色只是「換裝」，按鈕改叫「確定」，
+             存成預設裝備角色（會連動主選單中間放大顯示的角色，見 setEquipped()），
+             然後直接返回主選單，不進入選模式／選難度／開始遊戲的流程。 */
+let charsScreenIntent = 'play';
+
+function openCharsScreen(intent){
+  charsScreenIntent = intent || 'play';
+  if(charsScreenIntent === 'equip'){
+    // 從主選單「角色」進來：預先把目前裝備的角色設成選取狀態，畫面上才會看到正確的那張卡被框起來
+    const curId = getEquipped('chars');
+    const curChar = (typeof ALL_CHARS !== 'undefined') && ALL_CHARS.find(c=>c.id===curId);
+    if(curChar) selChar = curChar;
+  }
+  buildCharGrid();   // 順便刷新一次，確保剛買的角色也能立刻選取
+  updateCharsNextButton();
+  goTo('scr-chars');
+  playSfx('click');
+}
+
+function updateCharsNextButton(){
+  const btn = document.getElementById('chars-next-btn');
+  if(!btn) return;
+  if(charsScreenIntent === 'equip'){
+    btn.textContent = getText('chars-confirm');
+    btn.onclick = () => {
+      setEquipped('chars', selChar.id);
+      playSfx('click');
+      goTo('scr-menu');
+    };
+  } else {
+    btn.textContent = getText('chars-next');
+    btn.onclick = () => {
+      goTo('scr-mode');
+      playSfx('click');
+      buildModeGrid();
+    };
+  }
+}
+/* 語言切換時，applyLanguageUI() 會用 data-i18n="chars-next" 把按鈕文字重設回「下一步…」，
+   這裡在事件之後重新套用一次，確保「確定」模式下文字不會被打回原狀。 */
+window.addEventListener('languageChanged', () => {
+  if (typeof updateCharsNextButton === 'function') updateCharsNextButton();
+});
+
 function buildCharGrid(){
   const grid=document.getElementById('char-grid');grid.innerHTML='';
   ALL_CHARS.forEach((ch,i)=>{
@@ -1785,7 +1909,32 @@ function buildCharGrid(){
     setTimeout(()=>drawCharPreview(document.getElementById(`cc-${ch.id}`),ch),10);
   });
 }
-function drawCharPreview(cvs,ch){if(!cvs)return;const ctx=cvs.getContext('2d');ctx.clearRect(0,0,cvs.width,cvs.height);drawStickFigure(ctx,cvs.width/2,cvs.height/2+6,28,ch,false)}
+/* 角色圖片快取：同一個角色在選角畫面、商城格子都會重複用到同一張圖，
+   只在第一次用到時建立 Image 物件，之後直接重複使用，不用每次都重新載入。 */
+const _charImgCache = {};
+function getCharImage(ch){
+  if(!_charImgCache[ch.id]){
+    const img = new Image();
+    img.src = ch.img;
+    _charImgCache[ch.id] = img;
+  }
+  return _charImgCache[ch.id];
+}
+function drawCharPreview(cvs,ch){
+  if(!cvs) return;
+  const ctx = cvs.getContext('2d');
+  const img = getCharImage(ch);
+  const paint = () => {
+    if(!cvs.isConnected && cvs.width===0) return; // 畫面切換時卡片可能已經被移除
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    if(!img.naturalWidth) return;
+    const scale = Math.min(cvs.width/img.naturalWidth, cvs.height/img.naturalHeight) * 0.94;
+    const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
+    ctx.drawImage(img, (cvs.width-w)/2, cvs.height-h-2, w, h);
+  };
+  if(img.complete && img.naturalWidth) paint();
+  else img.addEventListener('load', paint, { once:true });
+}
 
 /* ── MODE GRID ── */
 function buildModeGrid() {
@@ -2115,7 +2264,7 @@ function switchLight(to){
     speak(getText('light-green-ui')); 
   }
   else if(to==='yellow'){
-    lightDur=1.5;dollTgt=90;ensureAudio();playSfx('yellow');
+    lightDur=2.2;dollTgt=90;ensureAudio();playSfx('yellow');
     speak(getText('light-yellow-ui'), 1.3); 
   }
   else{
@@ -2175,36 +2324,37 @@ function drawPlayer(ctx,W,H){
   if(selMode==='infinite'){px=sx+30+(ex-sx-60)*(.15+((repsCount%10)/10)*.7)}
   else{px=sx+10+(ex-sx-20)*Math.min(progress,1)}
   const py=ty+th/2;
-  ctx.save();ctx.shadowColor=selChar.color;ctx.shadowBlur=14+(posture.total/100)*12;
+  ctx.save();ctx.shadowColor=selChar.glow||'#4090FF';ctx.shadowBlur=14+(posture.total/100)*12;
   const controlMoving = isControlMode() && performance.now() < controlMoveUntil;
-  drawStickFigure(ctx,px,py,25,selChar,controlMoving || (!isControlMode() && light==='green'&&stsState==='sit'));ctx.restore();
+  drawCharSprite(ctx,px,py,25,selChar,controlMoving || (!isControlMode() && light==='green'&&stsState==='sit'));ctx.restore();
   if(posture.total>0&&gState==='playing'){
     const s=Math.round(posture.total),sc=s>=80?'#00CC6A':s>=60?'#FFAA00':'#FF3050';
     ctx.fillStyle=sc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(s,px,py-46);
   }
 }
 
-function drawStickFigure(ctx,cx,cy,sz,ch,moving){
-  const t=performance.now()/1000;
-  const lg=moving?Math.sin(t*7)*.32:0,ag=moving?Math.sin(t*7+1)*.38:0;
-  if(ch.rainbow){const hue=(t*60)%360;ctx.strokeStyle=`hsl(${hue},90%,60%)`;ctx.fillStyle=`hsl(${hue},90%,60%)`}
-  else{ctx.strokeStyle=ch.color;ctx.fillStyle=ch.color}
-  ctx.lineWidth=2.5;ctx.lineCap='round';
-  ctx.beginPath();ctx.arc(cx,cy-sz*.85,sz*.22,0,Math.PI*2);ctx.fill();
-  // Hat
-  const eqHat=getEquipped('hats');
-  if(eqHat){ctx.save();ctx.font=`${sz*.55}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText({'hat_crown':'👑','hat_glass':'😎','hat_halo':'😇','hat_horn':'😈'}[eqHat]||'',cx,cy-sz*1.3);ctx.restore()}
-  else if(ch.id==='gold'){ctx.fillStyle='#FFD700';ctx.beginPath();ctx.moveTo(cx,cy-sz*1.18);ctx.lineTo(cx-sz*.16,cy-sz*1.0);ctx.lineTo(cx+sz*.16,cy-sz*1.0);ctx.closePath();ctx.fill()}
-  else if(ch.id==='red'){for(let k=-1;k<=1;k++){ctx.fillStyle=ch.color;ctx.beginPath();ctx.moveTo(cx+k*sz*.13,cy-sz*1.08);ctx.lineTo(cx+k*sz*.13-sz*.06,cy-sz*.92);ctx.lineTo(cx+k*sz*.13+sz*.06,cy-sz*.92);ctx.closePath();ctx.fill()}}
-  if(ch.rainbow)ctx.fillStyle=`hsl(${(t*60+120)%360},90%,60%)`;else ctx.fillStyle=ch.color;
-  ctx.fillRect(cx-2,cy-sz*.58,4,sz*.52);
-  if(ch.rainbow)ctx.strokeStyle=`hsl(${(t*60+60)%360},90%,60%)`;else ctx.strokeStyle=ch.color;
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.06);ctx.lineTo(cx-sz*.28*Math.sin(lg+.28),cy+sz*.55);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.06);ctx.lineTo(cx+sz*.28*Math.sin(lg+.28),cy+sz*.55);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.4);ctx.lineTo(cx-sz*.38,cy-sz*.08+ag*sz*.18);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(cx,cy-sz*.4);ctx.lineTo(cx+sz*.38,cy-sz*.08-ag*sz*.18);ctx.stroke();
-  if(ch.id==='blue'&&!ch.rainbow){ctx.fillStyle=ch.acc;ctx.beginPath();ctx.arc(cx,cy-sz*.35,sz*.07,0,Math.PI*2);ctx.fill()}
-  if(ch.id==='green'){ctx.fillStyle=ch.acc;ctx.font=`bold ${sz*.2}px system-ui`;ctx.textAlign='center';ctx.fillText('★',cx,cy-sz*.28)}
+/* 角色改用插畫圖檔繪製（取代原本用線條畫的小人）。
+   sz 維持跟原本 drawStickFigure() 一樣的呼叫方式（半身高度單位），
+   圖片依原始比例縮放、腳底對齊 cy，走動時輕微上下彈跳當作動態回饋。
+   getEquipped('hats') 的道具頭飾維持原樣疊在頭頂。 */
+function drawCharSprite(ctx,cx,cy,sz,ch,moving){
+  const img = getCharImage(ch);
+  if(!img.naturalWidth) return; // 圖片還沒載入完成，這一幀先不畫，下一幀會自然補上
+  const t = performance.now()/1000;
+  const bob = moving ? Math.abs(Math.sin(t*7))*sz*.12 : 0;
+  const targetH = sz*2.15;
+  const scale = targetH / img.naturalHeight;
+  const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
+  const x = cx - w/2, y = cy - h + sz*.35 - bob;
+  ctx.drawImage(img, x, y, w, h);
+
+  const eqHat = getEquipped('hats');
+  if(eqHat){
+    ctx.save();
+    ctx.font = `${sz*.5}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText({'hat_crown':'👑','hat_glass':'😎','hat_halo':'😇','hat_horn':'😈'}[eqHat]||'', cx, y + h*.06);
+    ctx.restore();
+  }
 }
 
 function drawDoll(ctx,W,H){
@@ -2923,7 +3073,7 @@ function triggerControlTrainingEnd(){
   if(gState==='win'||gState==='over') return;
   gState='win'; detecting=false;
   stopVideoRecording(null); // 第一版控制訓練只產生前端報告，不啟動 Heavy。
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   const avgScore=controlSessionReps.length?Math.round(controlSessionReps.reduce((a,r)=>a+r.controlScore,0)/controlSessionReps.length):0;
   showOverlay('✅', selMode==='controlled_sit'?'控制坐下完成':'腳跟控制完成', '本次分析由前端 MediaPipe Full 即時資料產生。', true, [
@@ -3190,12 +3340,13 @@ function disconnectPhoneCam(){
 }
 
 
-/* ── 遊戲結束後停止攝影機（0917 版本先合併；手機鏡頭再玩一次的 lifecycle 後續再調整）── */
-function stopCameraAfterGameEnd(){
+function releaseCameraNow(){
   if (videoElement && videoElement.srcObject) {
     videoElement.srcObject.getTracks().forEach(t => t.stop());
     videoElement.srcObject = null;
   }
+  const camMsg = document.getElementById('cam-msg');
+  if (camMsg) camMsg.style.display = '';
 }
 
 /* ── GAME EVENTS ── */
@@ -3211,7 +3362,7 @@ function triggerCaught(msg){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM();
   ensureAudio();
   playSfx('caught');
@@ -3228,14 +3379,33 @@ function triggerCaught(msg){
     setTimeout(()=>{rf.style.transition=''},600);
   }
 
-  setTimeout(()=>{showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
+  setTimeout(()=>{if(gState!=='over')return;showOverlay('🚫',getText('res-caught-title'),msg,true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:fmtT(elapsed),l:getText('lbl-game-time')}]);if(typeof drawChart==='function')drawChart()},400);
   triggerGameDiagnosis();
+}
+
+/* ── 時間獎勵倍率（金幣用，不影響分數） ──
+   只在「經典通關」模式且成功通關時生效：完成得越快，金幣倍率越高。
+   秒數門檻依各難度的燈號步調抓一個合理區間，之後可依實際遊玩數據再微調，
+   改這個表就好，不用動下面的計算邏輯。 */
+const TIME_BONUS_TIERS = {
+  easy:   [{ withinSec: 90,  mul: 2.0 }, { withinSec: 150, mul: 1.5 }, { withinSec: 220, mul: 1.2 }],
+  normal: [{ withinSec: 75,  mul: 2.0 }, { withinSec: 130, mul: 1.5 }, { withinSec: 190, mul: 1.2 }],
+  hard:   [{ withinSec: 60,  mul: 2.0 }, { withinSec: 110, mul: 1.5 }, { withinSec: 160, mul: 1.2 }]
+};
+function getTimeBonusMultiplier(diffKey, elapsedSec, mode, result){
+  if(mode !== 'classic' || result !== 'win') return 1;
+  const tiers = TIME_BONUS_TIERS[diffKey] || TIME_BONUS_TIERS.normal;
+  for(const t of tiers){ if(elapsedSec <= t.withinSec) return t.mul; }
+  return 1;
 }
 
 function triggerWin(){
   if(isControlMode()){triggerControlTrainingEnd();return;}
   gState='win';detecting=false;
-  const bonus=Math.max(0,300-elapsed)*8;score+=bonus;
+  // 💡 修正：這裡以前會把時間獎勵直接加進 score，導致「最終分數」跟玩家實際拿到的姿勢分數對不起來
+  //    （快速通關時分數會被灌到好幾倍）。現在 score 維持玩家真正打出來的分數，
+  //    時間快慢改成只影響金幣倍率（見 calcCoins() 的 timeMul），不再動 score 本身。
+  const timeMul = getTimeBonusMultiplier(selDiffKey, elapsed, selMode, 'win');
   stopVideoRecording({
       result:'win',
       gameScore:Math.round(score),
@@ -3244,10 +3414,10 @@ function triggerWin(){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:Math.round(score/Math.max(repsCount,1)).toLocaleString(),l:getText('lbl-average-score')},{v:Math.round(bonus),l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{if(gState!=='win')return;showOverlay('🏆',getText('res-win-title'),getText('res-win-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:fmtT(elapsed),l:getText('lbl-complete-time')},{v:repsCount,l:getText('lbl-total-sts')},{v:timeMul>1?('×'+timeMul.toFixed(1)+' 🪙'):'—',l:getText('lbl-time-bonus')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3257,7 +3427,7 @@ function triggerStoryLevelClear(title, storyText){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3277,7 +3447,7 @@ function triggerRhythmEnd(stats){
   if(gState==='win'||gState==='over') return;
   gState='over'; detecting=false;
   try{ stopVideoRecording(null); }catch(e){}
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM(); ensureAudio(); playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'win',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
 
@@ -3310,10 +3480,10 @@ function triggerTimedEnd(){
       mode:selMode,
       difficulty:selDiffKey
     });
-  stopCameraAfterGameEnd();
+  releaseCameraNow();
   stopBGM();ensureAudio();playSfx('win');
   if(typeof onGameEnd==='function')onGameEnd({result:'timeup',score:Math.round(score),repsCount,elapsed,mode:selMode,diff:selDiffKey});
-  setTimeout(()=>{showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-average-score')}]);if(typeof drawChart==='function')drawChart()},300);
+  setTimeout(()=>{if(gState!=='over')return;showOverlay('⏱️',getText('res-timeup-title'),getText('res-timeup-sub'),true,[{v:Math.round(score).toLocaleString(),l:getText('lbl-final-score')},{v:repsCount,l:getText('lbl-completed-reps')},{v:Math.round(score/Math.max(repsCount,1)),l:getText('lbl-avg-score')}]);if(typeof drawChart==='function')drawChart()},300);
   triggerGameDiagnosis();
 }
 
@@ -3322,8 +3492,9 @@ function calcCoins(){
   const base=Math.floor(score/100);
   const diffMul=selDiff.coinMul;
   const modeMul=MODES[selMode].coinMul;
+  const timeMul=getTimeBonusMultiplier(selDiffKey, elapsed, selMode, gState);
   const bonus=(score>=1000?30:score>=500?10:0)+(gState==='win'&&selMode==='classic'?50:0);
-  return{base,diffMul,modeMul,bonus,total:Math.max(0,Math.round(base*diffMul*modeMul)+bonus)};
+  return{base,diffMul,modeMul,timeMul,bonus,total:Math.max(0,Math.round(base*diffMul*modeMul*timeMul)+bonus)};
 }
 
 function collectCoinsAndContinue(){
@@ -3332,7 +3503,7 @@ function collectCoinsAndContinue(){
   const input = document.getElementById('name-input');
   if(input) input.value='';
   
-  const {base,diffMul,modeMul,bonus,total}=calcCoins();
+  const {base,diffMul,modeMul,timeMul,bonus,total}=calcCoins();
   document.getElementById('ov-result').classList.remove('on');
   document.getElementById('cr-amount').textContent='+'+total+'🪙';
   
@@ -3344,6 +3515,7 @@ function collectCoinsAndContinue(){
     <div class="cr-row">${getText('cr-base')}：<span>+${base}🪙</span></div>
     <div class="cr-row">${getText('cr-diff')}（${diffName}）：<span>×${diffMul}</span></div>
     <div class="cr-row">${getText('cr-mode')}（${modeName}）：<span>×${modeMul.toFixed(1)}</span></div>
+    ${timeMul>1?`<div class="cr-row" style="color:var(--gold);">${getText('cr-time')}：<span>×${timeMul.toFixed(1)}</span></div>`:''}
     ${bonus>0?`<div class="cr-row">${getText('cr-bonus')}：<span>+${bonus}🪙</span></div>`:''}
     <div class="cr-row" style="color:var(--gold);font-weight:800;">${getText('cr-total-held')}：<span>${(getCoins()+total).toLocaleString()}🪙</span></div>`;
   document.getElementById('coin-reward').classList.add('on');
@@ -3440,7 +3612,6 @@ function showOverlay(icon,title,sub,buttons,stats=[]){
   document.getElementById('ov-icon').textContent=icon;document.getElementById('ov-title').textContent=title;document.getElementById('ov-sub').textContent=sub;
   document.getElementById('ov-stats').innerHTML=stats.map(s=>`<div class="sbox"><div class="sv">${s.v}</div><div class="sl">${s.l}</div></div>`).join('');
   ov.querySelectorAll('.ov-btns .btn').forEach(b=>b.style.display=buttons?'':'none');
-  document.getElementById('name-wrap').style.display=buttons?'flex':'none';
   ov.classList.add('on');
 }
 
@@ -3541,7 +3712,7 @@ function renderShop(){
 
       const owned=isOwned(ch.id),equipped=getEquipped('chars')===ch.id;
       const item=document.createElement('div');item.className='shop-item'+(equipped?' equipped':owned?' owned':'');
-      const cvs=document.createElement('canvas');cvs.width=72;cvs.height=72;
+      const cvs=document.createElement('canvas');cvs.width=160;cvs.height=160;
       
       item.innerHTML=`<div class="shop-item-preview"></div>
         <div class="shop-item-name">${ch.badge} ${name}</div>
@@ -4255,6 +4426,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   initParticles();
   initAICoachAndSettings();
   buildCharGrid();
+  renderMenuCharPreview();
   updateCoinUI();
   checkSignInStatus(); // 初始化檢查右上角小紅點
   
@@ -4516,12 +4688,10 @@ let calibTimerId = null;
 let userStandHipBaseline = null;
 let calibStage = 0;             // 0: 定位, 1: 站起+墊腳尖, 2: 坐下, 3: 完成
 let calibHoldTime = 0;          // 動作維持時間計時器（單位：真實秒數）
-let lastCalibTickTs = null;     // 上一次校正更新的時間戳，用來換算真實經過秒數
-
-// 校正流程秒數沿用目前既有 protocol；只修正計時方式，不改訓練流程。
-const CALIB_HOLD_SIT_SEC = 3.0;
-const CALIB_HOLD_STAND_SEC = 2.0;
-const CALIB_HOLD_SIT_BACK_SEC = 3.0;
+let lastCalibTickTs = null;     // 上一次計時的時間戳，用來換算成真實秒數
+const CALIB_HOLD_SIT_SEC = 3.5;
+const CALIB_HOLD_STAND_SEC = 2.5;
+const CALIB_HOLD_SIT_BACK_SEC = 3.5;
 let calibMaxHipY = null;        // 坐下時的骨盆高度 (數值最大 = 螢幕最低點 = 椅面位置)
 let calibMinHipY = null;        // 墊腳尖時的骨盆高度 (數值最小 = 螢幕最高點)
 let calibratedHeelMaxAngle = null; // 校正 Stage 1 墊腳尖時取得的最大 Heel–Toe angle
@@ -4658,16 +4828,17 @@ function checkCalibrationPosition(landmarks) {
   const calibBox = document.getElementById('calib-box');
   const timerText = document.getElementById('calib-timer');
 
-  // 用真實時間差累加校正維持時間，避免 requestAnimationFrame 幀率不同造成校正過快。
+  // 💡 用真實時間差 (秒) 來累加維持時間，而不是每次呼叫固定 +0.1，
+  // 這樣不管螢幕更新率是 30fps 還是 60fps，校正所需時間都會是實際的秒數。
   const nowTs = performance.now();
   let calibDt = 0;
   if (lastCalibTickTs !== null) {
     calibDt = (nowTs - lastCalibTickTs) / 1000;
-    // 切換分頁或掉幀時限制單次累積量，避免一次跳過太多進度。
+    // 切分頁籤/掉幀後可能出現異常大的 dt，限制上限避免一次跳太多
     calibDt = Math.min(calibDt, 0.1);
   }
   lastCalibTickTs = nowTs;
-  
+
   // 強制隱藏原本會擋住畫面的巨大計時文字
   if (timerText) timerText.style.display = 'none';
 
