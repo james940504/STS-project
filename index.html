@@ -366,7 +366,6 @@
     <div id="ov-pause" class="overlay-modal">
       <div style="font-size:3em">⏸</div>
       <div class="pause-title" data-i18n="pause-title">遊戲暫停</div>
-      <div style="font-size:.9em;color:var(--dim)" data-i18n="pause-sub">按 P 鍵或點擊「繼續」恢復遊戲</div>
       <div class="pause-stats" id="pause-stats"></div>
       <div style="display:flex;gap:10px;margin-top:4px;">
         <button class="btn btn-blue" onclick="resumeGame()" data-i18n="pause-btn-resume">▶ 繼續遊戲</button>
@@ -458,7 +457,7 @@
     </select>
   </div>
   
-  <!-- 設定卡片：四個滑塊開關（狀態由 app.js 的 applySettingsToUI 同步） -->
+  <!-- 設定卡片：兩個滑塊開關（狀態由 app.js 的 applySettingsToUI 同步） -->
   <div class="card" style="width:640px; display:flex; flex-direction:column; gap:28px; padding:32px; border-radius:24px; background:var(--card2);">
     <div class="set-row">
       <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-mute" data-i18n="lbl-set-mute">遊戲音效</span>
@@ -468,16 +467,20 @@
       <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-part" data-i18n="lbl-set-part">背景粒子特效</span>
       <button type="button" id="set-part-sw" class="set-switch on" role="switch" aria-checked="true" aria-labelledby="lbl-set-part" onclick="toggleParticles()"><span class="set-knob"></span></button>
     </div>
-    <div class="set-row">
-      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-large" data-i18n="lbl-set-large">大字體</span>
-      <button type="button" id="set-large-sw" class="set-switch" role="switch" aria-checked="false" aria-labelledby="lbl-set-large" onclick="toggleLargeText()"><span class="set-knob"></span></button>
-    </div>
-    <div class="set-row">
-      <span style="font-size:1.8em; font-weight:700; color:var(--text);" id="lbl-set-contrast" data-i18n="lbl-set-contrast">高對比</span>
-      <button type="button" id="set-contrast-sw" class="set-switch" role="switch" aria-checked="false" aria-labelledby="lbl-set-contrast" onclick="toggleHighContrast()"><span class="set-knob"></span></button>
-    </div>
   </div>
   
+
+  <!-- 大廳專用：登出（從遊戲畫面開設定時會被隱藏） -->
+  <div id="set-lobby-actions" style="width:640px; display:flex; justify-content:center;">
+    <button type="button" class="btn btn-ghost" id="set-logout-btn" style="padding:14px 32px; font-size:1.6em; border-radius:16px; border-color:var(--red); color:var(--red);" onclick="logoutFromSettings()" data-i18n="set-logout-btn">🚪 登出</button>
+  </div>
+
+  <!-- 遊戲中專用：重新開始一次／退出遊戲回主畫面（校正、倒數、遊戲進行中都會顯示；結算畫面不顯示） -->
+  <div id="set-game-actions" style="width:640px; display:none; gap:16px; justify-content:center; flex-wrap:wrap;">
+    <button type="button" class="btn btn-ghost" id="set-restart-btn" style="padding:14px 28px; font-size:1.6em; border-radius:16px;" onclick="restartFromSettings()" data-i18n="set-restart-btn">🔄 重新開始一次</button>
+    <button type="button" class="btn btn-ghost" id="set-quit-btn" style="padding:14px 28px; font-size:1.6em; border-radius:16px; border-color:var(--red); color:var(--red);" onclick="quitToLobbyFromSettings()" data-i18n="set-quit-btn">🏠 退出遊戲回主畫面</button>
+  </div>
+
   <!-- 返回按鈕 放大 2 倍 -->
   <button class="btn btn-blue" id="set-back-btn" style="padding:16px 36px; font-size:1.8em; border-radius:16px;" onclick="closeSettings();playSfx('click')" data-i18n="set-back-btn">確認並返回</button>
 </div>
@@ -577,12 +580,12 @@
 <script>
 /* 設定補強：
    0) 語言切換時同步 <html lang>
-   1) 為「大字體／高對比」、聯絡我們、手機鏡頭補上中英文標籤（app.js 的字典裡沒有這兩個 key）
+   1) 為設定面板的登出／重新開始／退出遊戲按鈕、聯絡我們、手機鏡頭補上中英文標籤（app.js 的字典裡沒有這些 key）
    2) 讓「背景粒子特效」開關真的生效（app.js 目前只記錄狀態，沒有隱藏粒子） */
 (function () {
   if (typeof i18n !== 'undefined') {
-    Object.assign(i18n['zh-TW'], { 'lbl-set-large': '大字體', 'lbl-set-contrast': '高對比', 'title-contact': '聯絡我們', 'title-phonecam': '使用手機鏡頭（測試版）', 'lbl-phonecam': '手機鏡頭' });
-    Object.assign(i18n['en'],    { 'lbl-set-large': 'Large Text', 'lbl-set-contrast': 'High Contrast', 'title-contact': 'Contact Us', 'title-phonecam': 'Use Phone Camera (Beta)', 'lbl-phonecam': 'Phone Camera' });
+    Object.assign(i18n['zh-TW'], { 'set-logout-btn': '🚪 登出', 'set-restart-btn': '🔄 重新開始一次', 'set-quit-btn': '🏠 退出遊戲回主畫面', 'title-contact': '聯絡我們', 'title-phonecam': '使用手機鏡頭（測試版）', 'lbl-phonecam': '手機鏡頭' });
+    Object.assign(i18n['en'],    { 'set-logout-btn': '🚪 Log out', 'set-restart-btn': '🔄 Restart', 'set-quit-btn': '🏠 Quit to Main Menu', 'title-contact': 'Contact Us', 'title-phonecam': 'Use Phone Camera (Beta)', 'lbl-phonecam': 'Phone Camera' });
   }
   /* 語言切換時同步 <html lang>：CSS 依此縮小英文按鈕文字，也有助於螢幕報讀 */
   if (typeof applyLanguageUI === 'function') {

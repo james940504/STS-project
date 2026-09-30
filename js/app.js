@@ -114,7 +114,6 @@ const i18n = {
 
     // ── 9. 暫停與結算 ──
     'pause-title': '遊戲暫停',
-    'pause-sub': '按 P 鍵或點擊「繼續」恢復遊戲',
     'pause-btn-resume': '▶ 繼續遊戲',
     'pause-btn-quit': '🏠 返回主選單',
     'reward-title': '金幣獎勵！',
@@ -524,7 +523,6 @@ const i18n = {
 
     // ── 9. Pause & Result ──
     'pause-title': 'Paused',
-    'pause-sub': 'Press P or click Resume to continue',
     'pause-btn-resume': '▶ Resume',
     'pause-btn-quit': '🏠 Main Menu',
     'reward-title': 'Coin Reward!',
@@ -1075,17 +1073,23 @@ function openSettings(fromGame = false) {
   applySettingsToUI();
   const modal = document.getElementById('ov-settings');
   if (modal) modal.classList.remove('off');
+  // 結算畫面上不顯示「重新開始／退出」：那裡有自己的按鈕，而且直接退出會領不到金幣、存不到分數
+  const inResult = (gState === 'over' || gState === 'win');
   const lobbyActions = document.getElementById('set-lobby-actions');
   const gameActions = document.getElementById('set-game-actions');
   if (lobbyActions) lobbyActions.style.display = fromGame ? 'none' : 'flex';
-  if (gameActions) gameActions.style.display = fromGame ? 'flex' : 'none';
+  if (gameActions) gameActions.style.display = (fromGame && !inResult) ? 'flex' : 'none';
 }
 
-/* 遊戲畫面右上角設定鍵專用：先暫停遊戲，再打開跟主選單一致的設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
+/* 遊戲畫面右上角設定鍵專用：先暫停（校正階段、倒數、正式遊戲都會暫停），
+   再打開設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
 function openInGameSettings() {
   if (gState === 'playing') {
     pauseGame();
     settingsPausedGame = true;
+  } else if (isSetupActive()) {
+    pauseSetup();
+    settingsPausedSetup = true;
   }
   openSettings(true);
 }
@@ -1095,43 +1099,60 @@ async function logoutFromSettings() {
   const confirmMsg = (gameSettings.lang === 'en') ? 'Log out?' : '確定要登出嗎？';
   if (!confirm(confirmMsg)) return;
   ensureAudio(); playSfx('click');
-  try {
-    if (window.supabaseClient && window.supabaseClient.auth && typeof window.supabaseClient.auth.signOut === 'function') {
-      await window.supabaseClient.auth.signOut();
-    }
-  } catch (e) {
-    console.error('登出失敗：', e);
+  try { const save = loadSave(); save.gameSettings = gameSettings; writeSave(save); } catch (e) {}
+  if (typeof handleLogout === 'function') {   // index.html 內建：呼叫 /api/logout 後導回 STS_Home.html
+    await handleLogout();
+    return;
   }
-  window.currentPlayer = null;
-  location.reload();
+  try { await fetch('/api/logout', { method: 'POST' }); } catch (e) { console.error('登出失敗：', e); }
+  window.location.href = 'STS_Home.html';
 }
 
-/* 設定面板裡的「再玩一次」：只在遊戲進行中開啟設定時看得到，關掉設定與暫停畫面後直接重開一局 */
+/* 設定面板裡的「重新開始一次」：校正階段 → 重新校正；倒數／遊戲中 → 直接重開一局 */
 function restartFromSettings() {
-  settingsPausedGame = false; // 我們要直接重開，不要讓 closeSettings() 的邏輯把舊的一局恢復
+  const calibrationUnfinished = (phase !== 'GAME');
+  settingsPausedGame = false;   // 我們要直接重開，不要讓 closeSettings() 的邏輯把舊的一局恢復
+  settingsPausedSetup = false;
   const modal = document.getElementById('ov-settings');
   if (modal) modal.classList.add('off');
   document.getElementById('ov-pause').classList.remove('on');
+  document.getElementById('ov-result').classList.remove('on');
+  document.getElementById('coin-reward').classList.remove('on');
   isPaused = false;
   ensureAudio(); playSfx('click');
+  const save = loadSave(); save.gameSettings = gameSettings; writeSave(save);
+
+  resetSetupUI();               // 清掉舊的校正／倒數計時器與畫面
+  stopBGM();
+  stopVideoRecording();         // 舊的一局不分析、不上傳，直接結束錄影
+  if (typeof onRhythmGameEnd === 'function') onRhythmGameEnd();
+
   const liveStream = videoElement?.srcObject && videoElement.srcObject.getVideoTracks().some(t => t.readyState === 'live');
-  if (!liveStream || !poseLandmarker) { launchGame(); return; }
+  if (!liveStream || !poseLandmarker) { cleanupGame(); launchGame(); return; }
   resetGameState();
   gState = 'ready';
+  isTimeUp = false;
   detecting = true;
   lastFrame = performance.now();
   if (detectLoopId) cancelAnimationFrame(detectLoopId);
   if (gameLoopId) cancelAnimationFrame(gameLoopId);
   detectLoopId = requestAnimationFrame(detectLoopMP);
   gameLoopId = requestAnimationFrame(gameLoop);
-  countdownStart(beginPlay);
+  if (calibrationUnfinished) launchGameWithCalibration();
+  else countdownStart(beginPlay);
 }
 
-/* 設定面板裡的「退出遊戲回大廳」：只在遊戲進行中開啟設定時看得到 */
+/* 設定面板裡的「退出遊戲回主畫面」：校正、倒數、遊戲中都可用 */
 function quitToLobbyFromSettings() {
+  const confirmMsg = (gameSettings.lang === 'en')
+    ? 'Quit this game and return to the main menu? This run will not be saved.'
+    : '確定要退出遊戲回到主畫面嗎？這一局不會被記錄。';
+  if (!confirm(confirmMsg)) return;
   settingsPausedGame = false;
+  settingsPausedSetup = false;
   const modal = document.getElementById('ov-settings');
   if (modal) modal.classList.add('off');
+  const save = loadSave(); save.gameSettings = gameSettings; writeSave(save);
   document.getElementById('ov-pause').classList.remove('on');
   isPaused = false;
   ensureAudio(); playSfx('click');
@@ -1150,6 +1171,10 @@ function closeSettings() {
   if (settingsPausedGame) {
     settingsPausedGame = false;
     resumeGame();
+  }
+  if (settingsPausedSetup) {
+    settingsPausedSetup = false;
+    resumeSetup();
   }
 }
 
@@ -1251,22 +1276,6 @@ function applySettingsToUI() {
   // 注意：gameSettings.mute 為 true 代表「靜音」，所以滑塊開啟＝沒有靜音。
   setSwitch('set-mute-sw', !gameSettings.mute);
   setSwitch('set-part-sw', gameSettings.particles);
-  setSwitch('set-large-sw', gameSettings.largeText);
-  setSwitch('set-contrast-sw', gameSettings.highContrast);
-
-  // ── 無障礙：大字體 / 高對比 ──
-  document.body.classList.toggle('large-text', !!gameSettings.largeText);
-  document.body.classList.toggle('high-contrast', !!gameSettings.highContrast);
-}
-
-function toggleLargeText() {
-  gameSettings.largeText = !gameSettings.largeText;
-  applySettingsToUI();
-}
-
-function toggleHighContrast() {
-  gameSettings.highContrast = !gameSettings.highContrast;
-  applySettingsToUI();
 }
 
 // 修改你的初始化函式，確保一開網頁就載入正確語言
@@ -1287,6 +1296,8 @@ function initAICoachAndSettings() {
   if (save && save.gameSettings) {
     // 將本地存檔的設定合併到全域變數 gameSettings 中
     gameSettings = { ...gameSettings, ...save.gameSettings };
+    delete gameSettings.largeText;      // 大字體／高對比已移除，清掉舊存檔留下的欄位
+    delete gameSettings.highContrast;
     isMuted = !!gameSettings.mute;
   }
   
@@ -1556,10 +1567,11 @@ let lastVideoTime = -1;
 let startTs=0;
 let pausedAccum=0, pauseStartTs=0;
 let settingsPausedGame=false;
+let settingsPausedSetup=false;   // 校正／倒數階段被設定鍵暫停
 const TIPS=['💡 頭部直立，眼睛平視螢幕','💡 肩膀向後放鬆，不要聳肩','💡 下巴微收，避免頸部前傾','💡 腰背挺直，保持自然弧度','💡 兩肩保持水平，不要歪斜','💡 深呼吸，放鬆全身肌肉'];
 
 /* ── GAME SETTINGS ── */
-let gameSettings = { mute: false, particles: true, largeText: false, highContrast: false };
+let gameSettings = { mute: false, particles: true };
 
 /* ── AUDIO ── */
 let actx=null, bgmId=null, isMuted=false, bgmBeat=0;
@@ -2089,6 +2101,63 @@ function goTutorial(){
   document.getElementById('tut-mode-hint').innerHTML=`<div style="width=1000px;font-size:1.35em;color:var(--dim);line-height:1.8;">${hints[selMode]}<br>${getText('tut-hint-score')}</div>`;
 }
 
+/* ── 校正／倒數階段的暫停 ──
+   這兩個階段是靠 setTimeout 串起來的（校正完成後等 1 秒、倒數 3-2-1-GO），
+   所以用可暫停的計時器：暫停時記下剩餘毫秒，恢復時從剩餘時間繼續。 */
+let setupPaused = false;
+const _setupTimers = new Set();
+function setupTimeout(fn, ms) {
+  const t = { remaining: ms, start: 0, id: null };
+  t.arm = () => {
+    clearTimeout(t.id);
+    t.start = performance.now();
+    t.id = setTimeout(() => { _setupTimers.delete(t); fn(); }, t.remaining);
+  };
+  t.pause = () => {
+    clearTimeout(t.id);
+    t.remaining = Math.max(0, t.remaining - (performance.now() - t.start));
+  };
+  _setupTimers.add(t);
+  if (!setupPaused) t.arm();
+  return t;
+}
+function clearSetupTimers() {
+  _setupTimers.forEach(t => clearTimeout(t.id));
+  _setupTimers.clear();
+}
+/* 目前是不是在「校正中」或「倒數中」（還沒進入 playing） */
+function isSetupActive() {
+  return gState === 'ready' && (phase === 'INIT_DELAY' || phase === 'READY' || phase === 'GAME');
+}
+function pauseSetup() {
+  if (setupPaused) return;
+  setupPaused = true;
+  _setupTimers.forEach(t => t.pause());
+  lastCalibTickTs = null;   // 恢復後校正的「維持秒數」不會把暫停的時間也算進去
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+function resumeSetup() {
+  if (!setupPaused) return;
+  setupPaused = false;
+  lastCalibTickTs = null;
+  lastFrame = performance.now();
+  _setupTimers.forEach(t => t.arm());
+}
+/* 離開遊戲／重開時，把校正與倒數留下的計時器、文字、進度條全部清乾淨 */
+function resetSetupUI() {
+  clearSetupTimers();
+  setupPaused = false;
+  const cd = document.getElementById('countdown');
+  if (cd) cd.classList.remove('on');
+  const calibOverlay = document.getElementById('calib-overlay');
+  if (calibOverlay) calibOverlay.classList.add('calib-off');
+  ['calib-center-label', 'calib-bottom-bar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  });
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+
 /* ── PAUSE ── */
 function pauseGame(){
   if(gState!=='playing')return;
@@ -2102,6 +2171,8 @@ function pauseGame(){
   // 暫停時連姿勢偵測迴圈也一併停掉：鏡頭畫面照樣顯示最後一格，但不再跑 AI 推論，省效能也避免暫停中誤判動作
   if(detectLoopId){cancelAnimationFrame(detectLoopId);detectLoopId=null;}
   stopBGM();
+  // 錄影也一起暫停，送去 Heavy 分析的影片才不會混進暫停的那段時間
+  try{if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.pause();}catch(e){console.warn('錄影暫停失敗',e)}
   // 節奏音樂模式的節拍器是獨立的計時器，暫停遊戲時也要跟著停，不然背景會一直嗶嗶叫
   if(typeof onRhythmGamePause==='function') onRhythmGamePause();
 }
@@ -2120,6 +2191,7 @@ function resumeGame(){
   lastFrame=performance.now();
   if(detecting&&poseLandmarker&&!detectLoopId)detectLoopId=requestAnimationFrame(detectLoopMP);
   startBGM();
+  try{if(mediaRecorder&&mediaRecorder.state==='paused')mediaRecorder.resume();}catch(e){console.warn('錄影恢復失敗',e)}
   // 節拍器從「現在」重新算起，讓玩家恢復遊戲後有完整一小節可以抓拍子，不會被暫停時間打亂節奏
   if(typeof onRhythmGameResume==='function') onRhythmGameResume();
   requestAnimationFrame(gameLoop);
@@ -3629,6 +3701,11 @@ function saveAndMenu(){playSfx('click');saveScore(buildScoreEntry());cleanupGame
 /* ── 遊戲狀態清理 (釋放視訊資源) ── */
 function cleanupGame() {
   detecting = false;
+  launchSeq++;              // 讓還在載入中的 launchGame() 知道已經被取消
+  resetSetupUI();
+  settingsPausedSetup = false;
+  phase = 'IDLE';
+  isTimeUp = false;
   stopVideoRecording();
   stopBGM();
   gState = 'idle';
@@ -4699,6 +4776,7 @@ let userHipRange = 20;          // 玩家骨盆運動總行程 (預設 20px)
 let calibTopShoulderY = null;   // 墊腳尖時的肩膀高度 (過濾背景雜訊用)
 
 /* ── LAUNCH (純淨設定 + 極限靈敏度版) ── */
+let launchSeq = 0;   // 每次啟動 +1；cleanupGame() 也會 +1，用來偵測「載入到一半就退出」
 async function launchGame() {
   if (typeof hasAgreedToLegal === 'function' && !hasAgreedToLegal()) {
     if (typeof openLegalOverlay === 'function') openLegalOverlay('onboarding');
@@ -4706,6 +4784,7 @@ async function launchGame() {
     return;
   }
   ensureAudio(); playSfx('click'); goTo('scr-game');
+  const mySeq = ++launchSeq;
   gCvs = document.getElementById('game-canvas'); gCtx = gCvs.getContext('2d');
   pCvs = document.getElementById('pose-canvas'); pCtx = pCvs.getContext('2d');
   
@@ -4734,6 +4813,7 @@ async function launchGame() {
       videoElement.srcObject = stream;
     }
     await videoElement.play();
+    if (mySeq !== launchSeq) return;   // 載入期間玩家已退出遊戲
 
     if (!poseLandmarker) {
       document.getElementById('cam-status-text').textContent = getText('cam-step-library');
@@ -4760,6 +4840,7 @@ async function launchGame() {
       });
     }
 
+    if (mySeq !== launchSeq) return;   // 模型載入期間玩家已退出遊戲
     camMsg.style.display = 'none';
     gState = 'ready';
     resetGameState();
@@ -4773,6 +4854,7 @@ async function launchGame() {
     launchGameWithCalibration();
 
   } catch (e) {
+    if (mySeq !== launchSeq) return;   // 是玩家自己退出造成的中斷，不用跳錯誤
     camMsg.style.display = 'none';
     if (typeof clearActiveChallenge === 'function') clearActiveChallenge();
     console.error("啟動失敗詳細原因:", e);
@@ -4809,7 +4891,7 @@ function launchGameWithCalibration() {
       boxText.innerText = getText('calib-align');
   }
   speak(getText('speech-calib-start'), 1.1);
-  setTimeout(() => {
+  setupTimeout(() => {
       phase = "READY";
   }, 2000);
 
@@ -4824,6 +4906,7 @@ function launchGameWithCalibration() {
   }, 1000);
 }
 function checkCalibrationPosition(landmarks) {
+  if (setupPaused) { lastCalibTickTs = null; return; }   // 設定鍵暫停中：不判定、不計時
   const boxText = document.getElementById('calib-text');
   const calibBox = document.getElementById('calib-box');
   const timerText = document.getElementById('calib-timer');
@@ -5030,7 +5113,7 @@ function checkCalibrationPosition(landmarks) {
       clearInterval(calibTimerId);
       calibStage = 4;
       
-      setTimeout(() => {
+      setupTimeout(() => {
         try {
           // 清除大字與進度條
           const centerLabel = document.getElementById('calib-center-label');
@@ -5412,7 +5495,7 @@ function countdownStart(cb){
       speak(getText('game-start'), 1.3, 1.2); 
     }
     i++;
-    i<seq.length?setTimeout(tick,750):setTimeout(()=>{el.classList.remove('on');cb()},500)
+    i<seq.length?setupTimeout(tick,750):setupTimeout(()=>{el.classList.remove('on');cb()},500)
   }
   tick();
 }

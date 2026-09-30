@@ -1,18 +1,12 @@
 /* ==========================================================================
-   settings.css — 設定視窗的滑塊開關 + 無障礙（大字體／高對比）+ 粒子開關
+   settings.css — 設定視窗的滑塊開關 + 粒子開關
    載入順序：放在 style.css 之後（index.html 已處理）
    狀態 class 由 app.js 的 applySettingsToUI() 寫入：
-     .set-switch.on / body.large-text / body.high-contrast
+     .set-switch.on
    body.particles-off 由 index.html 底部的設定補強腳本寫入。
    ========================================================================== */
 
 /* ---------- 設定列 ---------- */
-.set-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-}
 
 /* ---------- 滑塊開關 ---------- */
 .set-switch {
@@ -48,28 +42,7 @@
 /* ---------- 背景粒子特效關閉：只藏粒子畫布，保留 #particles-js 的底色 ---------- */
 body.particles-off #particles-js canvas { display: none; }
 
-/* ---------- 大字體 ---------- */
-body.large-text {
-  font-size: clamp(15px, 1.25vw, 22px);
-  --hm-ts: calc(var(--hm-ts-base, 1) * 1.15);   /* 主選單標籤再放大 15%（見 menu-home.css） */
-}
 #ov-settings { overflow-y: auto; }
-
-/* ---------- 高對比 ---------- */
-body.high-contrast {
-  --text: #FFFFFF;
-  --dim: #C9D8F2;
-  --border: rgba(255, 255, 255, .75);
-  --bluef: #A9CDFF;
-  --blue2: #8CC0FF;
-}
-body.high-contrast .card,
-body.high-contrast .char-card,
-body.high-contrast .mode-card,
-body.high-contrast .diff-card { border-color: #fff; }
-body.high-contrast .btn-ghost { color: #fff; border-color: #fff; }
-body.high-contrast #scr-menu .hm-sub { color: #1c2c48; }
-body.high-contrast #scr-menu .hm-legal .legal-footer-link { color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
   .set-switch, .set-switch .set-knob { transition: none; }
