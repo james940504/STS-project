@@ -287,11 +287,22 @@ class RepRecord:
     heel_values: list[float] = field(default_factory=list)
     score_values: list[float] = field(default_factory=list)
 
-    def add(self, metrics: dict[str, float | str], score: float) -> None:
+    def add(
+        self,
+        metrics: dict[str, float | str],
+        score: float,
+        *,
+        include_heel: bool = False,
+    ) -> None:
+        """記錄單次 STS 的角度。
+
+        heel 只在正式足跟評分階段（sts_state == 3）寫入，
+        避免 RepRecord.max_heel 與正式 heel_max 的定義不一致。
+        """
         self.hip_values.append(float(metrics["hip_angle"]))
         self.knee_values.append(float(metrics["knee_angle"]))
         heel = float(metrics["heel_angle"])
-        if math.isfinite(heel):
+        if include_heel and math.isfinite(heel):
             self.heel_values.append(heel)
         self.score_values.append(float(score))
 
@@ -421,9 +432,13 @@ class STSStateMachine:
             self.score = (self.heel_score + self.trunk_score) / 2.0
 
         if self.current_rep is not None:
-            self.current_rep.add(metrics, self.score)
+            self.current_rep.add(
+                metrics,
+                self.score,
+                include_heel=(self.sts_state == 3),
+            )
             if self.sts_state in (0, 1):
-                self.current_rep.trunk_values.append(trunk_vert)    
+                self.current_rep.trunk_values.append(trunk_vert)
 
         return {
             "stage": self.stage,
@@ -519,6 +534,105 @@ def build_posture_profile(
         "overall_score": _mean(overall_scores),
         "avg_max_trunk": _mean(_safe_float(record.get("max_trunk")) for record in rep_records),
         "avg_max_heel": _mean(_safe_float(record.get("max_heel")) for record in rep_records),
+    }
+
+
+
+def _population_std(values: Iterable[float]) -> float:
+    items = [float(value) for value in values]
+    if len(items) <= 1:
+        return 0.0
+    mean_value = _mean(items)
+    return float(math.sqrt(sum((value - mean_value) ** 2 for value in items) / len(items)))
+
+
+def _first_second_half(values: list[float]) -> dict[str, float | None]:
+    """比較前半與後半；資料太少時不硬做趨勢推論。"""
+    if len(values) < 4:
+        return {"first_half_avg": None, "second_half_avg": None, "change": None}
+    midpoint = len(values) // 2
+    first = values[:midpoint]
+    second = values[midpoint:]
+    first_avg = _mean(first)
+    second_avg = _mean(second)
+    return {
+        "first_half_avg": float(first_avg),
+        "second_half_avg": float(second_avg),
+        "change": float(second_avg - first_avg),
+    }
+
+
+def build_ai_analysis_summary(
+    rep_records: list[dict[str, float | int]],
+    posture_profile: dict[str, float | int],
+    frame_summary: dict[str, float | int | str],
+) -> dict[str, Any]:
+    """建立給 LLM 的權威數值摘要。
+
+    這裡的數值由 Python 計算，Prompt 會要求模型不得自行覆寫或重新定義。
+    CSV 僅作為時間序列與動作發生順序的證據。
+    """
+    rep_details: list[dict[str, float | int]] = []
+    for record in rep_records:
+        max_trunk = _safe_float(record.get("max_trunk"))
+        max_heel = _safe_float(record.get("max_heel"))
+        trunk_score = _trunk_score_calculate(max_trunk)
+        heel_score = _heel_score_calculate(max_heel)
+        rep_details.append({
+            "rep": int(record.get("rep", 0) or 0),
+            "start_time_sec": _safe_float(record.get("start_time")),
+            "completion_time_sec": _safe_float(record.get("completion_time")),
+            "duration_sec": _safe_float(record.get("duration")),
+            "min_hip_deg": _safe_float(record.get("min_hip")),
+            "max_hip_deg": _safe_float(record.get("max_hip")),
+            "min_knee_deg": _safe_float(record.get("min_knee")),
+            "max_knee_deg": _safe_float(record.get("max_knee")),
+            "max_trunk_deg": max_trunk,
+            "max_heel_deg": max_heel,
+            "trunk_score": float(trunk_score),
+            "heel_score": float(heel_score),
+            "overall_score": float((trunk_score + heel_score) / 2.0),
+        })
+
+    durations = [float(item["duration_sec"]) for item in rep_details]
+    trunks = [float(item["max_trunk_deg"]) for item in rep_details]
+    heels = [float(item["max_heel_deg"]) for item in rep_details]
+    scores = [float(item["overall_score"]) for item in rep_details]
+
+    return {
+        "analysis_contract": {
+            "python_scores_are_authoritative": True,
+            "csv_role": "time_series_evidence_only",
+            "medical_diagnosis_allowed": False,
+        },
+        "overall": {
+            "completed_reps": int(posture_profile.get("reps", 0) or 0),
+            "trunk_score": _safe_float(posture_profile.get("trunk_score")),
+            "heel_score": _safe_float(posture_profile.get("heel_score")),
+            "overall_score": _safe_float(posture_profile.get("overall_score")),
+            "avg_max_trunk_deg": _safe_float(posture_profile.get("avg_max_trunk")),
+            "avg_max_heel_deg": _safe_float(posture_profile.get("avg_max_heel")),
+        },
+        "consistency": {
+            "duration_std_sec": _population_std(durations),
+            "trunk_max_std_deg": _population_std(trunks),
+            "heel_max_std_deg": _population_std(heels),
+            "overall_score_std": _population_std(scores),
+        },
+        "trends": {
+            "duration": _first_second_half(durations),
+            "trunk_max": _first_second_half(trunks),
+            "heel_max": _first_second_half(heels),
+            "overall_score": _first_second_half(scores),
+        },
+        "data_quality": {
+            "total_frames": int(frame_summary.get("total_frames", 0) or 0),
+            "valid_pose_frames": int(frame_summary.get("valid_pose_frames", 0) or 0),
+            "pose_detection_rate_percent": _safe_float(frame_summary.get("pose_detection_rate")),
+            "longest_failure_streak_frames": int(frame_summary.get("longest_failure_streak", 0) or 0),
+            "quality_warning": str(frame_summary.get("quality_warning", "") or ""),
+        },
+        "reps": rep_details,
     }
 
 
@@ -636,7 +750,7 @@ def generate_pdf_report(
     else:
         elements.append(Paragraph("尚未辨識到完整的坐下→起身→站立動作。", styles["CJKBody"]))
 
-    advice_source = "Gemini AI" if posture_advice.get("source") == "gemini" else "本機規則備援"
+    advice_source = "OpenAI" if posture_advice.get("source") == "openai" else "本機規則備援"
     profile_rows = [
         ["評分項目", "Heavy 平均結果"],
         ["軀幹控制", f"{_safe_float(posture_profile.get('trunk_score')):.1f} / 100"],
@@ -656,6 +770,8 @@ def generate_pdf_report(
     advice_title = escape(str(posture_advice.get("title", "姿勢建議")))
     advice_analysis = escape(str(posture_advice.get("analysis", "")))
     advice_tip = escape(str(posture_advice.get("tip", "")))
+    advice_limitations = escape(str(posture_advice.get("limitations", "")))
+    advice_safety = escape(str(posture_advice.get("safety_note", "")))
     elements.extend([
         Spacer(1, 16),
         Paragraph("3. 姿勢評語與建議", styles["CJKHeading"]),
@@ -664,10 +780,13 @@ def generate_pdf_report(
         Paragraph(f"<b>{advice_title}</b>", styles["CJKBody"]),
         Paragraph(f"姿勢評語：{advice_analysis}", styles["CJKBody"]),
         Paragraph(f"改善建議：{advice_tip}", styles["CJKBody"]),
+        *([Paragraph(f"分析限制：{advice_limitations}", styles["CJKBody"])] if advice_limitations else []),
+        *([Paragraph(f"安全提醒：{advice_safety}", styles["CJKBody"])] if advice_safety else []),
         Spacer(1, 16),
         Paragraph("4. 說明", styles["CJKHeading"]),
         Paragraph("- 本報告由 Heavy 模型重新分析影片，不沿用前端 stage、rep 或動作品質分數。", styles["CJKBody"]),
-        Paragraph("- AI 僅解讀 Heavy 已計算的軀幹與腳跟結果；若 AI 服務不可用，會自動改用本機規則，不影響 PDF 產生。", styles["CJKBody"]),
+        Paragraph("- AI 以 Python 計算結果為數值依據，並參考 Heavy CSV 的完整時間序列觀察動作過程；AI 不得自行改寫評分門檻。", styles["CJKBody"]),
+        Paragraph("- AI 僅提供訓練回饋與動作品質說明，不進行疾病、傷害或治療診斷；若 AI 服務不可用，會自動改用本機規則。", styles["CJKBody"]),
         Paragraph("- 本報告內容僅供訓練回饋參考，不作為疾病診斷、治療或醫療處置依據。", styles["CJKBody"]),
         Paragraph("- CSV 同時保留 raw 與 smooth 角度，便於確認異常值出現在哪一層。", styles["CJKBody"]),
     ])
@@ -869,7 +988,17 @@ def analyze_video_with_heavy(
     }
 
     posture_profile = build_posture_profile(state_machine.rep_records)
-    posture_advice = generate_posture_advice(posture_profile, excel_path=output_csv_path)
+    ai_analysis_summary = build_ai_analysis_summary(
+        state_machine.rep_records,
+        posture_profile,
+        summary,
+    )
+    posture_advice = generate_posture_advice(
+        posture_profile,
+        analysis_summary=ai_analysis_summary,
+        rep_records=state_machine.rep_records,
+        excel_path=output_csv_path,
+    )
 
     # 方便 server / 前端之後直接顯示 Heavy 的正式分數與建議來源。
     summary["avg_trunk_score"] = float(posture_profile["trunk_score"])
@@ -896,4 +1025,5 @@ def analyze_video_with_heavy(
         "rep_records": state_machine.rep_records,
         "posture_profile": posture_profile,
         "posture_advice": posture_advice,
+        "ai_analysis_summary": ai_analysis_summary,
     }

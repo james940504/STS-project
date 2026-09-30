@@ -1,10 +1,11 @@
-"""Heavy analysis posture-advice helper - Lightweight Rep Summary Version."""
+"""Heavy analysis posture-advice helper - OpenAI API + local fallback."""
 
 from __future__ import annotations
 
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -25,18 +26,17 @@ try:
 except ImportError:
     print("[AI Advice][import] 尚未安裝 python-dotenv，無法自動載入 .env", flush=True)
 
-DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+DEFAULT_OPENAI_MODEL = "gpt-6-luna"
 
 try:
-    from google import genai
-    from google.genai import types
+    from openai import OpenAI
 
-    HAS_GENAI_SDK = True
+    HAS_OPENAI_SDK = True
 except ImportError as _sdk_exc:
-    HAS_GENAI_SDK = False
-    print(f"[AI Advice][import] google-genai 匯入失敗：{_sdk_exc!r}", flush=True)
+    HAS_OPENAI_SDK = False
+    print(f"[AI Advice][import] openai SDK 匯入失敗：{_sdk_exc!r}", flush=True)
 
-print(f"[AI Advice][import] HAS_GENAI_SDK={HAS_GENAI_SDK}", flush=True)
+print(f"[AI Advice][import] HAS_OPENAI_SDK={HAS_OPENAI_SDK}", flush=True)
 
 
 def _safe_score(value: Any) -> float:
@@ -57,6 +57,8 @@ def local_posture_advice(profile: dict[str, Any]) -> dict[str, str]:
             "title": "資料不足",
             "analysis": "尚未辨識到完整起立動作，目前無法可靠評估姿勢品質。",
             "tip": "請確認數據檔內容完整，並包含至少一次完整坐下到站立。",
+            "limitations": "沒有完整起立動作，無法進行可靠的動作品質分析。",
+            "safety_note": "本結果僅供訓練回饋參考，不作為疾病診斷、治療或醫療處置依據。",
             "source": "local",
         }
 
@@ -88,164 +90,292 @@ def local_posture_advice(profile: dict[str, Any]) -> dict[str, str]:
             "維持目前動作穩定度，可嘗試增加訓練次數。",
         )
 
-    return {"title": title, "analysis": analysis, "tip": tip, "source": "local"}
+    return {
+        "title": title,
+        "analysis": analysis,
+        "tip": tip,
+        "limitations": "本機備援僅依整體軀幹與足跟分數提供基本回饋，未進行完整時間序列語意分析。",
+        "safety_note": "本結果僅供訓練回饋參考；若出現疼痛、暈眩、明顯不穩或近期受傷，應停止訓練並諮詢合格醫療或復健專業人員。",
+        "source": "local",
+    }
 
 
-def _extract_rep_summary_table(file_path: Path) -> str:
-    """從 Excel/CSV 擷取精簡的「次數/完成時間/動作時間/軀幹最大/腳跟最大/最高分數」文字表。"""
+def _read_complete_csv_text(file_path: Path) -> str:
+    """讀取完整 Heavy CSV/Excel，保留每一列時間序列作為 AI 的過程證據。"""
     try:
         if file_path.suffix.lower() == ".csv":
-            df = pd.read_csv(file_path)
-        else:
-            df = pd.read_excel(file_path)
+            # 直接讀原始 CSV 文字，避免重新輸出時改變欄位/精度。
+            return file_path.read_text(encoding="utf-8-sig", errors="replace")
 
-        if df.empty or "rep_heavy" not in df.columns:
-            return ""
-
-        lines = [
-            "次數\t完成時間\t動作時間\t軀幹最大\t腳跟最大\t最高分數"
-        ]
-
-        # 依 rep_heavy 分組，排除準備期 (rep_heavy <= 0)
-        grouped = df[df["rep_heavy"] > 0].groupby("rep_heavy")
-
-        for rep_id, group in grouped:
-            if len(group) < 3:  # 忽略雜訊極少幀
-                continue
-
-            # 計算完成時間與動作持續時間
-            if "video_time_ms" in group.columns:
-                end_time_sec = group["video_time_ms"].iloc[-1] / 1000.0
-                start_time_sec = group["video_time_ms"].iloc[0] / 1000.0
-                duration_sec = max(0.1, end_time_sec - start_time_sec)
-            else:
-                end_time_sec = group["frame_idx"].iloc[-1] / 30.0
-                duration_sec = len(group) / 30.0
-
-            trunk_max = (
-                group["trunk_vert_heavy"].max()
-                if "trunk_vert_heavy" in group.columns
-                else 0.0
-            )
-            heel_max = (
-                group["heel_angle_heavy"].max()
-                if "heel_angle_heavy" in group.columns
-                else 0.0
-            )
-            score_max = (
-                group["score_heavy"].max()
-                if "score_heavy" in group.columns
-                else 0.0
-            )
-
-            lines.append(
-                f"{int(rep_id)}\t{end_time_sec:.2f}s\t{duration_sec:.2f}s\t{trunk_max:.1f}°\t{heel_max:.1f}°\t{score_max:.1f}"
-            )
-
-        return "\n".join(lines)
-
+        df = pd.read_excel(file_path)
+        return df.to_csv(index=False)
     except Exception as exc:
-        logger.warning(f"[AI Advice] 擷取 Rep 輕量摘要失敗 ({exc})")
+        logger.warning("[AI Advice] 讀取完整 CSV/Excel 失敗 (%s)", exc)
         return ""
 
 
-def _build_prompt(profile: dict[str, Any], rep_table_text: str) -> str:
-    summary_section = (
-        f"【各次起立動作明細表】\n{rep_table_text}"
-        if rep_table_text
-        else "【無明細數據，請僅參考總體數據】"
+def _build_prompt(
+    profile: dict[str, Any],
+    analysis_summary: dict[str, Any] | None,
+    rep_records: list[dict[str, Any]] | None,
+    csv_text: str,
+) -> str:
+    authoritative = analysis_summary or {
+        "overall": profile,
+        "reps": rep_records or [],
+    }
+
+    authoritative_json = json.dumps(
+        authoritative,
+        ensure_ascii=False,
+        separators=(",", ":"),
     )
 
+    csv_section = csv_text if csv_text else "（未提供 CSV 時間序列）"
+
     return f"""
-你是專業的物理治療師與姿勢矯正教練。
-請根據下方的坐站訓練統計數據進行專業分析。
+你是「坐站（Sit-to-Stand, STS）訓練回饋助手」，不是醫師，也不是診斷系統。
+你的任務是把已由 Python / Heavy 模型計算的數據轉成清楚、保守、可執行的訓練回饋。
 
-【整體摘要】
-- 完成次數：{int(profile.get('reps', 0) or 0)} 次
-- 軀幹得分：{_safe_score(profile.get('trunk_score')):.1f}/100
-- 足跟得分：{_safe_score(profile.get('heel_score')):.1f}/100
-- 綜合得分：{_safe_score(profile.get('overall_score')):.1f}/100
+【最高優先規則】
+1. Python 摘要中的分數、平均、最大值、標準差、前後半段差異與完成次數是「權威數值」。不得自行重算後覆寫，也不得自行改變評分門檻。
+2. 完整 CSV 只用來追蹤時間序列、動作先後、某一次 rep 或某一 stage 何時出現變化，以及確認 Python 摘要所描述的趨勢是否有過程證據。
+3. 若 Python 摘要與 CSV 看似不一致，請在 limitations 指出「資料存在不一致，需人工複核」，不可自行選一方並宣稱為真。
+4. 只能描述觀察到的動作表現，例如「後半段軀幹前傾增加」、「各次完成時間差異較大」。
+5. 禁止診斷或暗示疾病、受傷、肌肉失憶、神經問題、關節病變、跌倒風險等醫療結論；也不得宣稱某個數值代表特定疾病。
+6. 不得把相關性寫成因果。若資料只支持「可能」，必須使用「可能、可觀察到、建議留意」等保守語句。
+7. 不得推測疼痛、疲勞、頭暈、肌力不足、心理狀態或使用者沒有提供的症狀。若想提及，只能寫成需要另外確認的可能因素，不能當成結論。
+8. 建議限於低風險的動作練習原則：速度控制、動作穩定、適度休息、保持支撐環境、依既定訓練方式改善；不可給藥物、治療處方或高風險運動處置。
+9. 若資料品質 warning 不為空、有效姿勢比例偏低、或完整 reps 太少，必須降低語氣確定度並寫入 limitations。
+10. 若出現疼痛、暈眩、明顯失衡、呼吸不適或近期受傷，安全提醒應建議停止訓練並尋求合格醫療或復健專業人員評估。
 
-{summary_section}
+【分析順序】
+A. 先用 Python 摘要確認整體表現與資料品質。
+B. 比較每一次 rep 的 duration、max_trunk、max_heel、score 與前後半段趨勢。
+C. 再查看 CSV 時間序列，說明主要變化出現在哪些 rep / stage / 時間附近。
+D. 最多挑 2~3 個最有證據、最值得改善的重點，不要把每個數字都寫成問題。
+E. 建議必須與觀察到的數據直接對應；沒有證據就不要寫。
 
-請針對「各次動作時間變長/變短」、「軀幹前傾角度變化」、「腳跟抬起幅度」與「得分穩定度」進行觀察，嚴格以 JSON 格式輸出：
+【Python 權威摘要 JSON】
+{authoritative_json}
+
+【完整 Heavy CSV 時間序列】
+{csv_section}
+
+只輸出一個 JSON object，不要 Markdown，不要額外說明：
 {{
-  "title": "簡短標題（10字內）",
-  "analysis": "針對動作時間、軀幹角度與腳跟抬起的觀察評語（60-100字）",
-  "tip": "具體的姿勢調整與動作發力建議（60-100字）"
+  "title": "10字內的中性標題，不使用疾病或恐嚇性詞彙",
+  "analysis": "120-220字。說明整體表現、1~3個最重要的趨勢，至少引用具體 rep 或數值依據；不能醫療診斷。",
+  "tip": "80-160字。提供2~3項低風險、可執行且直接對應數據的訓練建議。",
+  "limitations": "30-100字。說明資料品質、資料不足或模型無法判斷的項目；若無重大限制也要說明本分析僅依影片姿勢資料。",
+  "safety_note": "30-100字。健康照護安全提醒，不恐嚇、不診斷。"
 }}
 """.strip()
+
+
+def _is_non_retryable_openai_error(error_text: str) -> bool:
+    """401/403/多數 400 類錯誤重試通常沒有幫助。"""
+    upper = error_text.upper()
+    return any(
+        token in upper
+        for token in (
+            "401",
+            "403",
+            "INVALID_API_KEY",
+            "AUTHENTICATION",
+            "PERMISSION_DENIED",
+            "INSUFFICIENT_QUOTA",
+            "BILLING_HARD_LIMIT_REACHED",
+        )
+    )
 
 
 def generate_posture_advice(
     profile: dict[str, Any],
     excel_path: str | Path | None = None,
+    analysis_summary: dict[str, Any] | None = None,
+    rep_records: list[dict[str, Any]] | None = None,
     **kwargs: Any,
 ) -> dict[str, str]:
-    """擷取 Excel 摘要文字表傳送至 Gemini API。"""
+    """將 Heavy 摘要送至 OpenAI API；失敗時回退到本機規則。"""
     print("[AI Advice][call] generate_posture_advice() 被呼叫了", flush=True)
 
     fallback = local_posture_advice(profile)
-    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+
     print(
-        f"[AI Advice][call] api_key長度={len(api_key)} HAS_GENAI_SDK={HAS_GENAI_SDK} excel_path={excel_path}",
+        f"[AI Advice][call] OPENAI_API_KEY長度={len(api_key)} HAS_OPENAI_SDK={HAS_OPENAI_SDK} excel_path={excel_path}",
         flush=True,
     )
 
     if not api_key:
         print(
-            "[AI Advice][call] 找不到 GEMINI_API_KEY（環境變數未設定或 .env 未被載入），改用本機規則。",
+            "[AI Advice][call] 找不到 OPENAI_API_KEY，改用本機規則備援。",
             flush=True,
         )
         return fallback
 
-    if not HAS_GENAI_SDK:
+    if not HAS_OPENAI_SDK:
         print(
-            "[AI Advice][call] 尚未安裝 google-genai SDK（import google.genai 失敗），改用本機規則。",
+            "[AI Advice][call] 尚未安裝 openai SDK，改用本機規則備援。",
             flush=True,
         )
         return fallback
 
-    model_name = os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL).strip()
+    model_name = os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip()
     file_path = Path(excel_path).resolve() if excel_path else None
 
-    # 本地端提煉輕量化的文字表格
-    rep_table_text = (
-        _extract_rep_summary_table(file_path)
+    csv_text = (
+        _read_complete_csv_text(file_path)
         if (file_path and file_path.is_file())
         else ""
     )
 
-    try:
-        client = genai.Client(api_key=api_key)
-        prompt = _build_prompt(profile, rep_table_text)
+    print(
+        f"[AI Advice][payload] Python摘要={'有' if analysis_summary else '無'} "
+        f"rep_records={len(rep_records or [])} CSV字元數={len(csv_text)}",
+        flush=True,
+    )
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            ),
+    prompt = _build_prompt(
+        profile,
+        analysis_summary=analysis_summary,
+        rep_records=rep_records,
+        csv_text=csv_text,
+    )
+    client = OpenAI(api_key=api_key)
+
+    response = None
+    last_error: Exception | None = None
+
+    for attempt in range(1, 20):
+        try:
+            print(
+                f"[AI Advice][call] OpenAI 第 {attempt}/20 次嘗試，model={model_name}",
+                flush=True,
+            )
+
+            response = client.responses.create(
+                model=model_name,
+                input=prompt,
+            )
+
+            print(
+                f"[AI Advice][call] OpenAI 第 {attempt}/20 次成功",
+                flush=True,
+            )
+            break
+
+        except Exception as exc:
+            last_error = exc
+            error_text = str(exc)
+
+            print(f"[AI Advice][retry] 第 {attempt}/20 次失敗", flush=True)
+            print(f"[AI Advice][retry] type={type(exc).__name__}", flush=True)
+            print(f"[AI Advice][retry] message={error_text}", flush=True)
+
+            if _is_non_retryable_openai_error(error_text):
+                print(
+                    "[AI Advice][retry] 判定為驗證/權限/額度類錯誤，不再重試。",
+                    flush=True,
+                )
+                break
+
+            if attempt < 20:
+                wait_seconds = 2 ** (attempt - 1)
+                print(
+                    f"[AI Advice][retry] 等待 {wait_seconds} 秒後再試",
+                    flush=True,
+                )
+                time.sleep(wait_seconds)
+
+    if response is None:
+        print(
+            "[AI Advice][call] OpenAI 多次嘗試仍失敗，改用本機規則備援",
+            flush=True,
         )
+        if last_error is not None:
+            print(
+                f"[AI Advice][fallback] 最後錯誤={type(last_error).__name__}: {last_error}",
+                flush=True,
+            )
+        return fallback
 
+    try:
+        raw_text = (response.output_text or "").strip()
         clean_text = (
-            response.text.strip()
-            .removeprefix("```json")
+            raw_text.removeprefix("```json")
+            .removeprefix("```")
             .removesuffix("```")
             .strip()
         )
         data = json.loads(clean_text)
 
-        return {
+        result = {
             "title": str(data.get("title", fallback["title"])),
             "analysis": str(data.get("analysis", fallback["analysis"])),
             "tip": str(data.get("tip", fallback["tip"])),
-            "source": "gemini",
+            "limitations": str(data.get("limitations", fallback.get("limitations", ""))),
+            "safety_note": str(data.get("safety_note", fallback.get("safety_note", ""))),
+            "source": "openai",
         }
-    except Exception:
-        import traceback
 
-        print("[AI Advice][call] Gemini API 呼叫失敗，改用本機規則備援", flush=True)
-        traceback.print_exc()
+        print(
+            "[AI Advice][call] OpenAI 建議解析完成，source=openai",
+            flush=True,
+        )
+        return result
 
-    return fallback
+    except Exception as exc:
+        print(
+            "[AI Advice][parse] OpenAI 有回應，但 JSON 解析失敗，改用本機規則備援",
+            flush=True,
+        )
+        print(f"[AI Advice][parse] type={type(exc).__name__}", flush=True)
+        print(f"[AI Advice][parse] message={exc}", flush=True)
+        print(
+            f"[AI Advice][parse] raw_response={getattr(response, 'output_text', '')!r}",
+            flush=True,
+        )
+        return fallback
+
+
+if __name__ == "__main__":
+    # 直接執行 `python ai_advice.py` 時使用的小測試。
+    # server.py import 本檔時不會執行這一段。
+    test_profile = {
+        "reps": 6,
+        "trunk_score": 30.0,
+        "heel_score": 80.0,
+        "overall_score": 55.0,
+        "avg_max_trunk": 35.0,
+        "avg_max_heel": 30.0,
+    }
+
+    test_summary = {
+        "overall": test_profile,
+        "consistency": {
+            "duration_std_sec": 0.18,
+            "trunk_max_std_deg": 3.2,
+            "heel_max_std_deg": 2.8,
+            "overall_score_std": 4.5,
+        },
+        "trends": {
+            "duration": {"first_half_avg": 2.1, "second_half_avg": 2.5, "change": 0.4},
+            "trunk_max": {"first_half_avg": 31.0, "second_half_avg": 37.0, "change": 6.0},
+            "heel_max": {"first_half_avg": 32.0, "second_half_avg": 29.0, "change": -3.0},
+        },
+        "data_quality": {
+            "pose_detection_rate_percent": 96.0,
+            "quality_warning": "",
+        },
+        "reps": [],
+    }
+
+    test_result = generate_posture_advice(
+        test_profile,
+        analysis_summary=test_summary,
+    )
+
+    print("測試結果：", flush=True)
+    print(test_result, flush=True)
