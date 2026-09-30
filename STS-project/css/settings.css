@@ -1,0 +1,49 @@
+/* ==========================================================================
+   settings.css — 設定視窗的滑塊開關 + 粒子開關
+   載入順序：放在 style.css 之後（index.html 已處理）
+   狀態 class 由 app.js 的 applySettingsToUI() 寫入：
+     .set-switch.on
+   body.particles-off 由 index.html 底部的設定補強腳本寫入。
+   ========================================================================== */
+
+/* ---------- 設定列 ---------- */
+
+/* ---------- 滑塊開關 ---------- */
+.set-switch {
+  position: relative;
+  flex: none;
+  width: 3.6em;
+  height: 2em;
+  padding: 0;
+  font-size: 1.6em;                  /* 尺寸全用 em，跟著上面的字級走 */
+  border-radius: 1em;
+  border: 3px solid var(--border);
+  background: rgba(72, 104, 160, .28);
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.set-switch .set-knob {
+  position: absolute;
+  top: 50%; left: .2em;
+  width: 1.35em; height: 1.35em;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .4);
+  transform: translateY(-50%);
+  transition: transform .2s;
+}
+.set-switch.on {
+  background: var(--green);
+  border-color: rgba(0, 204, 106, .6);
+}
+.set-switch.on .set-knob { transform: translate(1.55em, -50%); }
+.set-switch:focus-visible { outline: 3px solid var(--blue2); outline-offset: 3px; }
+
+/* ---------- 背景粒子特效關閉：只藏粒子畫布，保留 #particles-js 的底色 ---------- */
+body.particles-off #particles-js canvas { display: none; }
+
+#ov-settings { overflow-y: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .set-switch, .set-switch .set-knob { transition: none; }
+}

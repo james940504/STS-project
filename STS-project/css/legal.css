@@ -1,0 +1,83 @@
+/* ══════════════════════════════════════════════════════════════
+   隱私權 / 攝影機使用同意 / 運動安全提醒 樣式
+   ══════════════════════════════════════════════════════════════ */
+
+.legal-content {
+  width: 100%;
+  max-width: 1280px;
+  max-height: 52vh;
+  overflow-y: auto;
+  background: var(--card2);
+  border: 3px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 44px;
+  text-align: left;
+}
+.legal-section { margin-bottom: 36px; }
+.legal-section:last-child { margin-bottom: 0; }
+.legal-section h3 {
+  font-size: 2.1em;
+  color: var(--blue2);
+  margin-bottom: 12px;
+}
+.legal-updated {
+  font-size: 1.44em;
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+.legal-section p {
+  font-size: 1.64em;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.legal-section p strong { color: var(--white); }
+
+.legal-agree-row {
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  justify-content: center;
+}
+.legal-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 1.7em;
+  color: var(--text);
+  cursor: pointer;
+}
+.legal-checkbox-label input[type="checkbox"] {
+  width: 36px;
+  height: 36px;
+  accent-color: var(--blue2);
+  cursor: pointer;
+}
+
+.legal-footer-link {
+  margin-top: 8px;
+  font-size: 1.5em;
+  color: var(--dim);
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+  transition: color .2s;
+}
+.legal-footer-link:hover { color: var(--blue2); }
+
+.safety-mini-note {
+  max-width: 1200px;
+  font-size: 1.6em;
+  color: var(--dim);
+  line-height: 1.7;
+  text-align: left;
+}
+.safety-mini-note strong { color: var(--yellow); }
+.legal-link-inline {
+  display: inline-block;
+  margin-left: 12px;
+  color: var(--blue2);
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
