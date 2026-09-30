@@ -67,8 +67,8 @@ const TOUR_STEPS = [
     en: { icon:'🗺️', title:'Adventure Map', desc:'Become the "Sit-Stand Hero" and battle through story levels! Each chapter has 5 levels with its own mini-story — every rep is an attack, no score required, just clear the rep count to win.' } },
 
   { target: '#nav-settings',
-    zh: { icon:'⚙️', title:'遊戲設定', desc:'切換語言、開關音效與粒子特效，也有「大字體」「高對比」無障礙選項。新手導覽、遊戲規則、隱私權聲明與聯絡我們也都收在這裡。' },
-    en: { icon:'⚙️', title:'Settings', desc:'Language, sound and particles, plus large-text and high-contrast accessibility options. The tour, game rules, privacy notice and contact form all live here too.' } },
+    zh: { icon:'⚙️', title:'遊戲設定', desc:'切換語言、開關音效與粒子特效，也能在這裡登出。新手導覽、遊戲規則、隱私權聲明與聯絡我們也都收在這裡。' },
+    en: { icon:'⚙️', title:'Settings', desc:'Language, sound and particles, plus log out. The tour, game rules, privacy notice and contact form all live here too.' } },
 
   { target: '#ai-chat-btn',
     zh: { icon:'🤖', title:'AI 教練', desc:'隨時點擊這裡詢問遊戲規則、坐站訓練好處或高分技巧，AI 教練會即時回覆你。' },

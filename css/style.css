@@ -231,7 +231,6 @@ body{
   pointer-events: none;
 }
 .nav-item:hover .nav-label { color: var(--blue2); }
-body.high-contrast .nav-label { color: #FFF; text-shadow: 0 2px 6px #000; }
 .icon-btn {
   background: rgba(15, 30, 54, 0.85);
   backdrop-filter: blur(4px);
@@ -833,33 +832,8 @@ body.high-contrast .nav-label { color: #FFF; text-shadow: 0 2px 6px #000; }
 
 /* ══════════════════════════════════════════════════════════════
    以下為 0809 版整合進來的功能樣式：
-   無障礙（大字體／高對比）、設定滑塊、好友系統
+   設定滑塊、好友系統
    ══════════════════════════════════════════════════════════════ */
-
-/* ── 無障礙：大字體模式 ──
-   這一版的版面用 clamp() 隨螢幕縮放，而且 html/body 綁死 100vw/100vh。
-   單純放大 font-size 不會讓 72px 的圖示按鈕變大，所以改用 zoom 等比放大，
-   再把寬高除回去，避免放大後撐破畫面跑出捲軸。 */
-body.large-text{
-  zoom: 1.35;
-  width: calc(100vw / 1.35);
-  height: calc(100vh / 1.35);
-}
-
-/* ── 無障礙：高對比模式 ──
-   覆寫調色盤變數：純黑背景、純白文字、更亮的強調色與更粗的邊框。 */
-body.high-contrast{
-  --bg:#000000; --bg2:#000000; --card:#000000; --card2:#0A0A0A;
-  --border:#FFFFFF; --blue:#3B9DFF; --blue2:#7CCBFF; --bluef:#9ED6FF;
-  --white:#FFFFFF; --text:#FFFFFF; --dim:#E6E6E6;
-  --green:#3CFF8F; --red:#FF6B84; --yellow:#FFD54A; --gold:#FFE066; --purple:#D6B3FF;
-}
-body.high-contrast .card,
-body.high-contrast .icon-btn,
-body.high-contrast .btn-ghost,
-body.high-contrast .char-card,
-body.high-contrast .mode-card,
-body.high-contrast .diff-card{border-width:3px;}
 
 /* ── 設定開關：滑塊樣式 ──
    用 <button role="switch"> 而不是 checkbox，鍵盤 Enter/Space 就能切換，
@@ -881,11 +855,6 @@ body.high-contrast .diff-card{border-width:3px;}
 .switch.on{ background:var(--blue); border-color:var(--blue2); }
 .switch.on::after{ left:calc(100% - 26px); background:var(--white); }
 .switch:focus-visible{ outline:3px solid var(--bluef); outline-offset:3px; }
-
-body.high-contrast .switch{ border-width:3px; background:#000; }
-body.high-contrast .switch::after{ background:#8A8A8A; }
-body.high-contrast .switch.on{ background:var(--blue); }
-body.high-contrast .switch.on::after{ background:#FFF; }
 
 .set-row{display:flex; justify-content:space-between; align-items:center; gap:20px;}
 .set-row-label{font-size:1.35em; font-weight:700; color:var(--text);}
@@ -923,9 +892,6 @@ body.high-contrast .switch.on::after{ background:#FFF; }
   text-align:center; color:var(--dim); font-size:.95em;
   padding:30px 12px; line-height:1.8;
 }
-body.high-contrast .friend-item,
-body.high-contrast .friend-avatar,
-body.high-contrast .friend-mini-btn{border-width:3px;}
 
 /* 好友視窗內容較高，預留頂部空間避免壓到右上角圖示列，超出時可捲動 */
 #ov-friends{padding:124px 16px 28px; overflow-y:auto;}
@@ -953,7 +919,6 @@ body.high-contrast .friend-mini-btn{border-width:3px;}
 .set-menu-text{display:flex; flex-direction:column; gap:3px; min-width:0;}
 .set-menu-title{font-size:1.05em; font-weight:800; color:var(--white);}
 .set-menu-desc{font-size:.82em; color:var(--dim); line-height:1.5;}
-body.high-contrast .set-menu-item{border-width:3px;}
 
 /* ══════════════ 歷史紀錄 ══════════════ */
 #ov-history{padding:110px 16px 28px; overflow-y:auto;}
@@ -990,8 +955,6 @@ body.high-contrast .set-menu-item{border-width:3px;}
 .hist-metric b{display:block; font-size:1.05em; color:var(--text); line-height:1.3;}
 .hist-metric span{font-size:.68em; color:var(--dim);}
 .hist-posture{margin-top:8px; font-size:.75em; color:var(--dim);}
-body.high-contrast .hist-item,
-body.high-contrast .hist-stat{border-width:3px;}
 
 /* ══════════════ 改善建議 ══════════════ */
 #ov-advice{padding:100px 16px 28px; overflow-y:auto;}
@@ -1047,11 +1010,6 @@ body.high-contrast .hist-stat{border-width:3px;}
   flex:1 1 0; background:var(--blue); border-radius:4px 4px 0 0; min-height:4px;
 }
 .advice-trend-summary{font-size:.8em; color:var(--dim); margin-top:8px; line-height:1.6;}
-body.high-contrast .advice-score,
-body.high-contrast .advice-issue,
-body.high-contrast .advice-drill,
-body.high-contrast .advice-status,
-body.high-contrast .advice-chart{border-width:3px;}
 
 /* ══════════════ 冒險地圖（章節 x 5 關的闖關戰鬥系統） ══════════════ */
 #ov-story{padding:110px 16px 28px; overflow-y:auto;}
@@ -1085,8 +1043,6 @@ body.high-contrast .advice-chart{border-width:3px;}
 .story-node.available{border-color:var(--blue2); box-shadow:0 0 12px var(--glow);}
 .story-node.cleared{border-color:var(--gold); background:rgba(255,215,0,.08);}
 .story-node.locked{opacity:.5; cursor:not-allowed;}
-body.high-contrast .story-chapter,
-body.high-contrast .story-node{border-width:3px;}
 
 .story-detail{
   background:var(--bg); border:2px dashed var(--border);
@@ -1101,7 +1057,6 @@ body.high-contrast .story-node{border-width:3px;}
 .story-detail-text{font-size:.85em; color:var(--text); line-height:1.8; margin-bottom:10px;}
 .story-detail-need{font-size:.75em; color:var(--dim); margin-bottom:12px;}
 .story-detail-btn{width:100%;}
-body.high-contrast .story-detail{border-width:3px;}
 
 /* 遊戲畫面裡的戰鬥進度 HUD（只在有選定關卡時顯示） */
 #story-battle-hud{
@@ -1207,7 +1162,6 @@ body.high-contrast .story-detail{border-width:3px;}
 .rhythm-tempo-name{font-weight:800; font-size:.98em; color:var(--white);}
 .rhythm-tempo-bpm{font-size:.78em; color:var(--gold); margin:2px 0 6px;}
 .rhythm-tempo-desc{font-size:.8em; color:var(--dim); line-height:1.6;}
-body.high-contrast .rhythm-tempo-card{border-width:3px;}
 
 /* 遊戲畫面裡的節拍 HUD（只在節奏模式進行中顯示），位置跟冒險模式戰鬥 HUD 共用同一排 */
 #rhythm-hud{
@@ -1245,7 +1199,6 @@ body.high-contrast .rhythm-tempo-card{border-width:3px;}
 .rhythm-judge-text.judge-great{color:var(--blue2);}
 .rhythm-judge-text.judge-good{color:var(--green);}
 .rhythm-judge-text.judge-miss{color:var(--red);}
-body.high-contrast #rhythm-hud{border-width:3px;}
 
 /* ==========================================================================
    shop-theme.css — 商城木頭質感重製
