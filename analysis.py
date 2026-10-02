@@ -591,9 +591,9 @@ def build_ai_analysis_summary(
             "max_heel_deg": max_heel,
             "trunk_score": float(trunk_score),
             "heel_score": float(heel_score),
-            "overall_score": float((trunk_score + heel_score) / 2.0),
+            "overall_score":  float((trunk_score + heel_score) / 2.0)  ,
         })
-
+      
     durations = [float(item["duration_sec"]) for item in rep_details]
     trunks = [float(item["max_trunk_deg"]) for item in rep_details]
     heels = [float(item["max_heel_deg"]) for item in rep_details]

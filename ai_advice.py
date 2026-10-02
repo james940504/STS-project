@@ -100,15 +100,113 @@ def local_posture_advice(profile: dict[str, Any]) -> dict[str, str]:
     }
 
 
+# 單次請求大小保護：OpenAI 有每分鐘 token 上限（TPM），單次請求超過會直接 429 "Request too large"，重試無用。
+# 縮短後的數字約 0.61 token/字元，22 萬字元 ≈ 13.5 萬 token，留空間給 prompt 與輸出。
+MAX_CSV_CHARS = 220_000
+# 錄影不超過這個秒數 → 保留每一幀（只視大小縮短小數）；超過才每隔幾幀取一筆。
+MAX_FULL_SERIES_SEC = 70.0
+
+
+def _round_number_text(value: str, decimals: int) -> str:
+    """只縮短帶小數點的數字字串；True/False、空白、文字一律原樣保留。"""
+    if "." not in value:
+        return value
+    try:
+        number = float(value)
+    except ValueError:
+        return value
+    if number != number or number in (float("inf"), float("-inf")):
+        return value
+    text = f"{number:.{decimals}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return "0" if text in ("-0", "") else text
+
+
+def _csv_duration_sec(header: list[str], rows: list[list[str]]) -> float:
+    """用最後一列的 video_time_ms 估錄影秒數；欄位不存在時用 30fps 推估。"""
+    try:
+        idx = header.index("video_time_ms")
+        return float(rows[-1][idx]) / 1000.0
+    except (ValueError, IndexError):
+        return len(rows) / 30.0
+
+
+def _compact_csv_text(raw_text: str) -> str:
+    """盡量保留完整時間序列：
+    1. 錄影 <= MAX_FULL_SERIES_SEC：保留全部列、全部欄，只在過大時縮短小數（2 → 1 → 0 位）。
+    2. 錄影更長：改成每隔幾幀取一筆（stage / rep 有變化的那一列一定保留），再縮短小數。
+    無論如何都會壓到 MAX_CSV_CHARS 以內，不會超標還照送。"""
+    import csv
+    import io
+
+    parsed = list(csv.reader(io.StringIO(raw_text)))
+    if len(parsed) < 2:
+        return raw_text
+    header, rows = parsed[0], parsed[1:]
+    duration = _csv_duration_sec(header, rows)
+
+    def col(name: str) -> int | None:
+        return header.index(name) if name in header else None
+
+    key_cols = [i for i in (col("stage_heavy"), col("rep_heavy")) if i is not None]
+
+    def pick(step: int) -> list[list[str]]:
+        if step <= 1:
+            return rows
+        kept: list[list[str]] = []
+        prev: list[str] | None = None
+        for i, row in enumerate(rows):
+            changed = prev is not None and any(
+                j < len(row) and j < len(prev) and row[j] != prev[j] for j in key_cols
+            )
+            if i % step == 0 or changed:
+                kept.append(row)
+            prev = row
+        return kept
+
+    first_step = 1 if duration <= MAX_FULL_SERIES_SEC else 2
+    result, used_step, used_dec, used_rows = raw_text, 1, 2, rows
+    done = False
+    for step in [first_step] + [s for s in (2, 3, 4, 6, 8, 12, 20, 30) if s > first_step]:
+        chosen = pick(step)
+        for decimals in (2, 1, 0):
+            out = io.StringIO()
+            writer = csv.writer(out, lineterminator="\n")
+            writer.writerow(header)
+            for row in chosen:
+                writer.writerow([_round_number_text(v, decimals) for v in row])
+            result = out.getvalue()
+            used_step, used_dec, used_rows = step, decimals, chosen
+            if len(result) <= MAX_CSV_CHARS:
+                done = True
+                break
+        if done:
+            break
+
+    if used_step > 1:
+        note = (
+            f"# 註：錄影約 {duration:.0f} 秒，為控制資料量，時間序列每 {used_step} 幀取 1 筆"
+            f"（stage / rep 變化的列一定保留），共 {len(used_rows)}/{len(rows)} 列；"
+            "數值已縮短小數位數。\n"
+        )
+        result = note + result
+    print(
+        f"[AI Advice][payload] 錄影約 {duration:.0f} 秒；CSV 保留 {len(used_rows)}/{len(rows)} 列"
+        f"（每 {used_step} 幀取 1 筆，小數 {used_dec} 位）；字元數 {len(raw_text)} -> {len(result)}",
+        flush=True,
+    )
+    return result
+
+
 def _read_complete_csv_text(file_path: Path) -> str:
-    """讀取完整 Heavy CSV/Excel，保留每一列時間序列作為 AI 的過程證據。"""
+    """讀取完整 Heavy CSV/Excel，保留每一列時間序列作為 AI 的過程證據（僅縮短小數位數）。"""
     try:
         if file_path.suffix.lower() == ".csv":
-            # 直接讀原始 CSV 文字，避免重新輸出時改變欄位/精度。
-            return file_path.read_text(encoding="utf-8-sig", errors="replace")
+            return _compact_csv_text(file_path.read_text(encoding="utf-8-sig", errors="replace"))
 
         df = pd.read_excel(file_path)
-        return df.to_csv(index=False)
+        return _compact_csv_text(df.to_csv(index=False))
     except Exception as exc:
         logger.warning("[AI Advice] 讀取完整 CSV/Excel 失敗 (%s)", exc)
         return ""
@@ -186,6 +284,8 @@ def _is_non_retryable_openai_error(error_text: str) -> bool:
             "PERMISSION_DENIED",
             "INSUFFICIENT_QUOTA",
             "BILLING_HARD_LIMIT_REACHED",
+            "REQUEST TOO LARGE",   # 單次請求本身超過 TPM 上限，等再久也一樣
+            "MODEL_NOT_FOUND",
         )
     )
 
@@ -248,10 +348,10 @@ def generate_posture_advice(
     response = None
     last_error: Exception | None = None
 
-    for attempt in range(1, 20):
+    for attempt in range(1, 10):
         try:
             print(
-                f"[AI Advice][call] OpenAI 第 {attempt}/20 次嘗試，model={model_name}",
+                f"[AI Advice][call] OpenAI 第 {attempt}/10 次嘗試，model={model_name}",
                 flush=True,
             )
 
@@ -261,7 +361,7 @@ def generate_posture_advice(
             )
 
             print(
-                f"[AI Advice][call] OpenAI 第 {attempt}/20 次成功",
+                f"[AI Advice][call] OpenAI 第 {attempt}/10 次成功",
                 flush=True,
             )
             break
@@ -270,7 +370,7 @@ def generate_posture_advice(
             last_error = exc
             error_text = str(exc)
 
-            print(f"[AI Advice][retry] 第 {attempt}/20 次失敗", flush=True)
+            print(f"[AI Advice][retry] 第 {attempt}/10 次失敗", flush=True)
             print(f"[AI Advice][retry] type={type(exc).__name__}", flush=True)
             print(f"[AI Advice][retry] message={error_text}", flush=True)
 
@@ -281,8 +381,8 @@ def generate_posture_advice(
                 )
                 break
 
-            if attempt < 20:
-                wait_seconds = 2 ** (attempt - 1)
+            if attempt < 10:
+                wait_seconds = 4
                 print(
                     f"[AI Advice][retry] 等待 {wait_seconds} 秒後再試",
                     flush=True,

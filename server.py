@@ -19,8 +19,9 @@ import cv2
 import pymysql
 from flask import Flask, jsonify, request, send_from_directory, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from ai_proxy import ai_bp
 from analysis import AnalysisError, analyze_video_with_heavy
+
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -45,6 +46,166 @@ DB_CONFIG = {
 
 def get_db():
     return pymysql.connect(**DB_CONFIG)
+
+
+# ───────── 個人訓練歷史（每個帳號各自一份） ─────────
+# 啟動後第一次用到歷史功能時自動建表（CREATE TABLE IF NOT EXISTS），不需要手動執行 SQL；
+# 同樣的語法也寫在 STS.sql，方便在 Workbench 手動建立。
+HISTORY_DDL = """
+CREATE TABLE IF NOT EXISTS training_sessions (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  client_id VARCHAR(40) NOT NULL,
+  played_at_ms BIGINT NOT NULL,
+  mode VARCHAR(32) NULL,
+  difficulty VARCHAR(16) NULL,
+  result VARCHAR(16) NULL,
+  score INT NULL,
+  reps INT NULL,
+  seconds FLOAT NULL,
+  posture_total SMALLINT NULL,
+  trunk_score SMALLINT NULL,
+  heel_score SMALLINT NULL,
+  knee_score SMALLINT NULL,
+  metrics_json JSON NULL,
+  record_session_id VARCHAR(64) NULL,
+  heavy_json JSON NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_user_client (user_id, client_id),
+  KEY idx_user_played (user_id, played_at_ms)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+"""
+_history_table_ready = False
+_CLIENT_ID_RE = re.compile(r"[A-Za-z0-9_-]{8,40}")
+
+
+def _ensure_history_table() -> None:
+    global _history_table_ready
+    if _history_table_ready:
+        return
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(HISTORY_DDL)
+        conn.commit()
+        _history_table_ready = True
+    finally:
+        conn.close()
+
+
+def _json_safe(value: Any) -> Any:
+    """NaN / Infinity 不是合法 JSON，MySQL JSON 欄位會拒收，一律換成 None。"""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {str(k): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(v) for v in value]
+    return value
+
+
+def _opt_int(value: Any, lo: int | None = None, hi: int | None = None) -> int | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    number = int(round(number))
+    if lo is not None:
+        number = max(lo, number)
+    if hi is not None:
+        number = min(hi, number)
+    return number
+
+
+def _opt_float(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _opt_text(value: Any, limit: int) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text[:limit] if text else None
+
+
+def _json_load(value: Any) -> Any:
+    if value is None or isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _history_row_to_entry(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": row["client_id"],
+        "at": int(row["played_at_ms"]),
+        "mode": row["mode"],
+        "diff": row["difficulty"],
+        "result": row["result"],
+        "score": row["score"] or 0,
+        "reps": row["reps"] or 0,
+        "seconds": float(row["seconds"] or 0),
+        "posture": {
+            "total": row["posture_total"],
+            "trunk": row["trunk_score"],
+            "heel": row["heel_score"],
+            "knee": row["knee_score"],
+        },
+        "metrics": _json_load(row["metrics_json"]) or {},
+        "sessionId": row["record_session_id"],
+        "heavy": _json_load(row["heavy_json"]),
+        "synced": True,
+        "schema": 2,
+    }
+
+
+def _upsert_history_entry(cur, user_id: int, raw: dict[str, Any]) -> bool:
+    """依 (user_id, client_id) 新增或更新一筆前端回報的訓練紀錄；不會動到 Heavy 欄位。"""
+    client_id = str(raw.get("id") or "")
+    if not _CLIENT_ID_RE.fullmatch(client_id):
+        return False
+    posture = raw.get("posture") if isinstance(raw.get("posture"), dict) else {}
+    metrics = raw.get("metrics") if isinstance(raw.get("metrics"), dict) else {}
+    played = _opt_int(raw.get("at"))
+    if played is None:
+        played = int(datetime.now().timestamp() * 1000)
+    cur.execute(
+        "INSERT INTO training_sessions "
+        "(user_id, client_id, played_at_ms, mode, difficulty, result, score, reps, seconds, "
+        " posture_total, trunk_score, heel_score, knee_score, metrics_json) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+        "ON DUPLICATE KEY UPDATE played_at_ms=VALUES(played_at_ms), mode=VALUES(mode), "
+        "difficulty=VALUES(difficulty), result=VALUES(result), score=VALUES(score), "
+        "reps=VALUES(reps), seconds=VALUES(seconds), posture_total=VALUES(posture_total), "
+        "trunk_score=VALUES(trunk_score), heel_score=VALUES(heel_score), "
+        "knee_score=VALUES(knee_score), metrics_json=VALUES(metrics_json)",
+        (
+            user_id,
+            client_id,
+            played,
+            _opt_text(raw.get("mode"), 32),
+            _opt_text(raw.get("diff"), 16),
+            _opt_text(raw.get("result"), 16),
+            _opt_int(raw.get("score"), 0, 10_000_000),
+            _opt_int(raw.get("reps"), 0, 100_000),
+            _opt_float(raw.get("seconds")),
+            _opt_int(posture.get("total"), 0, 100),
+            _opt_int(posture.get("trunk"), 0, 100),
+            _opt_int(posture.get("heel"), 0, 100),
+            _opt_int(posture.get("knee"), 0, 100),
+            json.dumps(_json_safe(metrics), ensure_ascii=False) if metrics else None,
+        ),
+    )
+    return True
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("sts-server")
@@ -391,6 +552,116 @@ def api_save():
     return jsonify({"success": True})
 
 
+@app.get("/api/history")
+def api_history_list():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+    mode = _opt_text(request.args.get("mode"), 32)
+    limit = _opt_int(request.args.get("limit"), 1, 1000) or 500
+    try:
+        _ensure_history_table()
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                if mode:
+                    cur.execute(
+                        "SELECT * FROM training_sessions WHERE user_id=%s AND mode=%s "
+                        "ORDER BY played_at_ms DESC LIMIT %s",
+                        (user_id, mode, limit),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT * FROM training_sessions WHERE user_id=%s "
+                        "ORDER BY played_at_ms DESC LIMIT %s",
+                        (user_id, limit),
+                    )
+                rows = cur.fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("讀取訓練歷史失敗")
+        return jsonify({"success": False, "message": "讀取訓練歷史失敗"}), 500
+    return jsonify({"success": True, "entries": [_history_row_to_entry(r) for r in rows]})
+
+
+@app.post("/api/history")
+def api_history_push():
+    """前端把本機尚未同步的紀錄批次送上來（單筆或 {"entries": [...]} 皆可）。"""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+    data = request.get_json(silent=True) or {}
+    entries = data.get("entries")
+    if entries is None:
+        entries = [data] if data else []
+    if not isinstance(entries, list) or len(entries) > 200:
+        return jsonify({"success": False, "message": "entries 格式不正確或一次超過 200 筆"}), 400
+    saved_ids: list[str] = []
+    try:
+        _ensure_history_table()
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                for raw in entries:
+                    if isinstance(raw, dict) and _upsert_history_entry(cur, int(user_id), raw):
+                        saved_ids.append(str(raw.get("id")))
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("寫入訓練歷史失敗")
+        return jsonify({"success": False, "message": "寫入訓練歷史失敗"}), 500
+    return jsonify({"success": True, "saved": len(saved_ids), "saved_ids": saved_ids})
+
+
+@app.delete("/api/history")
+def api_history_clear():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+    try:
+        _ensure_history_table()
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM training_sessions WHERE user_id=%s", (user_id,))
+                deleted = cur.rowcount
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("清除訓練歷史失敗")
+        return jsonify({"success": False, "message": "清除訓練歷史失敗"}), 500
+    return jsonify({"success": True, "deleted": deleted})
+
+
+@app.delete("/api/history/<client_id>")
+def api_history_remove(client_id: str):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "未登入"}), 401
+    if not _CLIENT_ID_RE.fullmatch(client_id):
+        return jsonify({"success": False, "message": "無效的紀錄 id"}), 400
+    try:
+        _ensure_history_table()
+        conn = get_db()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM training_sessions WHERE user_id=%s AND client_id=%s",
+                    (user_id, client_id),
+                )
+                deleted = cur.rowcount
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("刪除訓練歷史失敗")
+        return jsonify({"success": False, "message": "刪除訓練歷史失敗"}), 500
+    return jsonify({"success": True, "deleted": deleted})
+
+
 @app.get("/")
 def index():
     return send_from_directory(BASE_DIR, "index.html")
@@ -440,7 +711,82 @@ def download_record(session_id: str, filename: str):
     session_dir = RECORDS_DIR / session_id
     if not session_dir.is_dir():
         return jsonify({"success": False, "message": "找不到分析資料"}), 404
+    # 有記錄擁有者（user_id）的分析資料只有本人能看；舊資料沒有 user_id，維持原本可讀取。
+    try:
+        meta = json.loads((session_dir / f"session_{session_id}.json").read_text(encoding="utf-8"))
+        owner = meta.get("user_id")
+    except (OSError, ValueError):
+        owner = None
+    if owner is not None and session.get("user_id") != owner:
+        return jsonify({"success": False, "message": "沒有權限查看這份分析資料"}), 403
     return send_from_directory(session_dir, filename, as_attachment=False)
+
+
+def _attach_heavy_to_history(
+    user_id: int, record_session_id: str, session_info: dict[str, Any], result: dict[str, Any]
+) -> None:
+    """把 Heavy 分析的正式分數與 AI 評語掛到這位使用者的歷史紀錄上。
+    前端會在表單帶 history_client_id，讓它對上遊戲結束時前端寫的那一筆；
+    沒帶（或格式不對）就用 srv_<session_id> 另建一筆，避免分析結果沒地方存。"""
+    client_id = str(request.form.get("history_client_id", "")).strip()
+    if not _CLIENT_ID_RE.fullmatch(client_id):
+        client_id = f"srv_{record_session_id}"[:40]
+
+    profile = result.get("posture_profile") or {}
+    summary = result.get("summary") or {}
+    ai_summary = result.get("ai_analysis_summary") or {}
+    advice = result.get("posture_advice") or {}
+    rep_records = result.get("rep_records") or []
+    durations = [
+        float(r.get("duration")) for r in rep_records
+        if isinstance(r, dict) and _opt_float(r.get("duration")) is not None
+    ]
+    heavy = _json_safe({
+        "reps": result.get("heavy_reps"),
+        "overall_score": profile.get("overall_score"),
+        "trunk_score": profile.get("trunk_score"),
+        "heel_score": profile.get("heel_score"),
+        "avg_max_trunk_deg": profile.get("avg_max_trunk"),
+        "avg_max_heel_deg": profile.get("avg_max_heel"),
+        "avg_rep_duration_sec": (sum(durations) / len(durations)) if durations else None,
+        "consistency": ai_summary.get("consistency"),
+        "trends": ai_summary.get("trends"),
+        "pose_detection_rate_percent": summary.get("pose_detection_rate"),
+        "advice": {
+            "source": advice.get("source"),
+            "title": advice.get("title"),
+            "analysis": advice.get("analysis"),
+            "tip": advice.get("tip"),
+        },
+    })
+    _ensure_history_table()
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO training_sessions "
+                "(user_id, client_id, played_at_ms, mode, difficulty, result, score, reps, seconds, "
+                " record_session_id, heavy_json) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                "ON DUPLICATE KEY UPDATE record_session_id=VALUES(record_session_id), "
+                "heavy_json=VALUES(heavy_json)",
+                (
+                    user_id,
+                    client_id,
+                    int(datetime.now().timestamp() * 1000),
+                    _opt_text(session_info.get("mode_key"), 32),
+                    _opt_text(session_info.get("difficulty_key"), 16),
+                    _opt_text(session_info.get("result"), 16),
+                    _opt_int(session_info.get("game_score"), 0, 10_000_000),
+                    _opt_int(session_info.get("game_reps"), 0, 100_000),
+                    _opt_float(session_info.get("game_time")),
+                    record_session_id,
+                    json.dumps(heavy, ensure_ascii=False),
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 @app.post("/api/analyze")
@@ -471,6 +817,9 @@ def analyze_upload():
         "content_type": video.mimetype,
         "stored_filename": raw_filename,
     })
+    current_user_id = session.get("user_id")
+    if current_user_id:
+        session_info["user_id"] = current_user_id
 
     try:
         video.save(raw_path)
@@ -493,6 +842,12 @@ def analyze_upload():
             output_pdf_path=pdf_path,
             session_info=session_info,
         )
+
+        if current_user_id:
+            try:
+                _attach_heavy_to_history(int(current_user_id), session_id, session_info, result)
+            except Exception:
+                logger.exception("Heavy 結果寫入個人歷史失敗（不影響分析回應）")
 
         return jsonify({
             "success": True,
@@ -547,4 +902,7 @@ if __name__ == "__main__":
     host = os.environ.get("STS_HOST", "127.0.0.1")
     port = int(os.environ.get("STS_PORT", "5000"))
     debug = os.environ.get("STS_DEBUG", "1") == "1"
+    app.register_blueprint(ai_bp)
+    from password_reset import register_password_reset
+    register_password_reset(app, get_db)
     app.run(host=host, port=port, debug=debug, use_reloader=False)

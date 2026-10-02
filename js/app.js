@@ -30,7 +30,7 @@ const i18n = {
     'ai-preset-benefits': '坐站訓練好處',
     'ai-preset-skills': '高分技巧',
     'ai-input-holder': '問我問題...',
-    'ai-btn-send': '送出',
+    'ai-btn-send': '送出 🪙200',
 
     // ── 4. 主選單與通用返回 ──
     'menu-logo-title': '123<span>木頭人</span>',
@@ -61,7 +61,7 @@ const i18n = {
     'tut-cap-tiptoe': '墊腳尖',
     'tut-cap-step': '= +1步！',
     'tut-head-green': '綠燈時',
-    'tut-body-green': '完成<strong>站➔坐➔站➔墊腳</strong>即前進<br>姿勢越好，步伐越大',
+    'tut-body-green': '<strong>站➔坐➔站➔墊腳</strong><br>即前進<br>姿勢越好，步伐越大',
     'tut-head-yellow': '黃燈時',
     'tut-body-yellow': '<strong>起立後切黃燈</strong><br>請準備<strong>坐下</strong>',
     'tut-head-red': '紅燈時',
@@ -107,8 +107,6 @@ const i18n = {
     'game-score-lbl': '總分',
     'game-prog-lbl': '進度：',
     'game-cam-status': '啟動攝影機...',
-    'game-hud-light': '燈號',
-    'game-hud-streak': '連續好姿勢',
     'game-move-warn': '⚠️ 偵測到移動！',
     'game-rep-fb': '起立完成！',
 
@@ -120,7 +118,6 @@ const i18n = {
     'reward-btn-restart': '🔄 再玩一次',
     'reward-btn-board': '🏆 排行榜',
     'reward-btn-menu': '🏠 主選單',
-    'res-name-lbl': '輸入名稱（3字）：',
     'res-btn-collect': '🪙 領取金幣',
     'res-btn-share': '📸 分享成就卡',
     'res-btn-challenge': '🤝 挑戰好友',
@@ -194,7 +191,11 @@ const i18n = {
     'tut-hint-classic': '🏁 <strong>通關模式：</strong>走完全段距離即通關，剩餘時間轉為額外分數！',
     'tut-hint-infinite': '♾️ <strong>無盡挑戰：</strong>沒有終點！持續起立累積分數，直到被紅燈抓到為止，挑戰極限吧!',
     'tut-hint-timed': '⏱️ <strong>限時30秒：</strong>30秒倒數計時！時間內拼命衝分，時間到自動結算成績。',
-    'tut-hint-score': '📊 <strong>計分：</strong>單次起立最高 +100 分（依姿勢標準度）。按 <strong>P</strong> 暫停。',
+    'tut-hint-score': '📊 <strong>計分：</strong>單次起立最高 +100 分（依姿勢標準度）。',
+    'tut-hint-controlled_sit': '🪑 <strong>控制坐下：</strong>起立後先站穩保持 3 秒，再依你設定的秒數慢慢控制坐下；下降越平穩、越貼近目標時間，控制分越高，角色依控制分前進。',
+    'tut-hint-heel_control': '🦶 <strong>腳跟控制：</strong>墊腳抬起到最高處保持 3 秒，再依你設定的秒數慢慢放下腳跟；放下越平穩、越貼近目標時間，控制分越高，角色依控制分前進。',
+    'tut-angle-tip': '<div class="tut-angle-title">📐 拍攝角度很重要！</div>請以 <strong>35° 或 45°</strong> 的斜側角面對鏡頭，<br>讓系統同時看清楚膝蓋、腳跟與軀幹姿勢，分數才會準確。',
+    'tut-mode-pick': '切換模式查看規則：',
     'pause-score': '分數',
     'pause-reps': '次數',
     'prog-infinite': '分數累積中…',
@@ -253,6 +254,7 @@ const i18n = {
     // Calibration 畫面文字：動態 UI 也統一走 i18n/getText()
     'calib-ready': '請準備',
     'calib-align': '請準備，將肩膀與腰部對準鏡頭',
+    'calib-angle-banner': '📐 建議以 35°～45° 斜側角面對鏡頭',
     'calib-body-not-found': '⚠️ 找不到人體：請確保「肩膀與腰部」在鏡頭內',
     'calib-frame-incomplete': '⚠️ 畫面不完整，請稍微退後',
     'calib-step-sit': '1/3 偵測成功！請先「坐在椅子上」保持不動',
@@ -266,7 +268,8 @@ const i18n = {
     // JS 動態訊息
     'ai-thinking': 'AI 思考中…',
     'ai-no-reply': 'AI 暫時沒有回覆',
-    'ai-error': 'AI 回覆失敗，請稍後再試',
+    'ai-error': 'AI 回覆失敗，請稍後再試（金幣已退還）',
+    'ai-no-coins': '金幣不足，每次提問需要 200 金幣',
     'diag-tip-label': '建議',
     'diag-analyzing': '🤖 AI 教練正在分析姿態中...（超時將切換本地診斷）',
     'privacy-consent-required': '請先閱讀並同意隱私權與安全聲明',
@@ -439,7 +442,7 @@ const i18n = {
     'ai-preset-benefits': 'Benefits',
     'ai-preset-skills': 'High Score Tips',
     'ai-input-holder': 'Ask me anything...',
-    'ai-btn-send': 'Send',
+    'ai-btn-send': 'Send 🪙200',
 
     // ── 4. Main Menu ──
     'menu-logo-title': '123<span>WoodenMan</span>',
@@ -516,8 +519,6 @@ const i18n = {
     'game-score-lbl': 'Score',
     'game-prog-lbl': 'Progress: ',
     'game-cam-status': 'Starting Camera...',
-    'game-hud-light': 'Light',
-    'game-hud-streak': 'Good Streak',
     'game-move-warn': '⚠️ Movement Detected!',
     'game-rep-fb': 'Stand Up Done!',
 
@@ -529,7 +530,6 @@ const i18n = {
     'reward-btn-restart': '🔄 Play Again',
     'reward-btn-board': '🏆 Leaderboard',
     'reward-btn-menu': '🏠 Main Menu',
-    'res-name-lbl': 'Enter Name (3 chars):',
     'res-btn-collect': '🪙 Collect Coins',
     'res-btn-share': '📸 Share Card',
     'res-btn-challenge': '🤝 Challenge Friend',
@@ -579,7 +579,7 @@ const i18n = {
 
     'mode-classic-name': '🎬 Classic', 'mode-classic-desc': 'Reach 100% progress to win. Best for beginners.',
     'mode-infinite-name': '♾️ Infinite', 'mode-infinite-desc': 'No limits! Go as far as you can for the high score.',
-    'mode-timed-name': '⏱️ 2-Min Time Attack', 'mode-timed-desc': 'Dash for 120 seconds. Tests your endurance.',
+    'mode-timed-name': '⏱️ 30 seconds Time Attack', 'mode-timed-desc': 'Dash for 30 seconds. Tests your endurance.',
     'mode-controlled-sit-name': '🪑 Controlled Sit', 'mode-controlled-sit-desc': 'After standing, hold for 3 seconds, then sit down over your chosen time. Character movement follows control score.',
     'mode-heel-control-name': '🦶 Heel Control', 'mode-heel-control-desc': 'At the top of a heel raise, hold for 3 seconds, then lower over your chosen time. Character movement follows control score.',
 
@@ -602,7 +602,11 @@ const i18n = {
     'tut-hint-classic': '🏁 <strong>Classic:</strong> Reach the finish line! Remaining time becomes bonus points.',
     'tut-hint-infinite': '♾️ <strong>Infinite:</strong> No finish line! Keep scoring until the red light catches you.',
     'tut-hint-timed': '⏱️ <strong>Timed (30s):</strong> Score as much as possible in 30 seconds!',
-    'tut-hint-score': '📊 <strong>Scoring:</strong> Up to +100 pts per stand (based on posture). Press <strong>P</strong> to pause.',
+    'tut-hint-score': '📊 <strong>Scoring:</strong> Up to +100 pts per stand (based on posture).',
+    'tut-hint-controlled_sit': '🪑 <strong>Controlled Sit:</strong> After standing, hold steady for 3 seconds, then lower yourself over your chosen time. The smoother and closer to the target time, the higher your control score; your character moves by control score.',
+    'tut-hint-heel_control': '🦶 <strong>Heel Control:</strong> Raise your heels to the top and hold for 3 seconds, then lower them over your chosen time. The smoother and closer to the target time, the higher your control score; your character moves by control score.',
+    'tut-angle-tip': '<div class="tut-angle-title">📐 Camera angle matters!</div>Face the camera at a <strong>35° or 45°</strong> angle<br>so the system can clearly see your knees, heels and trunk for accurate scoring.',
+    'tut-mode-pick': 'Switch mode to view its rules:',
     'pause-score': 'Score',
     'pause-reps': 'Reps',
     'prog-infinite': 'Accumulating Score...',
@@ -661,6 +665,7 @@ const i18n = {
     // Calibration visual text
     'calib-ready': 'Get Ready',
     'calib-align': 'Get ready. Keep your shoulders and hips inside the camera view.',
+    'calib-angle-banner': '📐 Face the camera at a 35°–45° angle',
     'calib-body-not-found': '⚠️ Body not detected: keep your shoulders and hips in the camera view.',
     'calib-frame-incomplete': '⚠️ Your body is not fully visible. Please move slightly farther back.',
     'calib-step-sit': '1/3 Detected! Sit on the chair and hold still.',
@@ -674,7 +679,8 @@ const i18n = {
     // Dynamic JS messages
     'ai-thinking': 'AI is thinking…',
     'ai-no-reply': 'AI did not return a response.',
-    'ai-error': 'AI response failed. Please try again later.',
+    'ai-error': 'AI response failed. Please try again later (coins refunded).',
+    'ai-no-coins': 'Not enough coins. Each question costs 200 coins.',
     'diag-tip-label': 'Tip',
     'diag-analyzing': '🤖 AI coach is analyzing your posture... (local fallback will be used on timeout)',
     'privacy-consent-required': 'Please read and accept the Privacy & Safety Notice first.',
@@ -1004,6 +1010,7 @@ function escapeHTML(str) {
   }[ch]));
 }
 
+const AI_CHAT_COST = 200;
 async function sendAIMessage() {
   const inputEl = document.getElementById('ai-chat-input');
   const historyEl = document.getElementById('ai-chat-history');
@@ -1016,50 +1023,40 @@ async function sendAIMessage() {
   inputEl.value = '';
   historyEl.scrollTop = historyEl.scrollHeight;
 
+  // 每次問 AI 教練要花 AI_CHAT_COST 金幣；金幣不夠就不送出，失敗會退還
+  if (!spendCoins(AI_CHAT_COST)) {
+    historyEl.innerHTML += `<div class="chat-msg-ai">${getText('ai-no-coins')}</div>`;
+    historyEl.scrollTop = historyEl.scrollHeight;
+    return;
+  }
+
   const loadingId = 'loading-' + Date.now();
   historyEl.innerHTML += `<div id="${loadingId}" class="chat-msg-ai"><div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></div>${getText('ai-thinking')}</div>`;
   historyEl.scrollTop = historyEl.scrollHeight;
 
-  const API_KEY = 'AQ.Ab8RN6K23brKRZKiiDsM9blk22_I8j-N2DkZeSEPs-V2aLznUA';
-  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=' + API_KEY.trim();
-  const currentLang = (gameSettings.lang === 'en') ? 'English' : '繁體中文';
-  const promptText = `
-你現在是《123木頭人 PRO 姿勢矯正版》的專屬 AI 健身教練。
-
-【回答絕對守則】
-1. 必須極度精簡，不說廢話，條理分明，盡量控制在 50 字以內。
-2. 只回答與「123木頭人遊戲機制、規則、操作」或「坐站訓練(STS)、姿勢矯正、運動健康」相關的問題。
-3. 若玩家詢問上述範圍以外的任何內容，請直接且唯一回覆：「抱歉，我只能回答與『本遊戲規則』或『坐站訓練』相關的問題喔！請針對相關主題提問。」
-4. ⚠️ 強制要求：請務必使用【${currentLang}】來回答玩家的所有問題。
-
-【背景知識】
-遊戲規則：綠燈時完成站➔坐➔站➔墊腳可前進；黃燈時要準備坐下；紅燈時必須保持坐下且靜止。
-坐站訓練好處：鍛鍊大腿股四頭肌、臀大肌與核心，提升下肢肌力、預防跌倒，改善久坐。
-高分技巧：動作穩定、站起時保持軀幹控制、腳跟角度良好，並在紅燈時維持坐下靜止。
-
-玩家提問：${text}
-`;
+  const lang = (gameSettings.lang === 'en') ? 'en' : 'zh-TW';
 
   try {
-    const response = await fetch(endpoint, {
+    // API key 與提示詞都放在後端，前端只送玩家的問題
+    const response = await fetch('/api/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }]
-      })
+      body: JSON.stringify({ message: text, lang })
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Gemini API 錯誤詳情:', errText);
+      console.error('AI 後端錯誤詳情:', errText);
       throw new Error(`伺服器錯誤：${response.status}`);
     }
 
     const data = await response.json();
-    const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || getText('ai-no-reply');
+    if (!data?.reply) addCoins(AI_CHAT_COST);   // 沒拿到回覆也退幣
+    const aiReply = data?.reply || getText('ai-no-reply');
     const loadingEl = document.getElementById(loadingId);
     if (loadingEl) loadingEl.innerHTML = escapeHTML(aiReply).replace(/\n/g, '<br>');
   } catch (error) {
+    addCoins(AI_CHAT_COST);   // 失敗退還金幣
     const loadingEl = document.getElementById(loadingId);
     if (loadingEl) loadingEl.innerText = getText('ai-error');
     console.error('AI Error:', error);
@@ -1081,16 +1078,9 @@ function openSettings(fromGame = false) {
   if (gameActions) gameActions.style.display = (fromGame && !inResult) ? 'flex' : 'none';
 }
 
-/* 遊戲畫面右上角設定鍵專用：先暫停（校正階段、倒數、正式遊戲都會暫停），
-   再打開設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
+/* 遊戲畫面右上角設定鍵專用：不暫停任何東西（校正、倒數、遊戲與錄影照常進行），
+   直接打開設定面板（顯示遊戲內專屬按鈕，不顯示登出） */
 function openInGameSettings() {
-  if (gState === 'playing') {
-    pauseGame();
-    settingsPausedGame = true;
-  } else if (isSetupActive()) {
-    pauseSetup();
-    settingsPausedSetup = true;
-  }
   openSettings(true);
 }
 
@@ -1108,9 +1098,33 @@ async function logoutFromSettings() {
   window.location.href = 'STS_Home.html';
 }
 
-/* 設定面板裡的「重新開始一次」：校正階段 → 重新校正；倒數／遊戲中 → 直接重開一局 */
+/* 共用：一律從校正重新開始一局（「再玩一次」與設定裡的「重新開始一次」都呼叫它） */
+function restartFromCalibration() {
+  resetSetupUI();               // 清掉舊的校正／倒數計時器與畫面文字
+  const calibBox = document.getElementById('calib-box');
+  if (calibBox) calibBox.style.boxShadow = '';   // 還原上一輪校正完成時的綠色發光
+  isPaused = false;
+
+  const liveStream = videoElement?.srcObject && videoElement.srcObject.getVideoTracks().some(t => t.readyState === 'live');
+  if (liveStream && poseLandmarker) {
+    resetGameState();
+    gState = 'ready';
+    isTimeUp = false;
+    detecting = true;
+    lastFrame = performance.now();
+    if (detectLoopId) cancelAnimationFrame(detectLoopId);
+    if (gameLoopId) cancelAnimationFrame(gameLoopId);
+    detectLoopId = requestAnimationFrame(detectLoopMP);
+    gameLoopId = requestAnimationFrame(gameLoop);
+    launchGameWithCalibration();
+  } else {
+    cleanupGame();
+    launchGame();               // launchGame 本身會走校正
+  }
+}
+
+/* 設定面板裡的「重新開始一次」：關閉設定後一律從校正重新開始 */
 function restartFromSettings() {
-  const calibrationUnfinished = (phase !== 'GAME');
   settingsPausedGame = false;   // 我們要直接重開，不要讓 closeSettings() 的邏輯把舊的一局恢復
   settingsPausedSetup = false;
   const modal = document.getElementById('ov-settings');
@@ -1122,24 +1136,11 @@ function restartFromSettings() {
   ensureAudio(); playSfx('click');
   const save = loadSave(); save.gameSettings = gameSettings; writeSave(save);
 
-  resetSetupUI();               // 清掉舊的校正／倒數計時器與畫面
   stopBGM();
   stopVideoRecording();         // 舊的一局不分析、不上傳，直接結束錄影
   if (typeof onRhythmGameEnd === 'function') onRhythmGameEnd();
 
-  const liveStream = videoElement?.srcObject && videoElement.srcObject.getVideoTracks().some(t => t.readyState === 'live');
-  if (!liveStream || !poseLandmarker) { cleanupGame(); launchGame(); return; }
-  resetGameState();
-  gState = 'ready';
-  isTimeUp = false;
-  detecting = true;
-  lastFrame = performance.now();
-  if (detectLoopId) cancelAnimationFrame(detectLoopId);
-  if (gameLoopId) cancelAnimationFrame(gameLoopId);
-  detectLoopId = requestAnimationFrame(detectLoopMP);
-  gameLoopId = requestAnimationFrame(gameLoop);
-  if (calibrationUnfinished) launchGameWithCalibration();
-  else countdownStart(beginPlay);
+  restartFromCalibration();
 }
 
 /* 設定面板裡的「退出遊戲回主畫面」：校正、倒數、遊戲中都可用 */
@@ -1168,14 +1169,6 @@ function closeSettings() {
   const save = loadSave();
   save.gameSettings = gameSettings;
   writeSave(save);
-  if (settingsPausedGame) {
-    settingsPausedGame = false;
-    resumeGame();
-  }
-  if (settingsPausedSetup) {
-    settingsPausedSetup = false;
-    resumeSetup();
-  }
 }
 
 
@@ -2090,15 +2083,28 @@ function drawTutStick(id, pose) {
   }
   ctx.stroke();
 }
+let tutMode = null;
+function renderTutModeRules(){
+  const box = document.getElementById('tut-mode-hint');
+  if (!box) return;
+  const ids = Object.keys(MODES);
+  if (!tutMode || !MODES[tutMode]) tutMode = MODES[selMode] ? selMode : ids[0];
+  const tabs = ids.map(id => `<button class="btn ${id === tutMode ? 'btn-blue' : 'btn-ghost'}" style="padding:7px 14px;font-size:.85em;" onclick="tutMode='${id}';playSfx('click');renderTutModeRules()">${getText(MODES[id].nameKey)}</button>`).join('');
+  const isControl = !!MODES[tutMode].controlMode;
+  const imgs = { controlled_sit: 'img/guide_controlled_sit.png', heel_control: 'img/guide_heel_control.png' };
+  const imgEl = document.getElementById('tut-img');
+  if (imgEl) imgEl.src = imgs[tutMode] || 'img/sts_guide.png';
+  // 只有「經典通關」與「無盡模式」有紅綠燈；其他模式不顯示紅綠燈規則
+  const lights = document.getElementById('tut-lights');
+  if (lights) lights.style.display = (tutMode === 'classic' || tutMode === 'infinite') ? '' : 'none';
+  const score = isControl ? '' : `<br>${getText('tut-hint-score')}`;
+  box.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-bottom:12px;"><span style="color:var(--dim);font-size:.85em;">${getText('tut-mode-pick')}</span>${tabs}</div>`
+    + `<div style="font-size:1.2em;color:var(--dim);line-height:1.8;">${getText('tut-hint-' + tutMode)}${score}</div>`;
+}
 function goTutorial(){
   ensureAudio();playSfx('click');goTo('scr-tutorial');
-  drawTutStick('tut-stand','stand');drawTutStick('tut-sit','sit');drawTutStick('tut-stand2','stand');drawTutStick('tut-tiptoe', 'tiptoe');
-  const hints = {
-    classic: getText('tut-hint-classic'),
-    infinite: getText('tut-hint-infinite'),
-    timed: getText('tut-hint-timed')
-  };
-  document.getElementById('tut-mode-hint').innerHTML=`<div style="width=1000px;font-size:1.35em;color:var(--dim);line-height:1.8;">${hints[selMode]}<br>${getText('tut-hint-score')}</div>`;
+  tutMode = MODES[selMode] ? selMode : 'classic';
+  renderTutModeRules();
 }
 
 /* ── 校正／倒數階段的暫停 ──
@@ -2171,8 +2177,6 @@ function pauseGame(){
   // 暫停時連姿勢偵測迴圈也一併停掉：鏡頭畫面照樣顯示最後一格，但不再跑 AI 推論，省效能也避免暫停中誤判動作
   if(detectLoopId){cancelAnimationFrame(detectLoopId);detectLoopId=null;}
   stopBGM();
-  // 錄影也一起暫停，送去 Heavy 分析的影片才不會混進暫停的那段時間
-  try{if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.pause();}catch(e){console.warn('錄影暫停失敗',e)}
   // 節奏音樂模式的節拍器是獨立的計時器，暫停遊戲時也要跟著停，不然背景會一直嗶嗶叫
   if(typeof onRhythmGamePause==='function') onRhythmGamePause();
 }
@@ -2191,7 +2195,6 @@ function resumeGame(){
   lastFrame=performance.now();
   if(detecting&&poseLandmarker&&!detectLoopId)detectLoopId=requestAnimationFrame(detectLoopMP);
   startBGM();
-  try{if(mediaRecorder&&mediaRecorder.state==='paused')mediaRecorder.resume();}catch(e){console.warn('錄影恢復失敗',e)}
   // 節拍器從「現在」重新算起，讓玩家恢復遊戲後有完整一小節可以抓拍子，不會被暫停時間打亂節奏
   if(typeof onRhythmGameResume==='function') onRhythmGameResume();
   requestAnimationFrame(gameLoop);
@@ -2362,7 +2365,7 @@ function render(){
 function drawBg(ctx,W,H){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05091A');g.addColorStop(1,'#0A1428');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);starField.forEach(s=>{ctx.globalAlpha=Math.max(.05,s.a*.7);ctx.fillStyle='#80B8FF';ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1}
 
 function drawTrack(ctx,W,H){
-  const ty=H*.62,th=H*.13,sx=70,ex=W-70;
+  const {ty,th}=trackGeom(W,H),sx=70,ex=W-70;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(sx,ty+5,ex-sx,th);
   const g=ctx.createLinearGradient(0,ty,0,ty+th);g.addColorStop(0,'#111D35');g.addColorStop(1,'#0C1628');ctx.fillStyle=g;ctx.fillRect(sx,ty,ex-sx,th);
   ctx.strokeStyle='rgba(64,144,255,.22)';ctx.lineWidth=1.5;ctx.strokeRect(sx,ty,ex-sx,th);
@@ -2377,7 +2380,7 @@ function drawTrack(ctx,W,H){
 }
 
 function drawInfiniteTrack(ctx,W,H){
-  const ty=H*.62,th=H*.13,sx=70,ex=W-70;
+  const {ty,th}=trackGeom(W,H),sx=70,ex=W-70;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(sx,ty+5,ex-sx,th);
   const g=ctx.createLinearGradient(0,ty,0,ty+th);g.addColorStop(0,'#0D1A32');g.addColorStop(1,'#071220');ctx.fillStyle=g;ctx.fillRect(sx,ty,ex-sx,th);
   ctx.strokeStyle='rgba(0,204,106,.25)';ctx.lineWidth=1.5;ctx.strokeRect(sx,ty,ex-sx,th);
@@ -2390,18 +2393,31 @@ function drawTimedBorder(ctx,W,H){
   if(timedLeft<10){const alpha=(.5+Math.sin(elapsed*8)*.3)*(1-timedLeft/10)*.6;ctx.strokeStyle=`rgba(255,48,80,${alpha})`;ctx.lineWidth=6;ctx.strokeRect(0,0,W,H)}
 }
 
+/* 跑道幾何：遊戲舞台高度有限（上方是攝影機），跑道改成占舞台高度的大部分，
+   角色高度 = 跑道高度 × CHAR_TRACK_RATIO（至少 8 成），不再是小小一隻。 */
+function trackGeom(W,H){
+  const th=H*.13;           // 跑道高度維持原本比例
+  const ty=H-th-4;          // 跑道貼齊畫面最下方
+  return {ty,th};
+}
+const CHAR_TRACK_RATIO = .8;
+const CHAR_SCALE = 12;  // 角色放大倍率（1 = 最初大小）；設很大，實際會頂到整個舞台高度＝超級大
 function drawPlayer(ctx,W,H){
-  const ty=H*.62,th=H*.13,sx=70,ex=W-70;
+  const {ty,th}=trackGeom(W,H),sx=70,ex=W-70;
   let px;
   if(selMode==='infinite'){px=sx+30+(ex-sx-60)*(.15+((repsCount%10)/10)*.7)}
   else{px=sx+10+(ex-sx-20)*Math.min(progress,1)}
-  const py=ty+th/2;
+  // 角色 = 原本的 3 倍；腳踩在跑道上，身體往上超出跑道；水平方向保持整隻角色在畫面內
+  const charH=Math.min(th*CHAR_TRACK_RATIO*CHAR_SCALE,H-12),csz=charH/2.15;
+  px=Math.max(charH/2+4,Math.min(W-charH/2-4,px));
+  const feetY=Math.min(H-4,Math.max(ty+th*.85,charH+8));
+  const py=feetY-charH/2;
   ctx.save();ctx.shadowColor=selChar.glow||'#4090FF';ctx.shadowBlur=14+(posture.total/100)*12;
   const controlMoving = isControlMode() && performance.now() < controlMoveUntil;
-  drawCharSprite(ctx,px,py,25,selChar,controlMoving || (!isControlMode() && light==='green'&&stsState==='sit'));ctx.restore();
+  drawCharSprite(ctx,px,py+csz*.725,csz,selChar,controlMoving || (!isControlMode() && (light==='green'||light==='yellow')&&stsState==='sit'));ctx.restore();
   if(posture.total>0&&gState==='playing'){
     const s=Math.round(posture.total),sc=s>=80?'#00CC6A':s>=60?'#FFAA00':'#FF3050';
-    ctx.fillStyle=sc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(s,px,py-46);
+    ctx.fillStyle=sc;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(s,px,Math.max(12,py-charH/2-6));
   }
 }
 
@@ -2430,16 +2446,17 @@ function drawCharSprite(ctx,cx,cy,sz,ch,moving){
 }
 
 function drawDoll(ctx,W,H){
-  const ty=H*.62,dx=W-64,dy=ty-12,sz=38;
+  // 鬼（娃娃）超級大：高度約占舞台一半，靠右、腳貼畫面底部
+  const sz=H*.38,dx=W-sz*.6-10,dy=H-6-sz*.5;
   const fp=((dollRot%360)+360)%360>90;
   ctx.save();ctx.translate(dx,dy);
   ctx.shadowColor=fp?'rgba(255,48,80,.7)':light==='yellow'?'rgba(255,170,0,.7)':'rgba(30,111,255,.25)';ctx.shadowBlur=fp?26:8;
   const dc=fp?'#FF3050':'#2A4878',hc=fp?'#FFCCCC':'#A0C8FF';
   ctx.fillStyle=dc;ctx.beginPath();ctx.moveTo(-sz*.28,-sz*.28);ctx.lineTo(sz*.28,-sz*.28);ctx.lineTo(sz*.38,sz*.5);ctx.lineTo(-sz*.38,sz*.5);ctx.closePath();ctx.fill();
   ctx.fillStyle=hc;ctx.beginPath();ctx.arc(0,-sz*.54,sz*.27,0,Math.PI*2);ctx.fill();
-  if(fp){ctx.fillStyle='#CC0030';[-sz*.1,sz*.1].forEach(ex=>{ctx.beginPath();ctx.arc(ex,-sz*.57,2.5,0,Math.PI*2);ctx.fill()});const t2=performance.now()/1000;ctx.fillStyle=`rgba(255,48,80,${.16+Math.sin(t2*3)*.08})`;ctx.save();ctx.translate(0,-sz*.54);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,W*3,Math.PI+.38,Math.PI*2-.38);ctx.closePath();ctx.fill();ctx.restore()}
+  if(fp){ctx.fillStyle='#CC0030';[-sz*.1,sz*.1].forEach(ex=>{ctx.beginPath();ctx.arc(ex,-sz*.57,sz*.07,0,Math.PI*2);ctx.fill()});const t2=performance.now()/1000;ctx.fillStyle=`rgba(255,48,80,${.16+Math.sin(t2*3)*.08})`;ctx.save();ctx.translate(0,-sz*.54);ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,W*3,Math.PI+.38,Math.PI*2-.38);ctx.closePath();ctx.fill();ctx.restore()}
   ctx.shadowBlur=0;ctx.restore();
-  ctx.fillStyle=fp?'rgba(255,48,80,.9)':'rgba(80,130,200,.6)';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText(fp?'👁 偵測中':'⬅ 背對',dx,ty-62);
+  ctx.fillStyle=fp?'rgba(255,48,80,.9)':'rgba(80,130,200,.6)';ctx.font=`bold ${Math.round(sz*.2)}px system-ui`;ctx.textAlign='center';ctx.fillText(fp?'👁 偵測中':'⬅ 背對',dx,Math.max(14,dy-sz*1.05));
 }
 
 function getPlayerX(){
@@ -2450,8 +2467,10 @@ function getPlayerX(){
 }
 function spawnParticle(){
   if(!gCvs)return;
-  const px=getPlayerX();
-  const py=gCvs.height*.62+gCvs.height*.065;
+  const tg=trackGeom(gCvs.width,gCvs.height);
+  const half=Math.min(tg.th*CHAR_TRACK_RATIO*CHAR_SCALE,gCvs.height-12)/2;
+  const px=Math.max(half+4,Math.min(gCvs.width-half-4,getPlayerX()));
+  const py=Math.min(gCvs.height-8,tg.ty+tg.th*.8);
   const eqTrail=getEquipped('trails');
   const trailColor={'trail_fire':`hsl(${10+Math.random()*40},100%,${50+Math.random()*20}%)`,'trail_ice':`hsl(${190+Math.random()*30},95%,${65+Math.random()*15}%)`,'trail_star':`hsl(${40+Math.random()*40},100%,${60+Math.random()*20}%)`,'trail_elec':`hsl(${260+Math.random()*60},100%,${65+Math.random()*20}%)`}[eqTrail]||`hsl(${210+Math.random()*40},90%,65%)`;
   const size=eqTrail?5+Math.random()*5:2+Math.random()*2;
@@ -3572,8 +3591,6 @@ function calcCoins(){
 function collectCoinsAndContinue(){
   playSfx('coin');
   if(typeof buildScoreEntry==='function' && typeof saveScore==='function') saveScore(buildScoreEntry());
-  const input = document.getElementById('name-input');
-  if(input) input.value='';
   
   const {base,diffMul,modeMul,timeMul,bonus,total}=calcCoins();
   document.getElementById('ov-result').classList.remove('on');
@@ -3603,17 +3620,7 @@ function spawnCoinParticles(){
 function afterCoinCollect(action){
   document.getElementById('coin-reward').classList.remove('on');
   if(action==='restart'){
-    const liveStream=videoElement?.srcObject&&videoElement.srcObject.getVideoTracks().some(t=>t.readyState==='live');
-    if(!liveStream||!poseLandmarker){launchGame();return}
-    resetGameState();
-    gState='ready';
-    detecting=true;
-    lastFrame=performance.now();
-    if(detectLoopId)cancelAnimationFrame(detectLoopId);
-    if(gameLoopId)cancelAnimationFrame(gameLoopId);
-    detectLoopId=requestAnimationFrame(detectLoopMP);
-    gameLoopId=requestAnimationFrame(gameLoop);
-    countdownStart(beginPlay);
+    restartFromCalibration();
   }
   else if(action==='board'){cleanupGame();goTo('scr-board');renderBoard()}
   else{cleanupGame();goTo('scr-menu')}
@@ -3646,10 +3653,6 @@ function drawChart(){
 /* -- HUD / UI -- */
 function updateHUD(){
   if(isControlMode()) return;
-  const lightEl=document.getElementById('h-light');
-  if(lightEl)lightEl.textContent=light==='green'?'🟢':light==='yellow'?'🟡':'🔴';
-  const streakEl=document.getElementById('h-streak');
-  if(streakEl)streakEl.textContent=Math.floor(streak);
   const mw=document.getElementById('move-warn');
   if(mw)(light==='red'&&movevalue>selDiff.thresh*.6)?mw.classList.add('on'):mw.classList.remove('on');
 }
@@ -4696,51 +4699,18 @@ async function triggerGameDiagnosis() {
     applyLocalFallback('超過 10 秒未回應');
   }, 10000);
 
-  const API_KEY = 'AQ.Ab8RN6K23brKRZKiiDsM9blk22_I8j-N2DkZeSEPs-V2aLznUA';
-  const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' + API_KEY.trim();
-
-  const promptText = `
-你現在是《123木頭人 PRO》專屬 AI 健身教練。
-請根據玩家賽後數據進行評估，並【只輸出合法 JSON 格式】，包含 title, analysis, tip 三個欄位。
-
-【玩家數據】
-- 完成次數：${gameStats.reps} 次
-- 軀幹穩定度：${gameStats.trunkPerformance} 分 (低於50代表腰部前傾彎曲太多)
-- 腳跟/抬腳分數：${gameStats.heelPerformance} 分 (低於50代表墊腳/伸展不足)
-- 膝部穩定度：${gameStats.kneePerformance} 分 (低於50代表發生膝內夾/雙膝過度向內靠攏)
-
-【輸出 JSON 欄位要求】
-1. title: 可填入 "Great", "Good", "Normal", "Bad" 。
-2. analysis: 姿勢分析（控制在 20~40 字以內）。
-3. tip: 1 句具體改善建議（控制在 20~40 字以內）。
-4. 語言要求：請務必使用【${currentLang}】填寫欄位內容。
-
-【JSON 範例】
-{
-  "title": "Great",
-  "analysis": "軀幹控制良好，起身姿態非常標準！",
-  "tip": "繼續保持收腹，試著挑戰更高難度模式。"
-}
-`;
-
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch('/api/ai/diagnosis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        generationConfig: { responseMimeType: "application/json" }
-      })
+      body: JSON.stringify({ stats: gameStats, lang: langKey })
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
-    const rawJsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!rawJsonText) throw new Error('AI 回傳內容空白');
-
-    const aiDiagData = JSON.parse(rawJsonText);
+    const aiDiagData = data?.diagnosis;
+    if (!aiDiagData) throw new Error('AI 回傳內容空白');
 
     clearTimeout(timeoutId);
     if (!isRendered) {
@@ -5019,7 +4989,7 @@ function checkCalibrationPosition(landmarks) {
   const calibrationHeelAngle = calibrationMetrics?.angles?.heel;
   const isSitting =
     Number.isFinite(hipAngle) &&
-    hipAngle < 110 
+    hipAngle < 120 
   // ==========================================================
   // --- 校正狀態機 (肩膀+骨盆 雙重保險版) ---
   // ==========================================================
@@ -5420,6 +5390,7 @@ async function uploadRecordingForAnalysis(blob,analysisInfo,sessionId,mimeType='
   formData.append('game_reps',String(analysisInfo.gameReps??0));
   formData.append('game_time',String(analysisInfo.gameTime??0));
   formData.append('language', String(gameSettings?.lang || 'zh-TW'));
+  if(window.lastHistoryClientId)formData.append('history_client_id',String(window.lastHistoryClientId));
 
   try{
     const response=await fetch('/api/analyze',{

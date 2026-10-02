@@ -316,7 +316,7 @@ function b64DecodeUnicode(str) {
 
 function createChallengeFromResult() {
   ensureAudio(); playSfx('click');
-  const nameRaw = (document.getElementById('name-input')?.value || '').trim().toUpperCase();
+  const nameRaw = String(window.currentPlayer?.username || '').trim().toUpperCase().slice(0, 12);
   const payload = {
     v: 1,
     n: nameRaw || '???',
@@ -599,6 +599,8 @@ function onRepCompleted(repScore) {
 }
 
 function onGameEnd(info) {
+  // 個人訓練歷史（history.js）：每場結束都記一筆，並綁定目前登入的帳號
+  try { if (typeof recordGameHistory === 'function') recordGameHistory(info); } catch (e) { console.warn('歷史紀錄寫入失敗', e); }
   ensureSocialState();
   const s = loadSave();
   const st = ensureStats(s);
@@ -650,4 +652,4 @@ window.addEventListener('DOMContentLoaded', () => {
   ensureSocialState();
   refreshQuestDot();
   checkAchievements();
-});
+});

@@ -236,7 +236,6 @@ img, canvas, video { max-width: 100%; }
   #chart-cvs { width: 100%; height: auto; }
   #recording-result { width: 100%; }
   .recording-result-head { flex-wrap: wrap; gap: 6px; }
-  #name-wrap { flex-wrap: wrap; justify-content: center; gap: 8px; }
   .pause-title { font-size: 2.4em; }
   .pause-stats { flex-wrap: wrap; justify-content: center; }
   .cr-anim { font-size: 4.5em; }
@@ -315,8 +314,6 @@ img, canvas, video { max-width: 100%; }
   #cam-wrap canvas, #cam-wrap video { height: 100% !important; }
   #pose-stage { width: 100%; display: flex; justify-content: center; }
   #game-stage { min-height: 110px; border-radius: 14px; }
-  #hud { top: 8px; left: 10px; right: 10px; padding: 6px 10px; }
-  .hblock { min-width: 60px; }
   .hval { font-size: 1.6em; }
   .hlbl { font-size: .8em; }
   #move-warn { top: 60px; font-size: 1em; padding: 6px 16px; }
@@ -379,7 +376,6 @@ img, canvas, video { max-width: 100%; }
   #left-panel > .lbl { display: none; }
   #ss-panel { padding: 8px 12px !important; }
   #right-panel { padding: 8px 12px; gap: 8px; }
-  #hud { top: 8px; padding: 6px 12px; }
   #move-warn { top: 62px; }
   #game-settings-btn { width: 40px !important; height: 40px !important; font-size: 1.3em !important; top: 6px !important; right: 6px !important; }
 }

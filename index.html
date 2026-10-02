@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/settings.css">
 <link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/shop-theme.css">
+<link rel="stylesheet" href="css/history.css">
 <script>
   window.currentPlayer = null; // { id, username, email, coins }
 
@@ -143,6 +144,7 @@
       <button class="hm-btn hm-dock-btn hm-txt" id="nav-chars" onclick="openCharsScreen('equip')"><span class="hm-face" aria-hidden="true">🧍</span><span class="hm-lbl" data-i18n="nav-chars-label">角色</span></button>
       <button class="hm-btn hm-dock-btn menu-only-icon" onclick="openAchievementsScreen()" data-i18n-attr="title:title-achievements"><span class="hm-face" aria-hidden="true">🏅</span></button>
       <button class="hm-btn hm-dock-btn menu-only-icon" onclick="goTutorial();playSfx('click')" data-i18n-attr="title:title-tutorial"><span class="hm-face" aria-hidden="true">📜</span></button>
+      <button class="hm-btn hm-dock-btn menu-only-icon" onclick="openHistoryScreen()" title="訓練紀錄"><span class="hm-face" aria-hidden="true">📊</span></button>
     </nav>
 
     <!-- 右下：三顆大按鈕（挑戰／聯盟／聯賽） -->
@@ -197,17 +199,9 @@
 
 <div class="scr off" id="scr-tutorial">
   <div class="scr-title" data-i18n="tut-title">遊戲<span>說明</span></div>
-  <div class="ss-anim" style="gap:8px;">
-    <div class="ss-fig"><canvas id="tut-stand" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-stand">站立</div></div>
-    <div class="tut-arrow">→</div>
-    <div class="ss-fig"><canvas id="tut-sit" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-sit">坐下</div></div>
-    <div class="tut-arrow">→</div>
-    <div class="ss-fig"><canvas id="tut-stand2" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-stand">站立</div></div>
-    <div class="tut-arrow">→</div>
-    <div class="ss-fig"><canvas id="tut-tiptoe" width="70" height="120"></canvas><div class="ss-cap" data-i18n="tut-cap-tiptoe">墊腳尖</div></div>
-    <div class="tut-arrow" style="color:var(--green);font-size:1em;" data-i18n="tut-cap-step">= +1步！</div>
-  </div>
-  <div class="tut-grid">
+  <div class="tut-angle-card" data-i18n="tut-angle-tip"><div class="tut-angle-title">📐 拍攝角度很重要！</div>請以 <strong>35° 或 45°</strong> 的斜側角面對鏡頭，<br>讓系統同時看清楚膝蓋、腳跟與軀幹姿勢，分數才會準確。</div>
+  <img id="tut-img" src="img/sts_guide.png" alt="坐站訓練示意圖：站立、坐下、站立、墊腳尖" style="width:100%;max-width:760px;height:auto;border-radius:14px;display:block;margin:0 auto 14px;">
+  <div class="tut-grid" id="tut-lights">
     <div class="tut-card"><div class="tut-icon">🟢</div><div class="tut-head" data-i18n="tut-head-green">綠燈時</div><div class="tut-body" data-i18n="tut-body-green">完成<strong>站➔坐➔站➔墊腳</strong>即前進<br>姿勢越好，步伐越大</div></div>
     <div class="tut-card"><div class="tut-icon">🟡</div><div class="tut-head" data-i18n="tut-head-yellow">黃燈時</div><div class="tut-body" data-i18n="tut-body-yellow"><strong>起立後切黃燈</strong><br>請準備<strong>坐下</strong></div></div>
     <div class="tut-card"><div class="tut-icon">🔴</div><div class="tut-head" data-i18n="tut-head-red">紅燈時</div><div class="tut-body" data-i18n="tut-body-red">必須<strong>坐下且靜止</strong><br>亂動或站立<br><strong style="color:var(--red)">Game Over！</strong></div></div>
@@ -219,7 +213,6 @@
   </div>
   <div style="display:flex;gap:10px;">
     <button class="btn btn-ghost" onclick="goTo('scr-menu');playSfx('click')" data-i18n="tut-btn-menu">← 返回主選單</button>
-    <button class="btn btn-blue" onclick="openCharsScreen('play')" data-i18n="tut-btn-chars">去選角色 ▶</button>
   </div>
 </div>
 
@@ -244,6 +237,7 @@
 </div>
 
 <div class="scr off" id="scr-game">
+  <div id="game-angle-banner" data-i18n="calib-angle-banner">📐 建議以 35°～45° 斜側角面對鏡頭</div>
   <button class="icon-btn" id="game-settings-btn" style="position:fixed;top:14px;right:14px;z-index:500;" onclick="openInGameSettings();playSfx('click')" data-i18n-attr="title:title-settings">⚙️</button>
   <div id="left-panel">
     <div class="lbl"></div>
@@ -291,6 +285,7 @@
         <canvas id="pose-canvas" width="640" height="480"></canvas>
         <div id="cam-msg"><div class="spinner"></div><span id="cam-status-text">啟動攝影機...</span></div>
         <div id="calib-overlay" class="calib-off">
+          <div id="calib-angle-banner" data-i18n="calib-angle-banner">📐 建議以 35°～45° 斜側角面對鏡頭</div>
           <div id="calib-box">
             <div class="calib-corner c-tl"></div>
             <div class="calib-corner c-tr"></div>
@@ -304,10 +299,6 @@
     </div>
     <div id="game-stage">
       <canvas id="game-canvas"></canvas>
-      <div id="hud">
-        <div class="hblock"><div class="hval" id="h-light">🟢</div><div class="hlbl">燈號</div></div>
-        <div class="hblock"><div class="hval" id="h-streak">0</div><div class="hlbl">連續好姿勢</div></div>
-      </div>
     </div>
     <div id="move-warn">⚠️ 偵測到移動！</div>
     <div id="tip-box"></div>
@@ -338,7 +329,6 @@
       </div>
       <div id="control-report-wrap" style="display:none;"></div>
       <div id="chart-wrap"><div id="chart-title">📈 姿勢歷史曲線</div><canvas id="chart-cvs" width="380" height="110"></canvas></div>
-      <div id="name-wrap"><label for="name-input" data-i18n="res-name-lbl">輸入名稱（3字）：</label><input id="name-input" maxlength="3" placeholder="AAA" spellcheck="false"></div>
       <div class="ov-btns">
         <button class="btn btn-gold" onclick="collectCoinsAndContinue()" data-i18n="res-btn-collect">🪙 領取金幣</button>
         <button class="btn btn-ghost" onclick="openShareCardFromResult()" data-i18n="res-btn-share">📸 分享成就卡</button>
@@ -516,6 +506,28 @@
   <button class="btn btn-ghost" style="margin-top:14px;" onclick="goTo('scr-menu'); playSfx('click')" data-i18n="chal-btn-close">✖ 關閉</button>
 </div>
 
+<div id="ov-history" class="overlay-modal" style="position:fixed; z-index:9000;">
+  <div class="scr-title" style="margin-bottom:12px;">📊 訓練<span>紀錄</span></div>
+  <div class="hist-stats" id="history-stats"></div>
+  <div class="diff-tabs hv-views" id="history-views" style="margin-bottom:8px;">
+    <div class="diff-tab active" onclick="switchHistoryView('list',this)">列表</div>
+    <div class="diff-tab" onclick="switchHistoryView('trends',this)">趨勢</div>
+  </div>
+  <div class="diff-tabs" id="history-tabs" style="margin-bottom:12px;">
+    <div class="diff-tab active" onclick="switchHistoryFilter('all',this)">全部</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('classic',this)">通關</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('infinite',this)">無限</div>
+    <div class="diff-tab" onclick="switchHistoryFilter('timed',this)">限時</div>
+  </div>
+  <div id="history-trends" style="display:none; width:100%; max-width:560px; padding:0 4px;"></div>
+  <div id="history-list" style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:560px; padding:0 4px;"></div>
+  <div class="ov-btns" style="margin-top:14px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-ghost" onclick="exportHistoryCSV()">📥 匯出 CSV</button>
+    <button class="btn btn-ghost" style="border-color:var(--red); color:var(--red);" onclick="clearHistory()">🗑 清除紀錄</button>
+    <button class="btn btn-blue" onclick="closeHistoryScreen()">← 返回</button>
+  </div>
+</div>
+
 <div id="ov-share-card" class="overlay-modal">
   <div class="scr-title" style="margin-bottom:10px;" data-i18n="share-title">📸 分享<span>卡片</span></div>
   <img id="share-card-preview-img" style="max-width:280px;border-radius:14px;border:1.5px solid var(--border);"/>
@@ -576,6 +588,8 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@latest/build/qrcode.min.js"></script>
 <script src="js/app.js"></script>
 <script src="js/social.js"></script>
+<script src="js/history.js"></script>
+<script src="js/history-trends.js"></script>
 <script src="js/legal.js"></script>
 <script>
 /* 設定補強：

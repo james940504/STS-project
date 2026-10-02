@@ -1,0 +1,68 @@
+/* 訓練紀錄 — 趨勢圖（history-trends.js） */
+.hv-views{justify-content:center;}
+.hv-wrap{display:flex;flex-direction:column;gap:14px;width:100%;color:#b6c4de;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;}
+.hv-hint{font-size:.95em;color:#8a9bbd;text-align:center;}
+.hv-section,.hv-card{background:var(--card2,#071428);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;}
+.hv-h{margin:0 0 4px;font-size:1.15em;color:#d6e2f5;font-weight:700;}
+.hv-card-title{margin:0 0 2px;font-size:1.05em;color:#d6e2f5;font-weight:700;}
+.hv-card-sub{font-size:.85em;line-height:1.5;color:#8a9bbd;margin-bottom:8px;}
+.hv-empty{font-size:.95em;color:#8a9bbd;padding:10px 0;}
+
+.hv-plot{position:relative;width:100%;}
+.hv-svg{display:block;width:100%;height:auto;outline:none;touch-action:pan-y;}
+.hv-svg:focus-visible{outline:2px solid #4090FF;outline-offset:2px;border-radius:6px;}
+.hv-grid{stroke:rgba(255,255,255,.08);stroke-width:1;}
+.hv-axis{stroke:rgba(255,255,255,.16);stroke-width:1;}
+.hv-tick{fill:#8a9bbd;font-size:14px;}
+.hv-ref{stroke:#8E99AD;stroke-width:1;stroke-dasharray:4 4;}
+.hv-ref-label{fill:#8a9bbd;font-size:13px;}
+.hv-line{fill:none;stroke-linejoin:round;stroke-linecap:round;}
+.hv-line-main{stroke:#4090FF;stroke-width:2;}
+.hv-line-ctx{stroke:#8E99AD;stroke-width:1.5;opacity:.7;}
+.hv-dot{stroke:var(--card2,#071428);stroke-width:2;}
+.hv-dot-main{fill:#4090FF;}
+.hv-dot-ctx{fill:#8E99AD;}
+.hv-dot-est{fill:var(--card2,#071428);stroke:#8E99AD;stroke-width:2;}
+.hv-dot-main.hv-dot-est{stroke:#4090FF;}
+.hv-endlabel{fill:#d6e2f5;font-size:15px;font-weight:700;paint-order:stroke;stroke:#071428;stroke-width:4px;stroke-linejoin:round;}
+.hv-xh{stroke:rgba(255,255,255,.35);stroke-width:1;}
+.hv-active{fill:#4090FF;stroke:var(--card2,#071428);stroke-width:2;}
+.hv-hit{cursor:crosshair;}
+.hv-tip{position:absolute;top:0;z-index:2;pointer-events:none;background:#0d1f3c;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;font-size:.85em;color:#b6c4de;box-shadow:0 6px 18px rgba(0,0,0,.45);white-space:nowrap;}
+.hv-tip[hidden]{display:none;}
+.hv-tip-when{color:#8a9bbd;margin-bottom:4px;}
+.hv-tip-row{display:flex;align-items:center;gap:6px;line-height:1.6;}
+.hv-tip-key{width:8px;height:8px;border-radius:50%;background:#8E99AD;display:inline-block;}
+.hv-tip-key-ma{background:#4090FF;}
+.hv-tip-val{color:#eef4ff;font-variant-numeric:tabular-nums;}
+.hv-tip-name{color:#8a9bbd;}
+
+.hv-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:.82em;color:#b6c4de;}
+.hv-key{display:inline-flex;align-items:center;gap:6px;}
+.hv-sw{display:inline-block;}
+.hv-sw-dot{width:8px;height:8px;border-radius:50%;background:#8E99AD;}
+.hv-sw-line{width:16px;height:2px;background:#4090FF;border-radius:1px;}
+.hv-sw-hollow{width:8px;height:8px;border-radius:50%;border:2px solid #8E99AD;box-sizing:content-box;}
+
+.hv-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:6px;}
+.hv-tile{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;}
+.hv-tile-label{font-size:.82em;color:#8a9bbd;}
+.hv-tile-val{font-size:1.6em;font-weight:700;color:#eef4ff;font-family:system-ui,sans-serif;}
+.hv-delta{font-size:.85em;font-weight:600;}
+.hv-good{color:#3ecf5e;}
+.hv-bad{color:#ec835a;}
+.hv-flat{color:#8a9bbd;}
+.hv-spark{width:88px;height:26px;margin-top:2px;}
+.hv-spark-line{fill:none;stroke:#8E99AD;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;}
+.hv-spark-dot{fill:#4090FF;stroke:var(--card2,#071428);stroke-width:2;}
+
+.hv-table-wrap{background:var(--card2,#071428);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:10px 14px;}
+.hv-table-wrap summary{cursor:pointer;color:#b6c4de;font-weight:600;padding:4px 0;}
+.hv-table-wrap{overflow-x:auto;}
+.hv-table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.85em;}
+.hv-table th,.hv-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;white-space:nowrap;}
+.hv-table th{color:#8a9bbd;font-weight:600;}
+.hv-table td{color:#b6c4de;}
+.hv-table td.hv-num{text-align:right;font-variant-numeric:tabular-nums;}
+.hv-section .hv-card{background:transparent;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0;padding:12px 0 4px;}
+.hv-section .hv-card:first-of-type{border-top:0;}
